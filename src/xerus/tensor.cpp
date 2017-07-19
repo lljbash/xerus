@@ -66,7 +66,7 @@ namespace xerus {
 	
 	
 	Tensor::Tensor(DimensionTuple _dimensions, std::unique_ptr<value_t[]>&& _data)
-	: dimensions(std::move(_dimensions)), size(misc::product(dimensions)), representation(Representation::Dense), denseData(_data.release()) {
+	: dimensions(std::move(_dimensions)), size(misc::product(dimensions)), representation(Representation::Dense), denseData(_data.release(), internal::array_deleter_vt) {
 		REQUIRE(size != 0, "May not create tensors with an dimension == 0.");
 	}
 	
@@ -600,7 +600,7 @@ namespace xerus {
 			representation = Representation::Dense;
 		}
 		
-		denseData.reset(_newData.release());
+		denseData.reset(_newData.release(), internal::array_deleter_vt);
 	}
 	
 	void Tensor::reset(DimensionTuple _newDim, std::map<size_t, value_t>&& _newData) {

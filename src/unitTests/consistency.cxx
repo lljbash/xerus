@@ -401,11 +401,11 @@ static misc::UnitTest cons_op_x_t("Consistency", "operator_times_tensor", []() {
 		ttC(k&0) = ttB(k/2,i/2)*ttA(i/2,j/2)*ttX(j&0);
 		tnC(k&0) = tnB(k/2,i/2)*tnA(i/2,j/2)*tnX(j&0);
 		
-		TEST(approx_equal(C, sC, 1e-14));
-		TEST(approx_equal(C, tnC, 1e-14));
-		TEST(approx_equal(C, ttC, 1e-14));
-		TEST(approx_equal(sC, tnC, 1e-14));
-		TEST(approx_equal(sC, ttC, 1e-14));
+		TEST(approx_equal(C, sC, 1e-13));
+		TEST(approx_equal(C, tnC, 1e-13));
+		TEST(approx_equal(C, ttC, 1e-13));
+		TEST(approx_equal(sC, tnC, 1e-13));
+		TEST(approx_equal(sC, ttC, 1e-13));
 		
 		
 		// Add a new dimension
