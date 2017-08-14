@@ -26,6 +26,7 @@
 
 #include <set>
 #include <memory>
+#include <functional>
 #include "misc/fileIO.h"
  
 #include "indexedTensor.h"

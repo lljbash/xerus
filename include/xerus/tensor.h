@@ -28,6 +28,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <functional>
 
 #include "basic.h"
 #include "misc/containerSupport.h"
@@ -159,7 +160,7 @@ namespace xerus {
 		 * @param _dimensions the dimensions of the new tensor.
 		 * @param _data inital dense data in row-major order.
 		 */
-		explicit Tensor(DimensionTuple _dimensions, std::unique_ptr<value_t>&& _data);
+		explicit Tensor(DimensionTuple _dimensions, std::unique_ptr<value_t[]>&& _data);
 		
 		
 		/** 
@@ -663,7 +664,7 @@ namespace xerus {
 		/** 
 		 * @brief Resets the tensor to the given dimensions and representation.
 		 * @details Leaves the Tensor in the same state as if newly constructed with the the same arguments.
-		 * @param _dimensions the dimensions of the new tensor.
+		 * @param _newDim the dimensions of the new tensor.
 		 * @param _representation the new representation of the tensor.
 		 * @param _init (optional) data treatment, i.e. whether the tensor shall be zero initialized.
 		 */
@@ -672,7 +673,7 @@ namespace xerus {
 		
 		/** 
 		 * @brief Resets the tensor to the given dimensions, preserving the current representation.
-		 * @param _dimensions the dimensions of the new tensor.
+		 * @param _newDim the dimensions of the new tensor.
 		 * @param _init (optional) data treatment, i.e. whether the tensor shall be zero initialized.
 		 */
 		void reset(DimensionTuple _newDim, const Initialisation _init = Initialisation::Zero);
@@ -685,7 +686,7 @@ namespace xerus {
 		
 		/** 
 		 * @brief Resets the tensor to the given dimensions and uses the given data.
-		 * @param _dimensions the dimensions of the new tensor.
+		 * @param _newDim the dimensions of the new tensor.
 		 * @param _newData new dense data in row-major order.
 		 */
 		void reset(DimensionTuple _newDim, const std::shared_ptr<value_t>& _newData);
@@ -693,7 +694,7 @@ namespace xerus {
 		
 		/** 
 		 * @brief Resets the tensor to the given dimensions with data @a _newData.
-		 * @param _dimensions the dimensions of the new tensor.
+		 * @param _newDim the dimensions of the new tensor.
 		 * @param _newData new dense data in row-major order.
 		 */
 		void reset(DimensionTuple _newDim, std::unique_ptr<value_t[]>&& _newData);

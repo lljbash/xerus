@@ -27,6 +27,7 @@
 #include <memory>
 #include <map>
 #include <mutex>
+#include <functional>
 
 #include <suitesparse/cholmod.h>
 #include <suitesparse/SuiteSparseQR.hpp>

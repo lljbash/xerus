@@ -103,9 +103,9 @@ static misc::UnitTest tensor_svd_rnd512("Tensor", "SVD_Random_512x512", [](){
 	
 	(res1(i,o,k,j), res2(p,o), res3(l,n,m,p)) = SVD(-1*A(l,i,m,k,j,n));
 	res4(l,k,m,i,j,n) =  res1(k,o,i,j)*res2(p,o)*res3(l,n,m,p);
-	TEST(approx_equal(-1*res4, A, 1e-14));
-	MTEST(frob_norm(res1(k,o,i,j)*res1(k,p,i,j) - Tensor::identity(res2.dimensions)(o, p)) < 1e-12, " U not orthogonal");
-	MTEST(frob_norm(res3(l,n,m,o)*res3(l,n,m,p) - Tensor::identity(res2.dimensions)(o, p)) < 1e-12, " Vt not orthogonal");
+	TEST(approx_equal(-1*res4, A, 1e-13));
+	MTEST(frob_norm(res1(k,o,i,j)*res1(k,p,i,j) - Tensor::identity(res2.dimensions)(o, p)) < 1e-11, " U not orthogonal " << frob_norm(res1(k,o,i,j)*res1(k,p,i,j) - Tensor::identity(res2.dimensions)(o, p)));
+	MTEST(frob_norm(res3(l,n,m,o)*res3(l,n,m,p) - Tensor::identity(res2.dimensions)(o, p)) < 1e-11, " Vt not orthogonal " << frob_norm(res3(l,n,m,o)*res3(l,n,m,p) - Tensor::identity(res2.dimensions)(o, p)));
 });
 
 static misc::UnitTest tensor_svd_soft("Tensor", "SVD_soft_thresholding", [](){

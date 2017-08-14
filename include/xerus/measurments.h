@@ -26,6 +26,7 @@
 
 #include <set>
 #include <random>
+#include <functional>
 
 #include "basic.h"
 
