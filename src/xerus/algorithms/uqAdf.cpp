@@ -283,8 +283,8 @@ namespace xerus {
 		
         
         void solve() {
-			std::vector<double> residuals(10, 1000.0);
-			const size_t maxIterations = 1000;
+			std::vector<double> residuals(10, std::numeric_limits<double>::max());
+			const size_t maxIterations = 100000;
 			
 			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
 				x.move_core(0, true);
@@ -299,7 +299,8 @@ namespace xerus {
 					if(corePosition == 0) {
 						residuals.push_back(calc_residual_norm(0)/solutionsNorm);
 						
-						if(residuals.back()/residuals[residuals.size()-10] > 0.99) {
+						if(residuals.back()/residuals[residuals.size()-10] > 0.999) {
+                            LOG(greee, residuals.back() << " / " << residuals[residuals.size()-10] << " = " << residuals.back()/residuals[residuals.size()-10]);
 							LOG(ADF, "Residual decrease from " << std::scientific << residuals[10] << " to " << std::scientific << residuals.back() << " in " << residuals.size()-10 << " iterations.");
 							return; // We are done!
 						}
