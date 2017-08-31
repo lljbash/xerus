@@ -299,6 +299,8 @@ namespace xerus {
 					if(corePosition == 0) {
 						residuals.push_back(calc_residual_norm(0)/solutionsNorm);
 						
+                        LOG(ADFx, "Residual " << std::scientific << residuals.back());
+                        
 						if(residuals.back()/residuals[residuals.size()-10] > 0.999) {
                             LOG(greee, residuals.back() << " / " << residuals[residuals.size()-10] << " = " << residuals.back()/residuals[residuals.size()-10]);
 							LOG(ADF, "Residual decrease from " << std::scientific << residuals[10] << " to " << std::scientific << residuals.back() << " in " << residuals.size()-10 << " iterations.");
@@ -354,43 +356,63 @@ namespace xerus {
 			TTTensor baseTerm(x.dimensions);
 			mean.reinterpret_dimensions({1, x.dimensions[0], 1});
 			baseTerm.set_component(0, mean);
-			for(size_t k = 0; k < _measurments.initialRandomVectors.size(); ++k) {
-				baseTerm.set_component(k+1, Tensor::dirac({1, x.dimensions[k+1], 1}, 0));
+			for(size_t k = 1; k < x.degree(); ++k) {
+				baseTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
 			}
 			baseTerm.assume_core_position(0);
 			newX += baseTerm;
 			
 			mean.reinterpret_dimensions({x.dimensions[0]});
-			
-			// Calc linear terms
-			REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialRandomVectors[0].size(), "Sizes don't match.");
-			REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Sizes don't match.");
-			REQUIRE(_measurments.initialRandomVectors.size()+1 == x.degree(), "Sizes don't match.");
 
+			// Calc linear terms
+            std::set<size_t> usedParams;
 			for(size_t m = 0; m < _measurments.initialRandomVectors.size(); ++m) {
-				REQUIRE(_measurments.initialRandomVectors[m][m] > 0.0, "Invalid initial randVec");
+                const auto& rndVec = _measurments.initialRandomVectors[m];
+                const auto& sol = _measurments.initialSolutions[m];
+                
+                REQUIRE(rndVec.size()+1 == x.degree(), "Invalid random vector");
+                
+                // Find parameter number
+                size_t p = x.degree();
+                bool skip = false;
+                for(size_t i = 0; i < rndVec.size(); ++i) {
+                    if(std::abs(rndVec[i]) > 0.0) {
+                        if(misc::contains(usedParams, i)) {
+                            LOG(info, "Skipping douplicate parameter " << i);
+                            skip = true;
+                            continue; 
+                        }
+                        REQUIRE(p == x.degree(), "Parameters contains several non-zero entries: " << rndVec);
+                        REQUIRE(!misc::contains(usedParams, i), "Parameters " << i << " appears twice!" << _measurments.initialRandomVectors);
+                        usedParams.emplace(i);
+                        p = i;
+                    }
+                }
+                if(skip) { continue; }
+                REQUIRE(p != x.degree(), "Parameters contains no non-zero entry: " << rndVec);
+                
 				TTTensor linearTerm(x.dimensions);
-				Tensor tmp = (_measurments.initialSolutions[m] - mean);
+				Tensor tmp = (sol - mean);
 				tmp.reinterpret_dimensions({1, x.dimensions[0], 1});
 				linearTerm.set_component(0, tmp);
-				for(size_t k = 0; k < _measurments.initialRandomVectors.size(); ++k) {
-					if(k == m) {
-						linearTerm.set_component(k+1, Tensor::dirac({1, x.dimensions[k+1], 1}, 0));
+				for(size_t k = 1; k < x.degree(); ++k) {
+					if(k-1 == p) {
+						linearTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
 					} else {
-						REQUIRE(misc::hard_equal(_measurments.initialRandomVectors[m][k], 0.0), "Invalid initial randVec");
-						REQUIRE(x.dimensions[k+1] >= 1, "WTF");
-						linearTerm.set_component(k+1, Tensor::dirac({1, x.dimensions[k+1], 1}, 1));
+						REQUIRE(misc::hard_equal(rndVec[k-1], 0.0), "Invalid initial randVec");
+						linearTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 1));
 					}
 				}
 				linearTerm.assume_core_position(0);
 				newX += linearTerm;
 			}
 			
+			LOG(ADF, "Found linear terms for " << usedParams);
+			
 			// Add some noise
-// 			auto noise = TTTensor::random(newX.dimensions, std::vector<size_t>(newX.degree()-1, 2));
-// 			noise *= 1e-4*frob_norm(newX)/frob_norm(noise);
-// 			LOG(check, frob_norm(newX) << " vs " << frob_norm(noise));
-// 			newX += noise;
+			auto noise = TTTensor::random(newX.dimensions, std::vector<size_t>(newX.degree()-1, 3));
+			noise *= 1e-4*frob_norm(newX)/frob_norm(noise);
+			newX += noise;
 
 			
 			
@@ -400,7 +422,7 @@ namespace xerus {
 			
 			x = newX;
 			LOG(UQ_ADF, "Pre roundign ranks: " << x.ranks());
-			x.round(0.00025);
+			x.round(1e-5);
 			LOG(UQ_ADF, "Post roundign ranks: " << x.ranks());
 			uq_adf(x, _measurments.randomVectors, _measurments.solutions);
 			return x;

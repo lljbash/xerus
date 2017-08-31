@@ -18,31 +18,38 @@
 // or contact us at contact@libXerus.org.
 
 /**
- * @file
- * @brief Default include file for the misc (ie. non-tensor) functionality.
- */
+* @file
+* @brief Header file for some minimalistic file utilities.
+*/
 
 #pragma once
 
-#include "misc/check.h"
-#include "misc/standard.h"
-#include "misc/namedLogger.h"
- 
-#include "misc/basicArraySupport.h"
-#include "misc/containerSupport.h"
-#include "misc/stringUtilities.h"
-#include "misc/sfinae.h"
-#include "misc/callStack.h"
-#include "misc/simpleNumerics.h"
-#include "misc/timeMeasure.h"
-#include "misc/performanceAnalysis.h"
-#include "misc/exceptions.h"
-#include "misc/allocator.h"
-#include "misc/histogram.h"
-#include "misc/sort.h"
-#include "misc/math.h"
-#include "misc/missingFunctions.h"
-#include "misc/fileIO.h"
-#include "misc/stringFromTo.h"
-#include "misc/random.h"
-#include "misc/fileUtilities.h"
+#include <set>
+#include <string>
+#include <fstream>
+
+namespace xerus { namespace misc {
+    
+    void create_folder_for_file(const std::string& _path);
+    
+    std::set<std::string> get_files(const std::string& _path);
+
+    bool file_is_empty(const std::string& _filename);
+
+    std::string read_file(const std::string& _path);
+    
+    #if __cplusplus <= 201103L
+        #warning Some xerus file utilities require a C++14 compliant compiler
+    #else
+   
+    void open_file_read(std::ifstream &_fileStream, const std::string &_path);
+
+    void open_file_truncate(std::ofstream &_fileStream, const std::string &_path);
+
+    void open_file_append(std::ofstream &_fileStream, const std::string &_path);
+    
+    #endif
+} }
+
+
+

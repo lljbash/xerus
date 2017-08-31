@@ -23,11 +23,14 @@
  * @note this may only be used in cpp files and must NOT be included in any library header!
  */
 
-
 #pragma once
-#include "containerOutput.h"
+
 #include <type_traits>
 #include <memory>
+
+#include "containerOutput.h"
+#include "namedLogger.h"
+#include "check.h"
 
 // macro shorthands
 #define REQUIRE 		XERUS_REQUIRE
