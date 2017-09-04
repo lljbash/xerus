@@ -19,19 +19,21 @@
 
 /**
  * @file
- * @brief Header file for the ADF algorithm and its variants.
+ * @brief Header file for utilities for uncertainity quantification.
  */
 
 #pragma once
 
-#include "../index.h"
 #include "../ttNetwork.h"
-#include "../performanceData.h"
-#include "../measurments.h"
 
-namespace xerus {
+namespace xerus {namespace uq {
     
+    Tensor hermite_position(const double _v, const size_t _polyDegree);
 	
+	
+	Tensor legendre_position(const double _v, const size_t _polyDegree);
+	
+    
 	class UQMeasurementSet {
 	public:
 		std::vector<std::vector<double>> randomVectors;
@@ -47,16 +49,19 @@ namespace xerus {
 		void add(const std::vector<double>& _rndvec, const Tensor& _solution);
 		
 		void add_initial(const std::vector<double>& _rndvec, const Tensor& _solution);
+        
+        void clear();
 	};
 	
+    
+	TTTensor initial_guess(const UQMeasurementSet& _measurments, const TTTensor& _guess);
 	
-	
-	void uq_adf(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions);
-	
-	TTTensor uq_adf(const UQMeasurementSet& _measurments, const TTTensor& _guess);
-	
+    
 	Tensor uq_avg(const TTTensor& _x, const size_t _N, const size_t _numSpecial);
 	
+    
 	std::pair<std::vector<std::vector<double>>, std::vector<Tensor>> uq_mc(const TTTensor& _x, const size_t _N, const size_t _numSpecial);
-}
+    
+}}
+
 

@@ -58,9 +58,10 @@
     #include "xerus/algorithms/cg.h"
     #include "xerus/algorithms/decompositionAls.h"
     #include "xerus/algorithms/adf.h"
-    #include "xerus/algorithms/uqAdf.h"
     #include "xerus/algorithms/iht.h"
     #include "xerus/algorithms/largestEntry.h"
+    #include "xerus/applications/uqAdf.h"
+//     #include "xerus/applications/uqRaAdf.h"
     
 	#include "xerus/examples/specificLowRankTensors.h"
 

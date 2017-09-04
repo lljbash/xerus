@@ -22,10 +22,10 @@
  * @brief Implementation of the ADF variants. 
  */
 
-#include <xerus/algorithms/uqAdf.h>
+#include <xerus/applications/uqAdf.h>
 
 #include <xerus/misc/basicArraySupport.h>
-#include <xerus/misc/simpleNumerics.h>
+#include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
 #include <boost/math/special_functions/hermite.hpp>
@@ -35,21 +35,8 @@
 	#include <omp.h>
 #endif
 
-namespace xerus {
+namespace xerus { namespace uq {
     
-	Tensor randVar_to_position(const double _v, const size_t _polyDegree) {
-// 		const std::vector<xerus::misc::Polynomial> stochasticBasis = xerus::misc::Polynomial::build_orthogonal_base(_polyDegree, [](const double){return 1.0;}, -1., 1.);
-		
-		Tensor p({_polyDegree});
-		for (unsigned i = 0; i < _polyDegree; ++i) {
-// 			p[i] = stochasticBasis[i](_v);
-			p[i] = boost::math::hermite(i, _v/std::sqrt(2))/std::pow(2.0, i/2.0);
-// 			p[i] = boost::math::legendre_p(i, _v);
-// 			p[i] = boost::math::legendre_q(i, _v);
-		}
-		
-		return p;
-	}
 	
     class InternalSolver {
         const size_t N;
@@ -75,7 +62,7 @@ namespace xerus {
             for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
                 positions[corePosition].reserve(_randomVariables.size());
                 for(size_t j = 0; j < _randomVariables.size(); ++j) {
-                    positions[corePosition].push_back(randVar_to_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
+                    positions[corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
                 }
             }
             
@@ -338,165 +325,16 @@ namespace xerus {
 		REQUIRE(_measurments.randomVectors.size() == _measurments.solutions.size(), "Invalid measurments");
 		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
 		
-		if(_measurments.initialRandomVectors.size() > 0) {
-			LOG(UQ_ADF, "Init");
-			TTTensor x(_guess.dimensions);
-			TTTensor newX(x.dimensions);
-			
-			std::vector<std::vector<double>> randomVectors = _measurments.randomVectors;
-			std::vector<Tensor> solutions = _measurments.solutions;
-			
-			// Calc mean
-			Tensor mean({x.dimensions[0]});
-			for(const auto& sol : solutions) {
-				mean += sol;
-			}
-			mean /= double(solutions.size());
-			
-			TTTensor baseTerm(x.dimensions);
-			mean.reinterpret_dimensions({1, x.dimensions[0], 1});
-			baseTerm.set_component(0, mean);
-			for(size_t k = 1; k < x.degree(); ++k) {
-				baseTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
-			}
-			baseTerm.assume_core_position(0);
-			newX += baseTerm;
-			
-			mean.reinterpret_dimensions({x.dimensions[0]});
+        TTTensor x = initial_guess(_measurments, _guess);
+        
+        std::vector<std::vector<double>> randomVectors = _measurments.randomVectors;
+        std::vector<Tensor> solutions = _measurments.solutions;
+        randomVectors.insert(randomVectors.end(), _measurments.initialRandomVectors.begin(), _measurments.initialRandomVectors.end());
+        solutions.insert(solutions.end(), _measurments.initialSolutions.begin(), _measurments.initialSolutions.end());
+        
+        uq_adf(x, _measurments.randomVectors, _measurments.solutions);
+        return x;
+	}
 
-			// Calc linear terms
-            std::set<size_t> usedParams;
-			for(size_t m = 0; m < _measurments.initialRandomVectors.size(); ++m) {
-                const auto& rndVec = _measurments.initialRandomVectors[m];
-                const auto& sol = _measurments.initialSolutions[m];
-                
-                REQUIRE(rndVec.size()+1 == x.degree(), "Invalid random vector");
-                
-                // Find parameter number
-                size_t p = x.degree();
-                bool skip = false;
-                for(size_t i = 0; i < rndVec.size(); ++i) {
-                    if(std::abs(rndVec[i]) > 0.0) {
-                        if(misc::contains(usedParams, i)) {
-                            LOG(info, "Skipping douplicate parameter " << i);
-                            skip = true;
-                            continue; 
-                        }
-                        REQUIRE(p == x.degree(), "Parameters contains several non-zero entries: " << rndVec);
-                        REQUIRE(!misc::contains(usedParams, i), "Parameters " << i << " appears twice!" << _measurments.initialRandomVectors);
-                        usedParams.emplace(i);
-                        p = i;
-                    }
-                }
-                if(skip) { continue; }
-                REQUIRE(p != x.degree(), "Parameters contains no non-zero entry: " << rndVec);
-                
-				TTTensor linearTerm(x.dimensions);
-				Tensor tmp = (sol - mean);
-				tmp.reinterpret_dimensions({1, x.dimensions[0], 1});
-				linearTerm.set_component(0, tmp);
-				for(size_t k = 1; k < x.degree(); ++k) {
-					if(k-1 == p) {
-						linearTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
-					} else {
-						REQUIRE(misc::hard_equal(rndVec[k-1], 0.0), "Invalid initial randVec");
-						linearTerm.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 1));
-					}
-				}
-				linearTerm.assume_core_position(0);
-				newX += linearTerm;
-			}
-			
-			LOG(ADF, "Found linear terms for " << usedParams);
-			
-			// Add some noise
-			auto noise = TTTensor::random(newX.dimensions, std::vector<size_t>(newX.degree()-1, 3));
-			noise *= 1e-4*frob_norm(newX)/frob_norm(noise);
-			newX += noise;
-
-			
-			
-			// Add initial measurments. NOTE: must happen after mean is calculated
-			randomVectors.insert(randomVectors.end(), _measurments.initialRandomVectors.begin(), _measurments.initialRandomVectors.end());
-			solutions.insert(solutions.end(), _measurments.initialSolutions.begin(), _measurments.initialSolutions.end());
-			
-			x = newX;
-			LOG(UQ_ADF, "Pre roundign ranks: " << x.ranks());
-			x.round(1e-5);
-			LOG(UQ_ADF, "Post roundign ranks: " << x.ranks());
-			uq_adf(x, _measurments.randomVectors, _measurments.solutions);
-			return x;
-		} else {
-			auto x = _guess;
-			uq_adf(x, _measurments.randomVectors, _measurments.solutions);
-			return x;
-		}
-	}
 	
-	
-	void UQMeasurementSet::add(const std::vector<double>& _rndvec, const Tensor& _solution) {
-		randomVectors.push_back(_rndvec);
-		solutions.push_back(_solution);
-	}
-	
-	void UQMeasurementSet::add_initial(const std::vector<double>& _rndvec, const Tensor& _solution) {
-		initialRandomVectors.push_back(_rndvec);
-		initialSolutions.push_back(_solution);
-	}
-	
-	
-	std::pair<std::vector<std::vector<double>>, std::vector<Tensor>> uq_mc(const TTTensor& _x, const size_t _N, const size_t _numSpecial) {
-		std::mt19937_64 rnd;
-		std::normal_distribution<double> dist(0.0, 1.0);
-		
-		std::vector<std::vector<double>> randomVariables;
-		std::vector<Tensor> solutions;
-		
-		randomVariables.reserve(_N);
-		solutions.reserve(_N);
-		for(size_t i = 0; i < _N; ++i) {
-			randomVariables.push_back(std::vector<double>(_x.degree()-1));
-			Tensor p = Tensor::ones({1});
-			for(size_t k = _x.degree()-1; k > 0; --k) {
-				randomVariables[i][k-1] = (k <= _numSpecial?0.3:1.0)*dist(rnd);
-				contract(p, _x.get_component(k), p, 1);
-				contract(p, p, randVar_to_position(randomVariables[i][k-1], _x.dimensions[k]), 1);
-			}
-			contract(p, _x.get_component(0), p, 1);
-			p.reinterpret_dimensions({_x.dimensions[0]});
-			solutions.push_back(p);
-		}
-		
-		return std::make_pair(randomVariables, solutions);
-	}
-	
-	
-	Tensor uq_avg(const TTTensor& _x, const size_t _N, const size_t _numSpecial) {
-		Tensor realAvg({_x.dimensions[0]});
-		
-		#pragma omp parallel
-		{
-			std::mt19937_64 rnd;
-			std::normal_distribution<double> dist(0.0, 1.0);
-			Tensor avg({_x.dimensions[0]});
-			
-			#pragma omp parallel for 
-			for(size_t i = 0; i < _N; ++i) {
-				Tensor p = Tensor::ones({1});
-				for(size_t k = _x.degree()-1; k > 0; --k) {
-					contract(p, _x.get_component(k), p, 1);
-					contract(p, p, randVar_to_position((k <= _numSpecial?0.3:1.0)*dist(rnd), _x.dimensions[k]), 1);
-				}
-				contract(p, _x.get_component(0), p, 1);
-				p.reinterpret_dimensions({_x.dimensions[0]});
-				avg += p;
-			}
-			
-			#pragma omp critical
-			{ realAvg += avg; }
-		}
-		
-		return realAvg/double(_N);
-	}
-	
-} // namespace xerus
+}} // namespace  uq | xerus

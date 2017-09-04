@@ -48,6 +48,7 @@ DEBUG += -DXERUS_VERSION_COMMIT=$(XERUS_COMMIT_V)
 # Register the source files
 XERUS_SOURCES = $(wildcard src/xerus/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/algorithms/*.cpp)
+XERUS_SOURCES += $(wildcard src/xerus/applications/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/examples/*.cpp)
 
 MISC_SOURCES = $(wildcard src/xerus/misc/*.cpp)
