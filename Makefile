@@ -95,7 +95,7 @@ include makeIncludes/optimization.mk
 #		  			Set additional compiler options 
 # ------------------------------------------------------------------------------------------------------
 
-OTHER += -std=c++11			# Use the C++11 standard
+
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -108,8 +108,8 @@ define \n
 
 endef
 
-FLAGS = $(strip $(WARNINGS) $(OPTIMIZE) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER))
-PYTHON_FLAGS = $(strip $(WARNINGS) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER) -fno-var-tracking-assignments)
+FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(OPTIMIZE) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER))
+PYTHON_FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER) -fno-var-tracking-assignments)
 MINIMAL_DEPS = Makefile config.mk makeIncludes/general.mk makeIncludes/warnings.mk makeIncludes/optimization.mk
 
 

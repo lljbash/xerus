@@ -70,9 +70,9 @@ namespace xerus { namespace misc {
         return contents;
     }
     
-    #if __cplusplus <= 201103L
-        #warning Some xerus file utilities require a C++14 compliant compiler
-    #else
+    
+    
+    #if __cplusplus >= 201402L
     
         std::ifstream open_file_read(const std::string& _path) {
             REQUIRE(boost::filesystem::exists(_path), "File " << _path << " does not exist.");
@@ -82,17 +82,17 @@ namespace xerus { namespace misc {
         }
         
         
-        std::ifstream open_file_truncate(const std::string& _path) {
+        std::ofstream open_file_truncate(const std::string& _path) {
             create_folder_for_file(_path);
-            std::ifstream fileStream(_path, std::ofstream::out | std::ofstream::trunc);
+            std::ofstream fileStream(_path, std::ofstream::out | std::ofstream::trunc);
             CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (write) open the file " << _path);
             return fileStream;
         }
         
         
-        std::ifstream open_file_append(const std::string& _path) {
+        std::ofstream open_file_append(const std::string& _path) {
             create_folder_for_file(_path);
-            std::ifstream fileStream(_path, std::ofstream::out | std::ofstream::app);
+            std::ofstream fileStream(_path, std::ofstream::out | std::ofstream::app);
             CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (write) open the file " << _path);
             return fileStream;
         }

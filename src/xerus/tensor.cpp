@@ -1085,7 +1085,7 @@ namespace xerus {
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal Helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	template<int sign>
 	void Tensor::plus_minus_equal(Tensor& _me, const Tensor& _other) {
-		REQUIRE(_me.dimensions == _other.dimensions, "In Tensor sum the dimensions must coincide.");
+		REQUIRE(_me.dimensions == _other.dimensions, "In Tensor sum the dimensions must coincide. Got " << _me.dimensions << " and " << _other.dimensions);
 		
 		if(_me.is_dense()) {
 			_me.ensure_own_data_and_apply_factor();

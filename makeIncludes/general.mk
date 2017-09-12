@@ -20,6 +20,7 @@ ifneq (,$(findstring g++, $(CXX)))
 	endif
 endif
 
+
 # include fancy_callstack specific libraries (binutils + dependencies)
 ifdef XERUS_NO_FANCY_CALLSTACK
 	CALLSTACK_LIBS =

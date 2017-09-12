@@ -38,15 +38,14 @@ namespace xerus { namespace misc {
 
     std::string read_file(const std::string& _path);
     
-    #if __cplusplus <= 201103L
-        #warning Some xerus file utilities require a C++14 compliant compiler
-    #else
-   
-    void open_file_read(std::ifstream &_fileStream, const std::string &_path);
+	
+	#if __cplusplus >= 201402L
 
-    void open_file_truncate(std::ofstream &_fileStream, const std::string &_path);
+	std::ifstream open_file_read(const std::string& _path);
 
-    void open_file_append(std::ofstream &_fileStream, const std::string &_path);
+	std::ofstream open_file_truncate(const std::string& _path);
+
+	std::ofstream open_file_append(const std::string& _path);
     
     #endif
 } }
