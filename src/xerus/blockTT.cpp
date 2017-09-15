@@ -18,24 +18,23 @@
 // or contact us at contact@libXerus.org.
 
 /**
- * @file
- * @brief Header file for the ADF algorithm and its variants.
- */
+* @file
+* @brief Implementation of the TTNetwork class (and thus TTTensor and TTOperator).
+*/
 
-#pragma once
+#include <algorithm>
+#include <memory>
 
-#include "uq.h"
-#include "../blockTT.h"
+#include <xerus/blockTT.h>
 
-namespace xerus { namespace uq {
-	
-	void uq_adf(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions);
-	
-	TTTensor uq_adf(const uq::UQMeasurementSet& _measurments, const TTTensor& _guess);
-	
-	void uq_ra_adf(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions);
-	
-	TTTensor uq_ra_adf(const uq::UQMeasurementSet& _measurments, const TTTensor& _guess);
-    
-}}
+#include <xerus/misc/check.h>
+#include <xerus/misc/math.h>
+#include <xerus/misc/internal.h>
 
+#include <xerus/basic.h>
+#include <xerus/misc/basicArraySupport.h>
+
+namespace xerus { namespace internal {
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+	
+}} // namespace xerus

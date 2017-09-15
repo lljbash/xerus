@@ -152,7 +152,7 @@ namespace xerus { namespace uq {
 // 			x += noise;
 			
 			LOG(UQ_Inital_Guess, "Pre roundign ranks: " << x.ranks());
-			x.round(1e-5);
+			x.round(1e-4);
 			LOG(UQ_Inital_Guess, "Post roundign ranks: " << x.ranks());
 			return x;
 		} else {

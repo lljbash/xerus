@@ -91,6 +91,7 @@ namespace xerus { namespace uq {
             leftOughtStack(d, std::vector<Tensor>(N))
             {
                 REQUIRE(_randomVariables.size() == _solutions.size(), "ERROR");
+				LOG(uqADF, "Set size: " << _solutions.size());
         }
         
         

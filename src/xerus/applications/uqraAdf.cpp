@@ -42,7 +42,10 @@ namespace xerus { namespace uq {
         const size_t N;
         const size_t P;
 		const size_t d;
-		const double rankEps = 1e-6;
+		const double rankEps = 1e-4;
+		
+		const std::vector<std::vector<Tensor>> positions;
+		const std::vector<Tensor>& solutions;
 		
 		///@brief [setId]
 		std::vector<double> solutionsNorms;
@@ -51,6 +54,8 @@ namespace xerus { namespace uq {
         std::vector<std::vector<std::vector<Tensor>>> positionSets;
 		///@brief [setId][i]]
 		std::vector<std::vector<Tensor>> solutionSets;
+		
+		std::vector<size_t> setSizes;
         
         TTTensor& x;
 		
@@ -64,9 +69,24 @@ namespace xerus { namespace uq {
 		///@brief [setId][corePosition][i]
 		std::vector<std::vector<std::vector<Tensor>>> leftOughtStacks;
 		
+		std::vector<double> residuals = std::vector<double>(20, std::numeric_limits<double>::max());
+		
         
         
     public:
+		static std::vector<std::vector<Tensor>> create_positions(const TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables) {
+			std::vector<std::vector<Tensor>> positions(_x.degree());
+			
+			for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
+				positions[corePosition].reserve(_randomVariables.size());
+				for(size_t j = 0; j < _randomVariables.size(); ++j) {
+					positions[corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
+				}
+			}
+			
+			return positions;
+		}
+		
 		void calc_solution_norms() {
 			for(size_t setId = 0; setId < P; ++setId) {
 				LOG(info, "Set size " << setId <<": " << solutionSets[setId].size());
@@ -84,9 +104,12 @@ namespace xerus { namespace uq {
             N(_randomVariables.size()),
             P(_P),
             d(_x.degree()),
+            positions(create_positions(_x, _randomVariables)),
+            solutions(_solutions),
             solutionsNorms(_P),
             positionSets(_P, std::vector<std::vector<Tensor>>(_x.degree())),
             solutionSets(P),
+            setSizes(P),
             x(_x),
             rightStacks(_P, std::vector<std::vector<Tensor>>(_x.degree(), std::vector<Tensor>(N))),
             leftIsStacks(_P, std::vector<std::vector<Tensor>>(_x.degree(), std::vector<Tensor>(N))), 
@@ -94,31 +117,73 @@ namespace xerus { namespace uq {
             {
 				REQUIRE(P > 0, "P must be > 0");
 				REQUIRE(_randomVariables.size() == _solutions.size(), "There must be the same amount of randomVectors and solutions.");
-				std::uniform_int_distribution<size_t> setDist(0, P-1);
+				LOG(uqADF, "Set size: " << _solutions.size());
 				
-				for(size_t j = 0; j < N; ++j) {
+        }
+        
+        void create_sets() {
+			for(size_t setId = 0; setId < P; ++setId) {
+				solutionSets[setId].clear();
+				for(size_t corePosition = 1; corePosition < d; ++corePosition) {
+					positionSets[setId][corePosition].clear();
+				}
+			}
+			
+			std::uniform_real_distribution<double> stochDist(0.0, 1.0);
+			std::uniform_int_distribution<size_t> setDist(0, P-1);
+			
+			for(size_t j = 0; j < N; ++j) {
+				if(stochDist(misc::randomEngine) > 0.0) {
 					const size_t setId = setDist(misc::randomEngine);
-					for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
-						positionSets[setId][corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition])); // TODO choose polynom basis
-						solutionSets[setId].push_back(_solutions[j]);
+					solutionSets[setId].push_back(solutions[j]);
+					for(size_t corePosition = 1; corePosition < d; ++corePosition) {
+						positionSets[setId][corePosition].push_back(positions[corePosition][j]);
 					}
 				}
-				
-				calc_solution_norms();
-        }
+			}
+			
+			for(size_t setId = 0; setId < P; ++setId) {
+				setSizes[setId] = solutionSets[setId].size();
+			}
+			
+			calc_solution_norms();
+		}
+		
+		void create_master_set() {
+			for(size_t setId = 0; setId < P; ++setId) {
+				solutionSets[setId].clear();
+				for(size_t corePosition = 1; corePosition < d; ++corePosition) {
+					positionSets[setId][corePosition].clear();
+				}
+			}
+			
+			
+			for(size_t j = 0; j < N; ++j) {
+				solutionSets[0].push_back(solutions[j]);
+				for(size_t corePosition = 1; corePosition < d; ++corePosition) {
+					positionSets[0][corePosition].push_back(positions[corePosition][j]);
+				}
+			}
+			
+			for(size_t setId = 0; setId < P; ++setId) {
+				setSizes[setId] = solutionSets[setId].size();
+			}
+			
+			calc_solution_norms();
+		}
         
         void move_core(size_t _from, const size_t _to) {
 			const Index left, right, ext, p, r1, r2;
 			Tensor U, S, V;
 			while(_from < _to) { // To right
-				(U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(currComp(left, ext, p, right), std::numeric_limits<size_t>::max(), rankEps);
+				(U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(currComp(left, ext, p, right), currComp.dimensions[3]+1, std::min(rankEps, 0.1*residuals.back()));
 				x.set_component(_from, U);
 				currComp(left, ext, p, right) = S(left, r1)*V(r1, p, r2)*x.get_component(_from+1)(r2, ext, right);
 				_from++;
 			}
 			
 			while(_from > _to) { // To left
-				(U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(currComp(left, ext, p, right), std::numeric_limits<size_t>::max(), rankEps);
+				(U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(currComp(left, ext, p, right), currComp.dimensions[0]+1, std::min(rankEps, 0.1*residuals.back()));
 				x.set_component(_from, V);
 				currComp(left, ext, p, right) = x.get_component(_from-1)(left, ext, r1)*U(r1, p, r2)*S(r2, right);
 				_from--;
@@ -134,7 +199,7 @@ namespace xerus { namespace uq {
 					shuffledX.reinterpret_dimensions({x.dimensions[0], x.rank(0)});
 					
 					#pragma omp parallel for 
-					for(size_t j = 0; j < N; ++j) {
+					for(size_t j = 0; j < setSizes[setId]; ++j) {
 						// NOTE: leftIsStack[0] is always an identity
 						contract(leftOughtStacks[setId][_corePosition][j], solutionSets[setId][j], shuffledX, 1);
 					}
@@ -143,7 +208,7 @@ namespace xerus { namespace uq {
 					const Tensor shuffledX = reshuffle(x.get_component(_corePosition), {1, 0, 2});
 					Tensor measCmp, tmp;
 					#pragma omp parallel for  firstprivate(measCmp, tmp)
-					for(size_t j = 0; j < N; ++j) {
+					for(size_t j = 0; j < setSizes[setId]; ++j) {
 						contract(measCmp, positionSets[setId][_corePosition][j], shuffledX, 1);
 						
 						if(_corePosition > 1) {
@@ -168,14 +233,14 @@ namespace xerus { namespace uq {
 				if(_corePosition < d-1) {
 					Tensor tmp;
 					#pragma omp parallel for  firstprivate(tmp)
-					for(size_t j = 0; j < N; ++j) {
+					for(size_t j = 0; j < setSizes[setId]; ++j) {
 						contract(tmp, positionSets[setId][_corePosition][j], shuffledX, 1);
 						contract(rightStacks[setId][_corePosition][j], tmp, rightStacks[setId][_corePosition+1][j], 1);
 					}
 				} else { // _corePosition == d-1
 					shuffledX.reinterpret_dimensions({shuffledX.dimensions[0], shuffledX.dimensions[1]}); // Remove dangling 1-mode
 					#pragma omp parallel for 
-					for(size_t j = 0; j < N; ++j) {
+					for(size_t j = 0; j < setSizes[setId]; ++j) {
 						contract(rightStacks[setId][_corePosition][j], positionSets[setId][_corePosition][j], shuffledX, 1);
 					}
 				}
@@ -184,16 +249,17 @@ namespace xerus { namespace uq {
         
         
         Tensor calculate_delta(const size_t _corePosition, const size_t _setId) const {
-			Tensor delta(x.get_component(_corePosition).dimensions);
+			Tensor shuffledX = currComp;
+			shuffledX.fix_mode(2, _setId);
+			
+			Tensor delta(shuffledX.dimensions);
 			Tensor dyadComp, tmp;
 			
 			if(_corePosition > 0) {
-				Tensor shuffledX = currComp;
-				shuffledX.fix_mode(2, _setId);
 				shuffledX = reshuffle(shuffledX, {1, 0, 2});
 				
 				#pragma omp parallel for  firstprivate(dyadComp, tmp)
-				for(size_t j = 0; j < N; ++j) {
+				for(size_t j = 0; j < setSizes[_setId]; ++j) {
 					// Calculate common "dyadic part"
 					Tensor dyadicPart;
 					if(_corePosition < d-1) {
@@ -203,11 +269,10 @@ namespace xerus { namespace uq {
 						dyadicPart.reinterpret_dimensions({dyadicPart.dimensions[0], 1}); // Add dangling 1-mode
 					}
 					
-					
 					// Calculate "is"
 					Tensor isPart;
 					contract(isPart, positionSets[_setId][_corePosition][j], shuffledX, 1);
-                    
+					
                     if(_corePosition < d-1) {
 						contract(isPart, isPart, rightStacks[_setId][_corePosition+1][j], 1);
                     } else {
@@ -226,12 +291,10 @@ namespace xerus { namespace uq {
 					{ delta += dyadComp; }
 				}
 			} else { // _corePosition == 0
-				Tensor shuffledX = currComp;
-				shuffledX.fix_mode(2, _setId);
 				shuffledX.reinterpret_dimensions({shuffledX.dimensions[1], shuffledX.dimensions[2]});
 				
 				#pragma omp parallel for  firstprivate(dyadComp, tmp)
-				for(size_t j = 0; j < N; ++j) {
+				for(size_t j = 0; j < setSizes[_setId]; ++j) {
 					contract(dyadComp, shuffledX, rightStacks[_setId][_corePosition+1][j], 1);
 					contract(dyadComp, dyadComp - solutionSets[_setId][j], rightStacks[_setId][_corePosition+1][j], 0);
 					dyadComp.reinterpret_dimensions({1, dyadComp.dimensions[0], dyadComp.dimensions[1]});
@@ -251,7 +314,7 @@ namespace xerus { namespace uq {
 			
             if(_corePosition == 0) {
 				#pragma omp parallel for firstprivate(tmp) reduction(+:norm)
-                for(size_t j = 0; j < N; ++j) {
+				for(size_t j = 0; j < setSizes[_setId]; ++j) {
 					contract(tmp, _delta, rightStacks[_setId][1][j], 1);
 					const double normPart = misc::sqr(frob_norm(tmp));
 					norm += normPart;
@@ -264,7 +327,7 @@ namespace xerus { namespace uq {
                 
 				Tensor rightPart;
 				#pragma omp parallel for  firstprivate(tmp, rightPart) reduction(+:norm)
-				for(size_t j = 0; j < N; ++j) {
+				for(size_t j = 0; j < setSizes[_setId]; ++j) {
 					// Current node
 					contract(tmp, positionSets[_setId][_corePosition][j], shuffledDelta, 1);
 					
@@ -296,7 +359,7 @@ namespace xerus { namespace uq {
 			double norm = 0.0;
 			for(size_t setId = 0; setId < P; ++setId) {
 				Tensor tmp;
-				for(size_t j = 0; j < N; ++j) {
+				for(size_t j = 0; j < setSizes[setId]; ++j) {
 					auto cmp = currComp;
 					cmp.fix_mode(2, setId);
 					contract(tmp, cmp, rightStacks[setId][1][j], 1);
@@ -318,7 +381,7 @@ namespace xerus { namespace uq {
 		}
         
         void solve() {
-			std::vector<double> residuals(10, std::numeric_limits<double>::max());
+			
 			const size_t maxIterations = 100000;
 			LOG(bla, "Move: " << x.dimensions << ", " << x.ranks());
 			x.move_core(d-1);
@@ -329,24 +392,43 @@ namespace xerus { namespace uq {
 				currComp += add;
 			}
 			
+			const Index left, right, ext, p1, p2;
+			
 			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
 				move_core(d-1, 0);
+				
+				if(iteration%25 == 0) {
+					
+					create_master_set();
+					
+					// Rebuild right stack
+					for(size_t corePosition = d-1; corePosition > 0; --corePosition) {
+						calc_right_stack(corePosition);
+					}
+					
+					residuals.push_back(calc_residual_norm(0)/l2_norm(solutionsNorms));
+					
+					LOG(bla, "Itr: " << x.dimensions << ", " << x.ranks());
+					LOG(ADFx, "Residual " << std::scientific << residuals.back());
+					
+					if(residuals.back()/residuals[residuals.size()-20] > 0.99999) {
+						LOG(greee, residuals.back() << " / " << residuals[residuals.size()-20] << " = " << residuals.back()/residuals[residuals.size()-20]);
+						LOG(ADF, "Residual decrease from " << std::scientific << residuals[20] << " to " << std::scientific << residuals.back() << " in " << residuals.size()-20 << " iterations.");
+						return; // We are done!
+					}
+					
+					// Average currComp
+					currComp(left, ext, p2, right) = (1.0/double(P))*currComp(left, ext, p1, right)*Tensor::ones({P})(p1)*Tensor::ones({P})(p2);
+					
+					create_sets();
+				}
 				
 				// Rebuild right stack
 				for(size_t corePosition = d-1; corePosition > 0; --corePosition) {
 					calc_right_stack(corePosition);
 				}
 				
-				residuals.push_back(calc_residual_norm(0)/l2_norm(solutionsNorms));
 				
-				LOG(bla, "Itr: " << x.dimensions << ", " << x.ranks());
-				LOG(ADFx, "Residual " << std::scientific << residuals.back());
-				
-				if(residuals.back()/residuals[residuals.size()-10] > 0.999) {
-					LOG(greee, residuals.back() << " / " << residuals[residuals.size()-10] << " = " << residuals.back()/residuals[residuals.size()-10]);
-					LOG(ADF, "Residual decrease from " << std::scientific << residuals[10] << " to " << std::scientific << residuals.back() << " in " << residuals.size()-10 << " iterations.");
-					return; // We are done!
-				}
 				
 				for(size_t corePosition = 0; corePosition < d; ++corePosition) {
 					for(size_t setId = 0; setId < P; ++setId) {
@@ -355,8 +437,7 @@ namespace xerus { namespace uq {
 						const value_t PyR = misc::sqr(frob_norm(delta));
 						
 						// Actual update
-						const Index left, right, ext, p;
-						currComp(left, ext, p, right)  = currComp(left, ext, p, right)-((PyR/misc::sqr(normAProjGrad))*delta)(left, ext, right)*Tensor::dirac({P}, setId)(p);
+						currComp(left, ext, p1, right) = currComp(left, ext, p1, right)-((PyR/misc::sqr(normAProjGrad))*delta)(left, ext, right)*Tensor::dirac({P}, setId)(p1);
 					}
 					
 					// If we have not yet reached the end of the sweep we need to take care of the core and update our stacks
@@ -375,7 +456,7 @@ namespace xerus { namespace uq {
     
     void uq_ra_adf(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions) {
 		LOG(ADF, "Start UQ ADF");
-		impl_ra_adf::InternalSolver solver(_x, _randomVariables, _solutions, 1);
+		impl_ra_adf::InternalSolver solver(_x, _randomVariables, _solutions, 2);
         return solver.solve();
     }
     
