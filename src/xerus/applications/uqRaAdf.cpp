@@ -40,8 +40,8 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         const size_t N;
         const size_t P;
         const size_t d;
-        double rankEps = 3e-3;
-        const size_t maxRank = 20;
+        double rankEps = 5e-3;
+        const size_t maxRank = 15;
 		
 		const double solutionsNorm;
         
@@ -320,7 +320,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         
         void solve() {
 			std::vector<double> residuals(10, std::numeric_limits<double>::max());
-			const size_t maxIterations = 100000;
+			const size_t maxIterations = 100;
             const Index left, right, ext, p;
 			
 			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
