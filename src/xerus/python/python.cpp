@@ -51,7 +51,7 @@ BOOST_PYTHON_MODULE(xerus) {
 	expose_ttnetwork();
 	
 	expose_leastSquaresAlgorithms();
-	expose_recoveryAlgorithms();
+// 	expose_recoveryAlgorithms();
 	
 	expose_misc();
 }
