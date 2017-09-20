@@ -32,86 +32,70 @@ namespace xerus { namespace internal {
 	/**
 	 * @brief Specialized TensorNetwork class used to represent a BlockTT
 	 */
-	class BlockTT final : public TensorNetwork {
+	class BlockTT final  {
 	public:
-		/// @brief Flag indicating whether the TTNetwork is canonicalized.
-		bool canonicalized;
-		
+        const size_t P;
 		/**
 		 * @brief The position of the core.
-		 * @details If canonicalized is TRUE, corePosition gives the position of the core tensor. All components
+		 * @details CorePosition gives the position of the block/core tensor. All components
 		 * with smaller index are then left-orthogonalized and all components with larger index right-orthogonalized.
 		 */
-		size_t corePosition;		
+		size_t corePosition;
+        
+        std::vector<Tensor> components;
+        std::vector<size_t> dimensions;
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		/** 
-		 * @brief Constructs an order zero TTNetwork.
-		 * @details This is an empty TensorNetwork. Internally the network contains one order zero node with entry zero.
+		 * @brief BlockTTs cannot be default construced.
 		 */
 		explicit BlockTT() = delete;
 		
 		
-		///@brief TTNetworks are default copy constructable.
+		///@brief BlockTTs are default copy constructable.
 		BlockTT(const BlockTT & _cpy) = default;
 		
 		
-		///@brief TTNetworks are default move constructable.
+		///@brief BlockTTs are default move constructable.
 		BlockTT(      BlockTT&& _mov) noexcept = default;
 		
 		
 		/** 
 		 * @brief Constructs a BlockTT from the given TTTensor.
 		 */
-		explicit BlockTT(const TTTensor& _tensor, const size_t _blockPosition);
+		explicit BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim);
 		
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Standard Operators - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-		///@brief TTNetworks are default assignable.
+		///@brief BlockTTs are default assignable.
 		BlockTT& operator=(const BlockTT&  _other) = default;
 		
 		
-		///@brief TTNetworks are default move-assignable.
+		///@brief BlockTTs are default move-assignable.
 		BlockTT& operator=(      BlockTT&& _other) = default;
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		public:
 			
-			/** 
-			* @brief Complete access to a specific component of the TT decomposition.
-			* @note This function will not update rank and external dimension informations if it is used to set a component.
-			* @details This function gives complete access to the components, only intended for internal use.
-			* @param _idx index of the component to access.
-			* @returns a reference to the requested component.
-			*/
+            size_t degree() const;
+            
+            
 			Tensor& component(const size_t _idx);
 			
 			
-			/** 
-			* @brief Read access to a specific component of the TT decomposition.
-			* @details This function should be used to access the components, instead of direct access via
-			* nodes[...], because the implementation does not store the first component in nodes[0] but rather as
-			* nodes[1] etc. nodes[0] is an order one node with dimension one only used to allow the first component
-			* to be an order three tensor.
-			* @param _idx index of the component to access.
-			* @returns a const reference to the requested component.
-			*/
 			const Tensor& get_component(const size_t _idx) const;
 			
 			
-			/** 
-			* @brief Sets a specific component of the TT decomposition.
-			* @details This function also takes care of adjusting the corresponding link dimensions and external dimensions
-			* if needed. However this might still leave the TTNetwork in an invalid if the rank is changed. In this case it
-			* is the callers responsibility to also update the other component tensors consistently to account for that rank
-			* change.
-			* @param _idx index of the component to set.
-			* @param _T Tensor to use as the new component tensor.
-			*/
-			void set_component(const size_t _idx, Tensor _T);
+			void set_component(const size_t _idx, const Tensor& _T);
+            
+            
+			Tensor get_core(const size_t _blockPos) const;
+            
+            
+			Tensor get_average_core() const;
 			
 			
 			/** 
@@ -132,24 +116,15 @@ namespace xerus { namespace internal {
 			/** 
 			* @brief Move the core to a new position.
 			*/
-			void move_core(const size_t _position, const double _eps=EPSILON);
+			void move_core(const size_t _position, const double _eps=EPSILON, const size_t _maxRank=std::numeric_limits<size_t>::max());
+            
+            
+            void average_core();
 			
 			
-			/**
-				* @brief stores @a _pos as the current core position without verifying of ensuring that this is the case
-				* @details this is particularly useful after constructing an own TT tensor with set_component calls
-				* as these will assume that all orthogonalities are destroyed
-				*/
-			void assume_core_position(const size_t _pos);
-			
-			
-			virtual value_t frob_norm() const override;
-			
-			
-			/** 
-			* @brief 
-			*/
-			virtual void require_correct_format() const override;
+			value_t frob_norm() const;
+            
+			size_t dofs() const;
 			
 	};
 } }

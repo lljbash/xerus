@@ -129,7 +129,7 @@ namespace xerus { namespace uq {
                 REQUIRE(p != x.degree(), "Parameters contains no non-zero entry: " << rndVec);
                 
 				TTTensor linearTerm(x.dimensions);
-				Tensor tmp = (sol - mean)/rndVec[p]/2.0/3.14159265359; // TODO
+				Tensor tmp = (sol - mean)/rndVec[p]/*/2.0/3.14159265359*/; // TODO
 				tmp.reinterpret_dimensions({1, x.dimensions[0], 1});
 				linearTerm.set_component(0, tmp);
 				for(size_t k = 1; k < x.degree(); ++k) {
