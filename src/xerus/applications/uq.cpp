@@ -190,6 +190,6 @@ namespace xerus { namespace uq {
 		return realAvg/double(_N);
 	}
 	
-} // namespaceuq 
+} // namespace uq 
 } // namespace xerus
 

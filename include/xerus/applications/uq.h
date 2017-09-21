@@ -57,11 +57,7 @@ namespace xerus {namespace uq {
 	TTTensor initial_guess(const UQMeasurementSet& _measurments, const TTTensor& _guess);
 	
     
-	Tensor uq_avg(const TTTensor& _x, const size_t _N, const size_t _numSpecial);
-	
-    
-	std::pair<std::vector<std::vector<double>>, std::vector<Tensor>> uq_mc(const TTTensor& _x, const size_t _N, const size_t _numSpecial);
-    
+	Tensor mc_average(const TTTensor& _x, const size_t _N);
 }}
 
 
