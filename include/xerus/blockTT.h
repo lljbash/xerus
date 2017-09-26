@@ -34,7 +34,7 @@ namespace xerus { namespace internal {
 	 */
 	class BlockTT final  {
 	public:
-        const size_t P;
+        size_t P;
 		/**
 		 * @brief The position of the core.
 		 * @details CorePosition gives the position of the block/core tensor. All components
@@ -48,9 +48,9 @@ namespace xerus { namespace internal {
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		/** 
-		 * @brief BlockTTs cannot be default construced.
+		 * @brief BlockTTs can be default construced.
 		 */
-		explicit BlockTT() = delete;
+		BlockTT() = default;
 		
 		
 		///@brief BlockTTs are default copy constructable.

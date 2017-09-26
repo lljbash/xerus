@@ -129,7 +129,7 @@ namespace xerus { namespace uq {
                 REQUIRE(p != x.degree(), "Parameters contains no non-zero entry: " << rndVec);
                 
 				TTTensor linearTerm(x.dimensions);
-				Tensor tmp = (sol - mean)/rndVec[p]/*/2.0/3.14159265359*/; // TODO
+				Tensor tmp = (sol - mean)/rndVec[p]; // TODO
 				tmp.reinterpret_dimensions({1, x.dimensions[0], 1});
 				linearTerm.set_component(0, tmp);
 				for(size_t k = 1; k < x.degree(); ++k) {
@@ -146,13 +146,8 @@ namespace xerus { namespace uq {
 			
 			LOG(UQ_Inital_Guess, "Found linear terms for " << usedParams);
 			
-			// Add some noise
-// 			auto noise = TTTensor::random(x.dimensions, std::vector<size_t>(x.degree()-1, 10));
-// 			noise *= 1e-4*frob_norm(x)/frob_norm(noise);
-// 			x += noise;
-			
 			LOG(UQ_Inital_Guess, "Pre roundign ranks: " << x.ranks());
-			x.round(1e-4);
+			x.round(1e-5);
 			LOG(UQ_Inital_Guess, "Post roundign ranks: " << x.ranks());
 			return x;
 		} else {

@@ -123,6 +123,8 @@ namespace xerus { namespace misc {
 		try {
 			std::ifstream in(_filename, std::ifstream::in);
 			
+			XERUS_REQUIRE(in.is_open(), "Failed to open file");
+			
 			std::string firstLine;
 			std::getline(in, firstLine);
 			
