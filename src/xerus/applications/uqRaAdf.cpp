@@ -40,15 +40,15 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t P;
 		const size_t d;
 		
-		const double targetResidual = 1e-3;
+		const double targetResidual = 1e-5;
 		
-		const size_t maxRank = 8;
+		const size_t maxRank = 20;
 		double rankEps = 1e-3;
-		double minRankEps = 1e-4;
-		const double epsDecay = 0.98;
+		double minRankEps = 1e-6;
+		const double epsDecay = 0.95;
 		
-		const double convergenceFactor = 0.995;
-		const size_t maxIterations = 2500;
+		const double convergenceFactor = 0.9975;
+		const size_t maxIterations = 200;
 		
 		const double solutionsNorm;
 		
@@ -77,7 +77,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
 				positions[corePosition].reserve(_randomVariables.size());
 				for(size_t j = 0; j < _randomVariables.size(); ++j) {
-					positions[corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
+					positions[corePosition].push_back(legendre_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
 				}
 			}
 			
@@ -104,7 +104,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			std::uniform_int_distribution<size_t> setDist(0, P-1);
 			
 			for(size_t j = 0; j < N; ++j) {
-				if(stochDist(misc::randomEngine) > 0.8) {
+				if(stochDist(misc::randomEngine) > 0.1) {
 					sets[setDist(misc::randomEngine)].push_back(j);
 				} else {
 					controlSet.push_back(j);
@@ -458,7 +458,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		TTTensor x = initial_guess(_measurments, _guess);
 		
-		impl_uqRaAdf::InternalSolver solver(x, _measurments.randomVectors, _measurments.solutions, 1);
+		impl_uqRaAdf::InternalSolver solver(x, _measurments.randomVectors, _measurments.solutions, 2);
 		solver.solve();
 		return x;
 	}
