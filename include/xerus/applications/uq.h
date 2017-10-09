@@ -27,6 +27,8 @@
 #include "../ttNetwork.h"
 
 namespace xerus {namespace uq {
+	
+	enum class PolynomBasis : bool { Hermite, Legendre };
     
     Tensor hermite_position(const double _v, const size_t _polyDegree);
 	

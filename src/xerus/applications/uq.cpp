@@ -100,7 +100,7 @@ namespace xerus { namespace uq {
 			x.assume_core_position(0);
 			
 			mean.reinterpret_dimensions({x.dimensions[0]});
-/*
+
 			// Calc linear terms
             std::set<size_t> usedParams;
 			for(size_t m = 0; m < _measurments.initialRandomVectors.size(); ++m) {
@@ -145,11 +145,8 @@ namespace xerus { namespace uq {
 			}
 			
 			LOG(UQ_Inital_Guess, "Found linear terms for " << usedParams);
-			*/
-
-
-// 			LOG(UQ_Inital_Guess, "Pre roundign ranks: " << x.ranks());
-// 			x.round(1e-5);
+			
+			x.round(1e-4);
 			LOG(UQ_Inital_Guess, "Post roundign ranks: " << x.ranks());
 			return x;
 		} else {
