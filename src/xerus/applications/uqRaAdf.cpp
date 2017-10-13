@@ -40,6 +40,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t P = 2;
 		const size_t d;
 		
+
 		const PolynomBasis basisType;
 		
 		const double targetResidual;
@@ -474,7 +475,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
 		REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 		
-		LOG(RankAdaptiveUQ, "Calculating Average as start.");
+		LOG(UQ, "Calculating Average as start.");
 
 		TTTensor x(_dimensions);
 			
