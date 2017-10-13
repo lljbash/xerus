@@ -122,7 +122,6 @@ namespace xerus { namespace internal {
             numDofs -= r*r;
         }
         
-//         numDofs -= (P-1)*(components[corePosition].size/P);
 
         REQUIRE(corePosition == 0, "IE");
         numDofs -= components[0].size - misc::sqr(components[1].dimensions[0]);
@@ -135,14 +134,14 @@ namespace xerus { namespace internal {
         const Index left, right, ext, p, r1, r2;
         Tensor U, S, V;
         while(corePosition < _position) { // To right
-            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), std::min(_maxRank, components[corePosition].dimensions.back()+1), _eps);
+            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
             components[corePosition] = U;
             components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
             corePosition++;
         }
         
         while(corePosition > _position) { // To left
-            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), std::min(_maxRank, components[corePosition].dimensions.front()+1), _eps);
+            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
             components[corePosition] = V;
             components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
             corePosition--;
