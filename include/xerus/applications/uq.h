@@ -60,6 +60,8 @@ namespace xerus {namespace uq {
 	
     
 	Tensor mc_average(const TTTensor& _x, const size_t _N);
+	
+	Tensor average(const TTTensor& _x);
 }}
 
 

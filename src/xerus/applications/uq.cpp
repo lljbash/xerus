@@ -50,7 +50,6 @@ namespace xerus { namespace uq {
 		Tensor p({_polyDegree});
 		for (unsigned i = 0; i < _polyDegree; ++i) {
 			p[i] = boost::math::legendre_p(i, _v);
-// 			p[i] = boost::math::legendre_q(i, _v);
 		}
 		return p;
 	}
@@ -80,7 +79,7 @@ namespace xerus { namespace uq {
 		REQUIRE(_measurments.randomVectors.size() == _measurments.solutions.size(), "Invalid measurments");
 		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
 		
-        LOG(UQ_Inital_Guess, "Init");
+        LOG(UQ, "Init");
 		if(_measurments.initialRandomVectors.size() > 0) {
             TTTensor x(_guess.dimensions);
 			
@@ -182,6 +181,18 @@ namespace xerus { namespace uq {
 		}
 		
 		return realAvg/double(_N);
+	}
+	
+	
+	
+	Tensor average(const TTTensor& _x) {
+		TTTensor x = _x;
+		
+		while(x.degree() > 1) {
+			x.fix_mode(1, 0);
+		}
+		
+		return Tensor(x);
 	}
 	
 } // namespace uq 

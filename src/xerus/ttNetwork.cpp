@@ -429,9 +429,10 @@ namespace xerus {
 	
 	
 	template<bool isOperator>
-	void TTNetwork<isOperator>::fix_mode(const size_t _mode, const size_t _slatePosition) {
+	void TTNetwork<isOperator>::fix_mode(const size_t _mode, const size_t _slatePosition) { // TODO core position? Could be broken
 		REQUIRE(!isOperator, "fix_mode(), does not work for TTOperators, if applicable cast to TensorNetwork first");
 		TensorNetwork::fix_mode(_mode, _slatePosition);
+		require_correct_format();
 	}
 	
 	template<bool isOperator>
