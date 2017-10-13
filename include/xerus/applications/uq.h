@@ -59,7 +59,7 @@ namespace xerus {namespace uq {
 	TTTensor initial_guess(const UQMeasurementSet& _measurments, const TTTensor& _guess);
 	
     
-	Tensor mc_average(const TTTensor& _x, const size_t _N);
+	Tensor mc_average(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
 }}
 
 

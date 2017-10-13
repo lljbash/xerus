@@ -156,25 +156,43 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	Tensor mc_average(const TTTensor& _x, const size_t _N) {
+	Tensor mc_average(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
 		Tensor realAvg({_x.dimensions[0]});
 		
 		#pragma omp parallel
 		{
 			std::mt19937_64 rnd;
-			std::normal_distribution<double> dist(0.0, 1.0);
 			Tensor avg({_x.dimensions[0]});
+			const Tensor one = Tensor::ones({1});
 			
-			#pragma omp parallel for 
-			for(size_t i = 0; i < _N; ++i) {
-				Tensor p = Tensor::ones({1});
-				for(size_t k = _x.degree()-1; k > 0; --k) {
-					contract(p, _x.get_component(k), p, 1);
-					contract(p, p, hermite_position(dist(rnd), _x.dimensions[k]), 1);
+			if(_basisType == PolynomBasis::Hermite) {
+				std::normal_distribution<double> dist(0.0, 1.0);
+				
+				#pragma omp parallel for 
+				for(size_t i = 0; i < _N; ++i) {
+					Tensor p = one;
+					for(size_t k = _x.degree()-1; k > 0; --k) {
+						contract(p, _x.get_component(k), p, 1);
+						contract(p, p, hermite_position(dist(rnd), _x.dimensions[k]), 1);
+					}
+					contract(p, _x.get_component(0), p, 1);
+					p.reinterpret_dimensions({_x.dimensions[0]});
+					avg += p;
 				}
-				contract(p, _x.get_component(0), p, 1);
-				p.reinterpret_dimensions({_x.dimensions[0]});
-				avg += p;
+			} else {
+				std::uniform_real_distribution<double> dist(-1.0, 1.0);
+				
+				#pragma omp parallel for 
+				for(size_t i = 0; i < _N; ++i) {
+					Tensor p = one;
+					for(size_t k = _x.degree()-1; k > 0; --k) {
+						contract(p, _x.get_component(k), p, 1);
+						contract(p, p, legendre_position(dist(rnd), _x.dimensions[k]), 1);
+					}
+					contract(p, _x.get_component(0), p, 1);
+					p.reinterpret_dimensions({_x.dimensions[0]});
+					avg += p;
+				}
 			}
 			
 			#pragma omp critical

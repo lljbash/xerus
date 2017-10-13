@@ -44,9 +44,9 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		const double targetResidual;
 		
-		const size_t maxRank = 100;
+		const size_t maxRank = 50;
 		double rankEps;
-		double minRankEps = 1e-10;
+		double minRankEps = 1e-7;
 		const double epsDecay = 0.975;
 		
 		const double convergenceFactor = 0.995;
@@ -433,7 +433,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				}
 				
 				if(residuals.back()/residuals[residuals.size()-10] > convergenceFactor) {
-					if(nonImprovementCounter > 100) {
+					if(nonImprovementCounter > 100 || rankEps == minRankEps) {
 						finish();
 						return; // We are done!
 					}
@@ -492,6 +492,8 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
 		}
 		x.assume_core_position(0);
+		
+// 		x = initial_guess(_measurments, x);
 		
 		impl_uqRaAdf::InternalSolver solver(x, _measurments.randomVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
 		solver.solve();
