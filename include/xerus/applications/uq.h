@@ -58,10 +58,15 @@ namespace xerus {namespace uq {
     
 	TTTensor initial_guess(const UQMeasurementSet& _measurments, const TTTensor& _guess);
 	
+	std::pair<Tensor, Tensor> mc_stats(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
     
 	Tensor mc_average(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
 	
+	Tensor mc_standard_deviation(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
+	
 	Tensor average(const TTTensor& _x);
+	
+	Tensor standard_deviation(const TTTensor& _x);
 }}
 
 
