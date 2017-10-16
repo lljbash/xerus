@@ -45,10 +45,10 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		const double targetResidual;
 		
-		const size_t maxRank = 50;
+		const size_t maxRank = 40;
 		double rankEps;
-		double minRankEps = 1e-7;
-		const double epsDecay = 0.975;
+		double minRankEps = 1e-8;
+		const double epsDecay = 0.8;
 		
 		const double convergenceFactor = 0.995;
 		const size_t maxIterations;
@@ -64,6 +64,8 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		double bestTestResidual = std::numeric_limits<double>::max();
 		internal::BlockTT bestX;
+		
+		std::vector<std::vector<size_t>> prevRanks;
 		
 		TTTensor& outX;
 		
@@ -157,6 +159,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			positions(create_positions(_x, _basisType, _randomVariables)),
 			solutions(_solutions),
 			x(_x, 0, P),
+			prevRanks(10, _x.ranks()),
 			outX(_x),
 			rightStack(d, std::vector<Tensor>(N)),
 			leftIsStack(d, std::vector<Tensor>(N)), 
@@ -412,12 +415,13 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			}
 			
 			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
+				prevRanks.push_back(x.ranks());
 				double optResidual, testResidual;
 				std::vector<double> setResiduals;
 				std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
 				residuals.push_back(optResidual);
 				
-				if(testResidual < bestTestResidual) {
+				if(testResidual < 0.9999*bestTestResidual) {
 					bestX = x;
 					bestTestResidual = testResidual;
 					nonImprovementCounter = 0;
@@ -426,27 +430,37 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				}
 				
 						
-				LOG(ADFx, "Residual " << std::scientific << residuals.back() << " " << setResiduals << " . Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs());
+				LOG(ADFx, "Residual " << std::scientific << residuals.back() << " " << setResiduals << ". NonImpCnt: " << nonImprovementCounter << ", Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs());
 				
-				if(residuals.back() < targetResidual) {
+				if(residuals.back() < targetResidual || nonImprovementCounter > 100) {
 					finish();
 					return;
 				}
 				
 				if(residuals.back()/residuals[residuals.size()-10] > convergenceFactor) {
-					if(nonImprovementCounter > 100 || rankEps == minRankEps) {
+					bool maxRankReached = false;
+					bool ranksMaxed = false;
+					for(size_t i = 0; i < x.degree()-1; ++i) {
+						maxRankReached = maxRankReached || (x.rank(i) == maxRank);
+						ranksMaxed = ranksMaxed || (x.rank(i) == prevRanks[prevRanks.size()-11][i]+1);
+					}
+					
+					if(rankEps == minRankEps || maxRankReached) {
 						finish();
 						return; // We are done!
 					}
-					LOG(ADFx, "Reduce rankEps to " << epsDecay*rankEps);
-					rankEps = std::max(minRankEps, epsDecay*rankEps);
+					
+					if(!ranksMaxed) {
+						LOG(ADFx, "Reduce rankEps to " << std::max(minRankEps, epsDecay*rankEps));
+						rankEps = std::max(minRankEps, epsDecay*rankEps);
+					}
 				}
 					
 				// Forward sweep
 				for(size_t corePosition = 0; corePosition+1 < d; ++corePosition) {
 					update_core(corePosition);
 					
-					x.move_core(corePosition+1, rankEps, std::min(maxRank, x.rank(corePosition)+1));
+					x.move_core(corePosition+1, rankEps, std::min(maxRank, prevRanks[prevRanks.size()-10][corePosition]+1));
 					calc_left_stack(corePosition);
 				}
 				
@@ -456,7 +470,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				for(size_t corePosition = d-1; corePosition > 0; --corePosition) {
 					update_core(corePosition);
 					
-					x.move_core(corePosition-1, rankEps, std::min(maxRank, x.rank(corePosition-1)+1));
+					x.move_core(corePosition-1, rankEps, std::min(maxRank, prevRanks[prevRanks.size()-10][corePosition-1]+1));
 					calc_right_stack(corePosition);
 				}
 				

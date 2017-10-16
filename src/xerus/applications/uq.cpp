@@ -154,10 +154,10 @@ namespace xerus { namespace uq {
 		}
 	}
 	
+	
 	std::pair<Tensor, Tensor> mc_stats(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
 		Tensor avg({_x.dimensions[0]});
 		Tensor sqrAvg({_x.dimensions[0]});
-		Tensor sigma({_x.dimensions[0]});
 		
 		const Tensor one = Tensor::ones({1});
 		std::normal_distribution<double> hermiteDist(0.0, 1.0);
@@ -175,117 +175,7 @@ namespace xerus { namespace uq {
 			sqrAvg += entrywise_product(p,p);
 		}
 		
-		avg /= double(_N);
-		sqrAvg /= double(_N);
-		
-		for(size_t i = 0; i < _x.dimensions[0]; ++i) {
-			sigma[i] = std::sqrt(sqrAvg[i] - misc::sqr(avg[i]));
-		}
-		
-		
-		return std::make_pair(avg, sigma);
-	}
-	
-	
-	Tensor mc_average(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
-		Tensor realAvg({_x.dimensions[0]});
-		
-		#pragma omp parallel
-		{
-			std::mt19937_64 rnd;
-			Tensor avg({_x.dimensions[0]});
-			const Tensor one = Tensor::ones({1});
-			
-			if(_basisType == PolynomBasis::Hermite) {
-				std::normal_distribution<double> dist(0.0, 1.0);
-				
-				#pragma omp parallel for 
-				for(size_t i = 0; i < _N; ++i) {
-					Tensor p = one;
-					for(size_t k = _x.degree()-1; k > 0; --k) {
-						contract(p, _x.get_component(k), p, 1);
-						contract(p, p, hermite_position(dist(misc::randomEngine), _x.dimensions[k]), 1);
-					}
-					contract(p, _x.get_component(0), p, 1);
-					p.reinterpret_dimensions({_x.dimensions[0]});
-					avg += p;
-				}
-			} else {
-				std::uniform_real_distribution<double> dist(-1.0, 1.0);
-				
-				#pragma omp parallel for 
-				for(size_t i = 0; i < _N; ++i) {
-					Tensor p = one;
-					for(size_t k = _x.degree()-1; k > 0; --k) {
-						contract(p, _x.get_component(k), p, 1);
-						contract(p, p, legendre_position(dist(misc::randomEngine), _x.dimensions[k]), 1);
-					}
-					contract(p, _x.get_component(0), p, 1);
-					p.reinterpret_dimensions({_x.dimensions[0]});
-					avg += p;
-				}
-			}
-			
-			#pragma omp critical
-			{ realAvg += avg; }
-		}
-		
-		return realAvg/double(_N);
-	}
-	
-	
-	Tensor mc_standard_deviation(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
-		const Tensor avg = mc_average(_x, _basisType, _N);
-		
-		Tensor realStdDev({_x.dimensions[0]});
-		
-		#pragma omp parallel
-		{
-			Tensor stdDev({_x.dimensions[0]});
-			const Tensor one = Tensor::ones({1});
-			
-			if(_basisType == PolynomBasis::Hermite) {
-				std::normal_distribution<double> dist(0.0, 1.0);
-				
-				#pragma omp parallel for 
-				for(size_t i = 0; i < _N; ++i) {
-					Tensor p = one;
-					for(size_t k = _x.degree()-1; k > 0; --k) {
-						contract(p, _x.get_component(k), p, 1);
-						contract(p, p, hermite_position(dist(misc::randomEngine), _x.dimensions[k]), 1);
-					}
-					contract(p, _x.get_component(0), p, 1);
-					p.reinterpret_dimensions({_x.dimensions[0]});
-					
-					Tensor dev = p;//-avg;
-					stdDev += entrywise_product(dev, dev);
-				}
-			} else {
-				std::uniform_real_distribution<double> dist(-1.0, 1.0);
-				
-				#pragma omp parallel for 
-				for(size_t i = 0; i < _N; ++i) {
-					Tensor p = one;
-					for(size_t k = _x.degree()-1; k > 0; --k) {
-						contract(p, _x.get_component(k), p, 1);
-						contract(p, p, legendre_position(dist(misc::randomEngine), _x.dimensions[k]), 1);
-					}
-					contract(p, _x.get_component(0), p, 1);
-					p.reinterpret_dimensions({_x.dimensions[0]});
-					Tensor dev = p;//-avg;
-					stdDev += entrywise_product(dev, dev);
-				}
-			}
-			
-			#pragma omp critical
-			{ realStdDev += stdDev; }
-		}
-		
-		for(size_t i = 0; i < realStdDev.size; ++i) {
-			realStdDev[i] = std::sqrt(realStdDev[i]/double(_N) - misc::sqr(avg[i]));
-		}
-		
-		return realStdDev;
+		return std::make_pair(avg/double(_N), sqrAvg/double(_N));
 	}
 	
 	
@@ -301,20 +191,14 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	Tensor standard_deviation(const TTTensor& _x) {
-		const auto expectation = average(_x);
+	Tensor square_average(const TTTensor& _x) {
+		REQUIRE(_x.corePosition == 0, "Invaldi core position");
 		
 		Tensor spacialCmp = _x.get_component(0);
 		spacialCmp.reinterpret_dimensions({spacialCmp.dimensions[1], spacialCmp.dimensions[2]});
 		const auto sqrExpectation = contract(entrywise_product(spacialCmp, spacialCmp), xerus::Tensor::ones({spacialCmp.dimensions[1]}), 1);
 		
-		Tensor sigma(expectation.dimensions);
-		
-		for(size_t i = 0; i < sigma.size; ++i) {
-			sigma[i] = std::sqrt(sqrExpectation[i]-misc::sqr(expectation[i]));
-		}
-		
-		return sigma;
+		return sqrExpectation;
 	}
 	
 } // namespace uq 

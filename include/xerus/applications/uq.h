@@ -66,7 +66,7 @@ namespace xerus {namespace uq {
 	
 	Tensor average(const TTTensor& _x);
 	
-	Tensor standard_deviation(const TTTensor& _x);
+	Tensor square_average(const TTTensor& _x);
 }}
 
 
