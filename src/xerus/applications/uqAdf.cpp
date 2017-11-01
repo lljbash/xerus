@@ -59,7 +59,7 @@ namespace xerus { namespace uq {
             for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
                 positions[corePosition].reserve(_randomVariables.size());
                 for(size_t j = 0; j < _randomVariables.size(); ++j) {
-                    positions[corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
+                    positions[corePosition].push_back(hermite_evaluation(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
                 }
             }
             
@@ -322,17 +322,9 @@ namespace xerus { namespace uq {
     
     
     TTTensor uq_adf(const UQMeasurementSet& _measurments, const TTTensor& _guess) {
-		REQUIRE(_measurments.randomVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
-		
-        TTTensor x = initial_guess(_measurments, _guess);
-        
-        std::vector<std::vector<double>> randomVectors = _measurments.randomVectors;
-        std::vector<Tensor> solutions = _measurments.solutions;
-        randomVectors.insert(randomVectors.end(), _measurments.initialRandomVectors.begin(), _measurments.initialRandomVectors.end());
-        solutions.insert(solutions.end(), _measurments.initialSolutions.begin(), _measurments.initialSolutions.end());
-        
-        uq_adf(x, _measurments.randomVectors, _measurments.solutions);
+		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments.");
+		TTTensor x = _guess;
+        uq_adf(x, _measurments.parameterVectors, _measurments.solutions);
         return x;
 	}
 

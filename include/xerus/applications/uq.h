@@ -30,43 +30,46 @@ namespace xerus {namespace uq {
 	
 	enum class PolynomBasis : bool { Hermite, Legendre };
     
-    Tensor hermite_position(const double _v, const size_t _polyDegree);
+	///@brief Returns a vector (as tensor), containing the evaluations at value @a _value of the first @a _basisSize polynomials of the specified basis.
+	Tensor polynomial_basis_evaluation(const double _value, const PolynomBasis _polyBasis, const size_t _basisSize);
 	
 	
-	Tensor legendre_position(const double _v, const size_t _polyDegree);
+	///@brief Returns a vector (as tensor), containing the evaluations at value @a _value of the first @a _basisSize hermite polynomials.
+    Tensor hermite_evaluation(const double _value, const size_t _basisSize);
 	
-    
+	
+	///@brief Returns a vector (as tensor), containing the evaluations at value @a _value of the first @a _basisSize legendre polynomials.
+	Tensor legendre_evaluation(const double _value, const size_t _basisSize);
+	
+
+	///@brief Returns the first three stochastical moments of the solution @a _x. TODO Currently broken for m2 and m3.
+	std::tuple<Tensor, Tensor, Tensor> det_moments(const TTTensor& _x, const PolynomBasis _polyBasis);
+
+
+    ///@brief Approximates the first three stochastical moments of the solution @a _x using a monte carlo simulation with @a _N samples.
+	std::tuple<Tensor, Tensor, Tensor> mc_moments(const TTTensor& _x, const PolynomBasis _polyBasis, const size_t _N);
+
+
+	///@brief Calculates mean, variance and skewness using the first three stochastical moments.
+	std::tuple<Tensor, Tensor, Tensor> mean_var_skew(const std::tuple<Tensor, Tensor, Tensor>& _moments);
+
+
 	class UQMeasurementSet {
 	public:
-		std::vector<std::vector<double>> randomVectors;
+		std::vector<std::vector<double>> parameterVectors;
 		std::vector<Tensor> solutions;
-		
-		std::vector<std::vector<double>> initialRandomVectors;
-		std::vector<Tensor> initialSolutions;
 		
 		UQMeasurementSet() = default;
 		UQMeasurementSet(const UQMeasurementSet&  _other) = default;
 		UQMeasurementSet(      UQMeasurementSet&& _other) = default;
 		
-		void add(const std::vector<double>& _rndvec, const Tensor& _solution);
+		void add(const std::vector<double>& _paramVec, const Tensor& _solution);
 		
-		void add_initial(const std::vector<double>& _rndvec, const Tensor& _solution);
-        
-        void clear();
+		void clear();
 	};
 	
     
-	TTTensor initial_guess(const UQMeasurementSet& _measurments, const TTTensor& _guess);
-	
-	std::pair<Tensor, Tensor> mc_stats(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
-    
-	Tensor mc_average(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
-	
-	Tensor mc_standard_deviation(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N);
-	
-	Tensor average(const TTTensor& _x);
-	
-	Tensor square_average(const TTTensor& _x);
+	TTTensor initial_guess(const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions);
 }}
 
 

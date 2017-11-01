@@ -86,11 +86,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
 				positions[corePosition].reserve(_randomVariables.size());
 				for(size_t j = 0; j < _randomVariables.size(); ++j) {
-					if(_basisType == PolynomBasis::Hermite) {
-						positions[corePosition].push_back(hermite_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
-					} else {
-						positions[corePosition].push_back(legendre_position(_randomVariables[j][corePosition-1], _x.dimensions[corePosition]));
-					}
+					positions[corePosition].push_back(polynomial_basis_evaluation(_randomVariables[j][corePosition-1], _basisType, _x.dimensions[corePosition]));
 				}
 			}
 			
@@ -445,7 +441,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 						ranksMaxed = ranksMaxed || (x.rank(i) == prevRanks[prevRanks.size()-11][i]+1);
 					}
 					
-					if(rankEps == minRankEps || maxRankReached) {
+					if(misc::hard_equal(rankEps, minRankEps) || maxRankReached) {
 						finish();
 						return; // We are done!
 					}
@@ -485,8 +481,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 	
 	
 	TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _initalRankEps, const double _targetEps, const size_t _maxItr) {
-		REQUIRE(_measurments.randomVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
+		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
 		REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 		
 		LOG(UQ, "Calculating Average as start.");
@@ -508,22 +503,19 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		}
 		x.assume_core_position(0);
 		
-// 		x = initial_guess(_measurments, x);
-		
-		impl_uqRaAdf::InternalSolver solver(x, _measurments.randomVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
+		impl_uqRaAdf::InternalSolver solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
 		solver.solve();
 		return x;
 	}
 	
 	
 	TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const TTTensor& _initalGuess, const double _initalRankEps, const double _targetEps, const size_t _maxItr) {
-		REQUIRE(_measurments.randomVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_measurments.initialRandomVectors.size() == _measurments.initialSolutions.size(), "Invalid initial measurments");
+		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
 		REQUIRE(_initalGuess.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 		
 		TTTensor x = _initalGuess;
 		
-		impl_uqRaAdf::InternalSolver solver(x, _measurments.randomVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
+		impl_uqRaAdf::InternalSolver solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
 		solver.solve();
 		return x;
 	}
