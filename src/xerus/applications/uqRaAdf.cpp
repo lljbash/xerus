@@ -40,7 +40,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t P = 2;
 		const size_t d;
 		
-
 		const PolynomBasis basisType;
 		
 		const double targetResidual;
@@ -402,7 +401,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		
 		void solve() {
-			size_t nonImprovementCounter;
+			size_t nonImprovementCounter = 0;
 			
 			// Build inital right stack
 			REQUIRE(x.corePosition == 0, "Expecting core position to be 0.");
@@ -488,12 +487,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 		TTTensor x(_dimensions);
 			
-		// Calc mean
-		Tensor mean({x.dimensions[0]});
-		for(const auto& sol : _measurments.solutions) {
-			mean += sol;
-		}
-		mean /= double(_measurments.solutions.size());
+		Tensor mean = sample_mean(_measurments.solutions);
 		
 		// Set mean
 		mean.reinterpret_dimensions({1, x.dimensions[0], 1});

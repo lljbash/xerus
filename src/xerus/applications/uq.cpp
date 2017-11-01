@@ -141,20 +141,26 @@ namespace xerus { namespace uq {
 		solutions.clear();
 	}
 	
+	Tensor sample_mean(const std::vector<Tensor>& _samples) {
+		REQUIRE(_samples.size() > 0, "Need at least one measurment.");
+		
+		// Calc mean
+		Tensor mean({_samples.front().size});
+		for(const auto& samp : _samples) {
+			mean += samp;
+		}
+		mean /= double(_samples.size());
+		return mean;
+	}
+	
     
-    TTTensor initial_guess(const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions) {
+    TTTensor initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions) {
 		REQUIRE(_measurments.parameterVectors.size() > 0, "Need at least one measurment.");
 		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments.");
 		REQUIRE(_dimensions.front() == _measurments.solutions.front().dimensions.front(), "Inconsitend measurments and dimensions.");
 		
 		TTTensor initalGuess(_dimensions);
-		
-		// Calc mean
-		Tensor mean({_dimensions[0]});
-		for(const auto& sol : _measurments.solutions) {
-			mean += sol;
-		}
-		mean /= double(_measurments.solutions.size());
+		Tensor mean = _mean;
 		
 		// Set mean
 		mean.reinterpret_dimensions({1, _dimensions[0], 1});
