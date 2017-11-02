@@ -85,8 +85,8 @@ namespace xerus {
 			alpha = misc::sqr(frob_norm(grad)) / value_t(grad(i&0) * _A(i/2,j/2) * grad(j&0));
 		} else {
 			grad(i&0) = _A(j/2,i/2) * grad(j&0);
-			// stepsize alpha = <y,y>/<Ay,Ay>
-			alpha = frob_norm(grad) / frob_norm(_A(i/2,j/2) * grad(j&0));
+			// stepsize alpha = <y,y>/<Ay,Ay> = 1/|Ay/|y||^2
+			alpha = 1 / misc::sqr(frob_norm(_A(i/2,j/2) * (grad/frob_norm(grad))(j&0)));
 		}
 		_x[0] += alpha * grad;
 	}
