@@ -254,6 +254,8 @@ namespace xerus {
 	
 	
 	bool Tensor::all_entries_valid() const {
+		if(!std::isfinite(factor)) { return false; } 
+		
 		if(is_dense()) {
 			for(size_t i = 0; i < size; ++i) {
 				if(!std::isfinite(denseData.get()[i])) { return false; } 
@@ -370,14 +372,13 @@ namespace xerus {
 		if(is_dense()) {
 			return denseData.get()[_position];
 		} 
-			value_t& result = (*sparseData)[_position];
-			use_dense_representation_if_desirable();
-			if (is_dense()) {
-				return denseData.get()[_position];
-			} 
-				return result;
-			
+		value_t& result = (*sparseData)[_position];
+		use_dense_representation_if_desirable();
+		if (is_dense()) {
+			return denseData.get()[_position];
+		}
 		
+		return result;
 	}
 	
 	
@@ -388,13 +389,11 @@ namespace xerus {
 		if(is_dense()) {
 			return denseData.get()[_position];
 		} 
-			const std::map<size_t, value_t>::const_iterator entry = sparseData->find(_position);
-			if(entry == sparseData->end()) {
-				return 0.0;
-			} 
-				return entry->second;
-			
-		
+		const std::map<size_t, value_t>::const_iterator entry = sparseData->find(_position);
+		if(entry == sparseData->end()) {
+			return 0.0;
+		}
+		return entry->second;
 	}
 	
 	
