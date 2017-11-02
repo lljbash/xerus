@@ -35,6 +35,7 @@ namespace xerus { namespace internal {
 	class BlockTT final  {
 	public:
         size_t P;
+		
 		/**
 		 * @brief The position of the core.
 		 * @details CorePosition gives the position of the block/core tensor. All components
@@ -123,6 +124,7 @@ namespace xerus { namespace internal {
 			
 			
 			value_t frob_norm() const;
+
             
 			size_t dofs() const;
 			

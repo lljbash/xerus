@@ -360,6 +360,12 @@ namespace xerus {
 	
 	
 	template<bool isOperator>
+	size_t TTNetwork<isOperator>::num_components() const {
+		return degree()/N;
+	}
+	
+	
+	template<bool isOperator>
 	size_t TTNetwork<isOperator>::num_ranks() const {
 		return degree() == 0 ? 0 : degree()/N-1;
 	}

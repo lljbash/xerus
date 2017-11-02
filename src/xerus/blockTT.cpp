@@ -128,6 +128,7 @@ namespace xerus { namespace internal {
         
         return numDofs;
     }
+    
 	
 	void BlockTT::move_core(const size_t _position, const double _eps, const size_t _maxRank) {
         REQUIRE(_position < degree(), "IE");
