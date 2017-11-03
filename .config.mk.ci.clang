@@ -2,6 +2,7 @@
 # Compiler Options
 #=================================================================================================
 CXX = clang++
+COMPATIBILITY = -std=c++11
 
  DEBUG += -g                # Adds debug symbols
 

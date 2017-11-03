@@ -2,6 +2,7 @@
 # Compiler Options
 #=================================================================================================
 CXX = g++
+COMPATIBILITY = -std=c++11
 
 STRICT_WARNINGS = TRUE
 DEBUG += -D XERUS_TEST_COVERAGE                 # Enable coverage tests
