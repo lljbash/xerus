@@ -97,15 +97,13 @@
 		}
 	}
 
-	#ifdef XERUS_REPLACE_ALLOCATOR
-		void* operator new(std::size_t n) {
-			return myalloc(n);
-		}
+	void* operator new(std::size_t n) {
+		return myalloc(n);
+	}
 
-		void *operator new[](std::size_t s) {
-			return myalloc(s);
-		}
-	#endif
+	void *operator new[](std::size_t s) {
+		return myalloc(s);
+	}
 
 	// void *malloc(size_t size) {
 	//     return myalloc(size);
