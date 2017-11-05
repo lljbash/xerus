@@ -158,5 +158,15 @@
 	void operator delete[](void* ptr) noexcept {
 		mydelete(ptr);
 	}
+	
+	#if __cplusplus >= 201402L
+		void operator delete(void* ptr, size_t) noexcept {
+			mydelete(ptr);
+		}
+
+		void operator delete[](void* ptr, size_t) noexcept {
+			mydelete(ptr);
+		}
+	#endif
 
 #endif
