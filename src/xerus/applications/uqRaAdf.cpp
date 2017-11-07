@@ -40,8 +40,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t N;
 		const size_t d;
 		
-		const PolynomBasis basisType;
-		
 		const double targetResidual;
 		
 		const size_t maxRank = 40;
@@ -141,7 +139,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		InternalSolver(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions, const PolynomBasis _basisType, const size_t _maxItr, const double _targetEps, const double _initalRankEps) : 
 			N(_randomVariables.size()),
 			d(_x.degree()),
-			basisType(_basisType),
 			targetResidual(_targetEps),
 			rankEps(_initalRankEps),
 			maxIterations(_maxItr),

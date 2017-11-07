@@ -64,9 +64,9 @@ namespace xerus { namespace misc {
         
         std::string contents;
         fileStream.seekg(0, std::ios::end);
-        contents.resize(fileStream.tellg());
+        contents.resize(size_t(fileStream.tellg()));
         fileStream.seekg(0, std::ios::beg);
-        fileStream.read(&contents[0], contents.size());
+        fileStream.read(&contents[0], std::streamsize(contents.size()));
         return contents;
     }
     

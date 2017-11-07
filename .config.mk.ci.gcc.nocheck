@@ -2,6 +2,7 @@
 # Compiler Options
 #=================================================================================================
 CXX = g++
+COMPATIBILITY = -std=c++11
 
 STRICT_WARNINGS = TRUE
 
@@ -24,4 +25,5 @@ SUITESPARSE = -lcholmod -lspqr
 
 # custom include paths
 # OTHER += -I /path/to/include
+
 

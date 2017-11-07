@@ -57,7 +57,7 @@ namespace xerus { namespace uq {
 	Tensor legendre_evaluation(const double _v, const size_t _basisSize) {
 		Tensor p({_basisSize});
 		for (unsigned i = 0; i < _basisSize; ++i) {
-			p[i] = boost::math::legendre_p(i, _v);
+			p[i] = boost::math::legendre_p(int(i), _v);
 		}
 		return p;
 	}
