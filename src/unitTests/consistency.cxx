@@ -18,7 +18,7 @@
 // or contact us at contact@libXerus.org.
 
 
-#include<xerus.h>
+#include <xerus.h>
 
 #include "../../include/xerus/test/test.h"
 #include "../../include/xerus/misc/internal.h"
@@ -26,7 +26,7 @@ using namespace xerus;
 
 static const size_t MAX_RAM_REQUIREMENT = 1*1024*1024*1024;
 
-static misc::UnitTest cons_sum_diff("Consistency", "sum_and_difference", [](){
+static misc::UnitTest cons_sum_diff("Consistency", "sum_and_difference", []() {
 	std::mt19937_64 &rnd = xerus::misc::randomEngine;
 	std::uniform_int_distribution<size_t> dimDist(1, 3);
 	
@@ -35,9 +35,8 @@ static misc::UnitTest cons_sum_diff("Consistency", "sum_and_difference", [](){
 	const Index i, j, k;
 	
 	for(size_t d = 0; d <= 6; ++d) {
-		if (xerus::misc::product(dimsA) * 15 > MAX_RAM_REQUIREMENT) {
-			break;
-		}
+		if (xerus::misc::product(dimsA) * 15 > MAX_RAM_REQUIREMENT) { break; }
+		
 		Tensor A = Tensor::random(dimsA);
 		Tensor B = Tensor::random(dimsB);
 		Tensor X = Tensor::random(dimsX);

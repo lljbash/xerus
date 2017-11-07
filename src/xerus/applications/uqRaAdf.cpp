@@ -35,9 +35,9 @@
 
 namespace xerus { namespace uq { namespace impl_uqRaAdf {
 	
+	template<size_t P>
 	class InternalSolver {
 		const size_t N;
-		const size_t P = 2;
 		const size_t d;
 		
 		const PolynomBasis basisType;
@@ -46,7 +46,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		const size_t maxRank = 40;
 		double rankEps;
-		double minRankEps = 1e-8;
+		const double minRankEps = 1e-8;
 		const double epsDecay = 0.8;
 		
 		const double convergenceFactor = 0.995;
@@ -54,7 +54,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		double optNorm;
 		double testNorm;
-		std::vector<double> setNorms;
+		std::vector<double> setNorms = std::vector<double>(P);
 		
 		const std::vector<std::vector<Tensor>> positions;
 		const std::vector<Tensor>& solutions;
@@ -64,7 +64,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		double bestTestResidual = std::numeric_limits<double>::max();
 		internal::BlockTT bestX;
 		
-		std::vector<std::vector<size_t>> prevRanks;
+		std::vector<std::vector<size_t>> prevRanks; // TODO Circular Buffer
 		
 		TTTensor& outX;
 		
@@ -75,7 +75,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		std::vector<std::vector<size_t>> sets;
 		std::vector<size_t> controlSet;
 		
-		std::vector<double> residuals = std::vector<double>(10, std::numeric_limits<double>::max());
+		std::vector<double> residuals = std::vector<double>(10, std::numeric_limits<double>::max()); // TODO Circular Buffer
 		
 		
 	public:
@@ -96,23 +96,19 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		void calc_solution_norms() {
 			optNorm = 0.0;
 			testNorm = 0.0;
+			for(size_t k = 0; k < sets.size(); ++k) { setNorms[k] = 0.0; }
+			
 			for(size_t k = 0; k < sets.size(); ++k) {
-				setNorms[k] = 0.0;
+				for(const auto j : sets[k]) {
+					const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
+					optNorm += sqrNorm;
+					setNorms[k] += sqrNorm;
+				}
 			}
 			
-			for(size_t j = 0; j < N; ++j) {
+			for(const auto j : controlSet) {
 				const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
-				if(misc::contains(controlSet, j)){
-					testNorm += sqrNorm;
-				} else {
-					optNorm += sqrNorm;
-					
-					for(size_t k = 0; k < sets.size(); ++k) {
-						if(misc::contains(sets[k], j)) {
-							setNorms[k] += sqrNorm;
-						}
-					}
-				}
+				testNorm += sqrNorm;
 			}
 			
 			optNorm = std::sqrt(optNorm);
@@ -124,7 +120,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		
 		void shuffle_sets() {
-			// Reset sets
 			sets = std::vector<std::vector<size_t>>(P);
 			controlSet.clear();
 			
@@ -150,7 +145,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			targetResidual(_targetEps),
 			rankEps(_initalRankEps),
 			maxIterations(_maxItr),
-			setNorms(P),
 			positions(create_positions(_x, _basisType, _randomVariables)),
 			solutions(_solutions),
 			x(_x, 0, P),
@@ -374,6 +368,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			return std::make_tuple(optResidual, testResidual, setResiduals);
 		}
 		
+		
 		void update_core(const size_t _corePosition) {
 			const Index left, right, ext, p;
 			
@@ -386,6 +381,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				x.component(_corePosition)(left, ext, p, right) = x.component(_corePosition)(left, ext, p, right)-((PyR/misc::sqr(normAProjGrad))*delta)(left, ext, right)*Tensor::dirac({P}, setId)(p);
 			}
 		}
+		
 		
 		void finish() {
 			for(size_t i = 0; i < bestX.degree(); i++) {
@@ -477,6 +473,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 	};
 	
 }
+
 	
 	
 	TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _initalRankEps, const double _targetEps, const size_t _maxItr) {
@@ -497,7 +494,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		}
 		x.assume_core_position(0);
 		
-		impl_uqRaAdf::InternalSolver solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
+		impl_uqRaAdf::InternalSolver<2> solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
 		solver.solve();
 		return x;
 	}
@@ -509,7 +506,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		TTTensor x = _initalGuess;
 		
-		impl_uqRaAdf::InternalSolver solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
+		impl_uqRaAdf::InternalSolver<2> solver(x, _measurments.parameterVectors, _measurments.solutions, _basisType, _maxItr, _targetEps, _initalRankEps);
 		solver.solve();
 		return x;
 	}

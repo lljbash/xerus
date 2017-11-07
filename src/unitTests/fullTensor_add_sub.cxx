@@ -48,8 +48,8 @@ static misc::UnitTest tensor_sum_mat2("Tensor", "sum_matrix_2x2", [](){
     res(i,J) = B(i,J) + C(J,i);
     TEST(approx_entrywise_equal(res, {6,9,9,12}));
 });
- 
-static misc::UnitTest tensor_sum_eq("Tensor", "sum_lhs_equals_rhs", [](){
+
+static misc::UnitTest tensor_sum_eq("Tensor", "sum_lhs_equals_rhs", []() {
     Tensor B({2,2});
     Tensor C({2,2});
 

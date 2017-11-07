@@ -49,7 +49,6 @@ namespace xerus { namespace uq {
 		std::vector<std::vector<Tensor>> rightStack;  // From corePosition 1 to d-1
 		std::vector<std::vector<Tensor>> leftIsStack;
 		std::vector<std::vector<Tensor>> leftOughtStack;
-		
         
         
     public:

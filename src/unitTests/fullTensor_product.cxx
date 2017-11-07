@@ -416,3 +416,18 @@ static misc::UnitTest tensor_prod1000("Tensor", "Product_1000x1000", [](){
     res(i,K) = A(J,i) * B(K,J);
     TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
 });
+
+
+
+static misc::UnitTest dyadic_factor_product("Tensor", "Dyadic_factor_product", []() {
+	Index i,j;
+	Tensor s = Tensor::ones({10})/10.0;
+	
+	Tensor s1; s1(i,j) = s(i)*s(j);
+	
+	for(size_t k = 0; k < 10; ++k) {
+		for(size_t l = 0; l < 10; ++l) {
+			TEST(approx_equal(s1[{k,l}], 0.01));
+		}
+	}
+});

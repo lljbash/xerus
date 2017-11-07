@@ -220,6 +220,7 @@ namespace xerus {
 		return result;
 	}
 	
+	
 	template<bool isOperator>
 	TTNetwork<isOperator> TTNetwork<isOperator>::kronecker(const std::vector<size_t>& _dimensions) {
 		REQUIRE(_dimensions.size()%N == 0, "Illegal number of dimensions for ttOperator");
@@ -253,6 +254,7 @@ namespace xerus {
 		return result;
 	}
 	
+	
 	template<bool isOperator>
 	TTNetwork<isOperator> TTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const std::vector<size_t>& _position) {
 		REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for ttOperator");
@@ -262,7 +264,7 @@ namespace xerus {
 		const size_t numComponents = _dimensions.size()/N;
 		
 		if(numComponents <= 1) {
-			return TTNetwork(Tensor::dirac(_dimensions, _position));
+			return TTNetwork(Tensor::dirac(_dimensions, _position)); 
 		}
 		
 		TTNetwork result(_dimensions);
@@ -276,6 +278,7 @@ namespace xerus {
 		}
 		return result;
 	}
+	
 	
 	template<bool isOperator>
 	TTNetwork<isOperator> TTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const size_t _position) {
@@ -1496,5 +1499,4 @@ namespace xerus {
 		template void stream_reader(std::istream& _stream, TTNetwork<true> &_obj, const misc::FileFormat _format);
 		template void stream_reader(std::istream& _stream, TTNetwork<false> &_obj, const misc::FileFormat _format);
 	} // namespace misc
-	
 } // namespace xerus
