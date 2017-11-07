@@ -427,7 +427,7 @@ static misc::UnitTest dyadic_factor_product("Tensor", "Dyadic_factor_product", [
 	
 	for(size_t k = 0; k < 10; ++k) {
 		for(size_t l = 0; l < 10; ++l) {
-			TEST(approx_equal(s1[{k,l}], 0.01));
+			TEST(misc::approx_equal(s1[{k,l}], 0.01));
 		}
 	}
 });

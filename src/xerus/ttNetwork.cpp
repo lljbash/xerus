@@ -267,7 +267,7 @@ namespace xerus {
 			return TTNetwork(Tensor::dirac(_dimensions, _position)); 
 		}
 		
-		TTNetwork result(_dimensions);
+		TTNetwork<isOperator> result(_dimensions);
 		
 		for (size_t i = 0; i < numComponents; ++i) {
 			if(isOperator) {
