@@ -29,11 +29,15 @@
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
+#include <boost/circular_buffer.hpp>
+
 #ifdef _OPENMP
 	#include <omp.h>
 #endif
 
 namespace xerus { namespace uq { namespace impl_uqRaAdf {
+	
+	const size_t tracking = 10;
 	
 	template<size_t P>
 	class InternalSolver {
@@ -41,39 +45,39 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t d;
 		
 		const double targetResidual;
-		
 		const size_t maxRank = 40;
-		double rankEps;
 		const double minRankEps = 1e-8;
 		const double epsDecay = 0.8;
 		
 		const double convergenceFactor = 0.995;
 		const size_t maxIterations;
 		
-		double optNorm;
-		double testNorm;
-		std::vector<double> setNorms = std::vector<double>(P);
+		const double controlSetFraction = 0.1;
 		
 		const std::vector<std::vector<Tensor>> positions;
 		const std::vector<Tensor>& solutions;
 		
-		internal::BlockTT x;
+		TTTensor& outX;
+		
+		std::vector<std::vector<size_t>> sets;
+		std::vector<size_t> controlSet;
+		
+		double optNorm;
+		double testNorm;
+		std::vector<double> setNorms = std::vector<double>(P);
 		
 		double bestTestResidual = std::numeric_limits<double>::max();
 		internal::BlockTT bestX;
 		
-		std::vector<std::vector<size_t>> prevRanks; // TODO Circular Buffer
-		
-		TTTensor& outX;
+		internal::BlockTT x;
 		
 		std::vector<std::vector<Tensor>> rightStack;  // From corePosition 1 to d-1
 		std::vector<std::vector<Tensor>> leftIsStack;
 		std::vector<std::vector<Tensor>> leftOughtStack;
 		
-		std::vector<std::vector<size_t>> sets;
-		std::vector<size_t> controlSet;
-		
-		std::vector<double> residuals = std::vector<double>(10, std::numeric_limits<double>::max()); // TODO Circular Buffer
+		double rankEps;
+		boost::circular_buffer<std::vector<size_t>> prevRanks;
+		boost::circular_buffer<double> residuals {tracking, std::numeric_limits<double>::max()};
 		
 		
 	public:
@@ -91,32 +95,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		}
 		
 		
-		void calc_solution_norms() {
-			optNorm = 0.0;
-			testNorm = 0.0;
-			for(size_t k = 0; k < sets.size(); ++k) { setNorms[k] = 0.0; }
-			
-			for(size_t k = 0; k < sets.size(); ++k) {
-				for(const auto j : sets[k]) {
-					const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
-					optNorm += sqrNorm;
-					setNorms[k] += sqrNorm;
-				}
-			}
-			
-			for(const auto j : controlSet) {
-				const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
-				testNorm += sqrNorm;
-			}
-			
-			optNorm = std::sqrt(optNorm);
-			testNorm = std::sqrt(testNorm);
-			for(size_t k = 0; k < sets.size(); ++k) {
-				setNorms[k] = std::sqrt(setNorms[k]);
-			}
-		}
-		
-		
 		void shuffle_sets() {
 			sets = std::vector<std::vector<size_t>>(P);
 			controlSet.clear();
@@ -125,7 +103,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			std::uniform_int_distribution<size_t> setDist(0, P-1);
 			
 			for(size_t j = 0; j < N; ++j) {
-				if(stochDist(misc::randomEngine) > 0.1) {
+				if(stochDist(misc::randomEngine) > controlSetFraction) {
 					sets[setDist(misc::randomEngine)].push_back(j);
 				} else {
 					controlSet.push_back(j);
@@ -136,20 +114,42 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		}
 		
 		
+		void calc_solution_norms() {
+			optNorm = 0.0;
+			for(size_t k = 0; k < sets.size(); ++k) {
+				setNorms[k] = 0.0;
+				for(const auto j : sets[k]) {
+					const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
+					optNorm += sqrNorm;
+					setNorms[k] += sqrNorm;
+				}
+				setNorms[k] = std::sqrt(setNorms[k]);
+			}
+			optNorm = std::sqrt(optNorm);
+			
+			testNorm = 0.0;
+			for(const auto j : controlSet) {
+				const double sqrNorm = misc::sqr(frob_norm(solutions[j]));
+				testNorm += sqrNorm;
+			}
+			testNorm = std::sqrt(testNorm);
+		}
+		
+		
 		InternalSolver(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions, const PolynomBasis _basisType, const size_t _maxItr, const double _targetEps, const double _initalRankEps) : 
 			N(_randomVariables.size()),
 			d(_x.degree()),
 			targetResidual(_targetEps),
-			rankEps(_initalRankEps),
 			maxIterations(_maxItr),
 			positions(create_positions(_x, _basisType, _randomVariables)),
 			solutions(_solutions),
-			x(_x, 0, P),
-			prevRanks(10, _x.ranks()),
 			outX(_x),
+			x(_x, 0, P),
 			rightStack(d, std::vector<Tensor>(N)),
 			leftIsStack(d, std::vector<Tensor>(N)), 
-			leftOughtStack(d, std::vector<Tensor>(N))
+			leftOughtStack(d, std::vector<Tensor>(N)),
+			rankEps(_initalRankEps),
+			prevRanks(tracking+1, _x.ranks())
 			{
 				REQUIRE(_randomVariables.size() == _solutions.size(), "ERROR");
 				LOG(uqADF, "Set size: " << _solutions.size());
@@ -163,7 +163,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			
 			if(_position == 0) {
 				Tensor shuffledX = x.get_component(0);
-				shuffledX.reinterpret_dimensions({x.dimensions[0], x.rank(0)});
+				shuffledX.reinterpret_dimensions({x.dimensions[0], x.rank(0)}); // Remove dangling 1-mode
 				
 				#pragma omp parallel for 
 				for(size_t j = 0; j < N; ++j) {
@@ -195,7 +195,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			REQUIRE(_position > 0 && _position < d, "Invalid corePosition");
 			Tensor shuffledX = reshuffle(x.get_component(_position), {1, 0, 2});
 			
-			if(_position < d-1) {
+			if(_position+1 < d) {
 				Tensor tmp;
 				#pragma omp parallel for firstprivate(tmp)
 				for(size_t j = 0; j < N; ++j) {
@@ -280,7 +280,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			Tensor tmp;
 			
 			if(_corePosition == 0) {
-// 				#pragma omp parallel for firstprivate(tmp) reduction(+:norm)
+				#pragma omp parallel for firstprivate(tmp) reduction(+:norm)
 				for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
 					const size_t j = sets[_setId][jIdx];
 					contract(tmp, _delta, rightStack[1][j], 1);
@@ -289,7 +289,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				}
 			} else { // _corePosition > 0
 				Tensor shuffledDelta = reshuffle(_delta, {1, 0, 2});
-				if(_corePosition == d-1) {
+				if(_corePosition+1 == d) {
 					shuffledDelta.reinterpret_dimensions({shuffledDelta.dimensions[0], shuffledDelta.dimensions[1]}); // Remove dangling 1-mode
 				}
 				
@@ -297,10 +297,11 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				#pragma omp parallel for firstprivate(tmp, rightPart) reduction(+:norm)
 				for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
 					const size_t j = sets[_setId][jIdx];
+					
 					// Current node
 					contract(tmp, positions[_corePosition][j], shuffledDelta, 1);
 					
-					if(_corePosition < d-1) {
+					if(_corePosition+1 < d) {
 						contract(rightPart, tmp, rightStack[_corePosition+1][j], 1);
 					} else {
 						rightPart = tmp;
@@ -325,42 +326,38 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		
 		std::tuple<double, double, std::vector<double>> calc_residuals(const size_t _corePosition) const {
 			REQUIRE(_corePosition == 0, "Invalid corePosition");
-
-			double optResidual = 0.0;
-			double testResidual = 0.0;
-			std::vector<double> setResiduals(sets.size(), 0.0);
+			
+			// TODO paralell
 			
 			const auto avgCore = x.get_average_core();
 			Tensor tmp;
-			#pragma omp parallel for firstprivate(tmp) reduction(+:optResidual, testResidual)
-			for(size_t j = 0; j < N; ++j) {
+			
+			double optResidual = 0.0;			
+			std::vector<double> setResiduals(sets.size(), 0.0);
+			for(size_t k = 0; k < sets.size(); ++k) {
+				for(const auto j : sets[k]) {
+					contract(tmp, avgCore, rightStack[1][j], 1);
+					tmp.reinterpret_dimensions({x.dimensions[0]});
+					tmp -= solutions[j];
+					const double resSqr = misc::sqr(frob_norm(tmp));
+					
+					optResidual += resSqr;
+					setResiduals[k] += resSqr;
+				}
+				setResiduals[k] = std::sqrt(setResiduals[k])/setNorms[k];
+			}
+			optResidual = std::sqrt(optResidual)/optNorm;
+			
+			double testResidual = 0.0;
+			for(const auto j : controlSet) {
 				contract(tmp, avgCore, rightStack[1][j], 1);
 				tmp.reinterpret_dimensions({x.dimensions[0]});
 				tmp -= solutions[j];
 				const double resSqr = misc::sqr(frob_norm(tmp));
 				
-				if(misc::contains(controlSet, j)){
-					testResidual += resSqr;
-				} else {
-					optResidual += resSqr;
-					
-					for(size_t k = 0; k < sets.size(); ++k) {
-						if(misc::contains(sets[k], j)) {
-							#pragma omp critical
-							{
-								setResiduals[k] += resSqr;
-							}
-						}
-					}
-				}
+				testResidual += resSqr;
 			}
-			
-			optResidual = std::sqrt(optResidual)/optNorm;
 			testResidual = std::sqrt(testResidual)/testNorm;
-			for(size_t k = 0; k < sets.size(); ++k) {
-				setResiduals[k] = std::sqrt(setResiduals[k])/setNorms[k];
-			}
-			
 			
 			return std::make_tuple(optResidual, testResidual, setResiduals);
 		}
@@ -380,7 +377,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		}
 		
 		
-		void finish() {
+		void finish(const size_t _iteration) {
 			for(size_t i = 0; i < bestX.degree(); i++) {
 				if(i == bestX.corePosition) {
 					outX.set_component(i, bestX.get_average_core());
@@ -389,7 +386,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				}
 			}
 			
-			LOG(ADF, "Residual decrease from " << std::scientific << residuals[10] << " to " << std::scientific << residuals.back() << " in " << residuals.size()-10 << " iterations.");
+			LOG(ADF, "Residual decrease from " << std::scientific << 0.0 /* TODO */ << " to " << std::scientific << residuals.back() << " in " << _iteration << " iterations.");
 		}
 		
 		
@@ -421,20 +418,20 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				LOG(ADFx, "Residual " << std::scientific << residuals.back() << " " << setResiduals << ". NonImpCnt: " << nonImprovementCounter << ", Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs());
 				
 				if(residuals.back() < targetResidual || nonImprovementCounter > 100) {
-					finish();
+					finish(iteration);
 					return;
 				}
 				
-				if(residuals.back()/residuals[residuals.size()-10] > convergenceFactor) {
+				if(residuals.back()/residuals[0] > convergenceFactor) {
 					bool maxRankReached = false;
 					bool ranksMaxed = false;
 					for(size_t i = 0; i < x.degree()-1; ++i) {
 						maxRankReached = maxRankReached || (x.rank(i) == maxRank);
-						ranksMaxed = ranksMaxed || (x.rank(i) == prevRanks[prevRanks.size()-11][i]+1);
+						ranksMaxed = ranksMaxed || (x.rank(i) == prevRanks[0][i]+1);
 					}
 					
 					if(misc::hard_equal(rankEps, minRankEps) || maxRankReached) {
-						finish();
+						finish(iteration);
 						return; // We are done!
 					}
 					
@@ -448,7 +445,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				for(size_t corePosition = 0; corePosition+1 < d; ++corePosition) {
 					update_core(corePosition);
 					
-					x.move_core(corePosition+1, rankEps, std::min(maxRank, prevRanks[prevRanks.size()-10][corePosition]+1));
+					x.move_core(corePosition+1, rankEps, std::min(maxRank, prevRanks[1][corePosition]+1));
 					calc_left_stack(corePosition);
 				}
 				
@@ -458,20 +455,32 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				for(size_t corePosition = d-1; corePosition > 0; --corePosition) {
 					update_core(corePosition);
 					
-					x.move_core(corePosition-1, rankEps, std::min(maxRank, prevRanks[prevRanks.size()-10][corePosition-1]+1));
+					x.move_core(corePosition-1, rankEps, std::min(maxRank, prevRanks[1][corePosition-1]+1));
 					calc_right_stack(corePosition);
 				}
 				
 				update_core(0);
 			}
 			
-			finish();
+			finish(maxIterations);
 		}
 	};
 	
 }
 
-	
+// 	void uq_adf(TTTensor& _x, const std::vector<std::vector<double>>& _randomVariables, const std::vector<Tensor>& _solutions) {
+// 		LOG(ADF, "Start UQ ADF");
+//         impl_uqRaAdf::InternalSolver<1> solver(_x, _randomVariables, _solutions);
+//         return solver.solve();
+//     }
+//     
+//     
+//     TTTensor uq_adf(const UQMeasurementSet& _measurments, const TTTensor& _guess) {
+// 		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments.");
+// 		TTTensor x = _guess;
+//         uq_adf(x, _measurments.parameterVectors, _measurments.solutions);
+//         return x;
+// 	}
 	
 	TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _initalRankEps, const double _targetEps, const size_t _maxItr) {
 		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");

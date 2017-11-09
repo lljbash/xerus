@@ -129,23 +129,38 @@ namespace xerus { namespace internal {
         return numDofs;
     }
     
+    
+	void BlockTT::move_core_left(const double _eps, const size_t _maxRank) {
+		REQUIRE(corePosition > 0, "Can't move core left from position " << corePosition);
+		const Index left, right, ext, p, r1, r2;
+        Tensor U, S, V;
+		
+		(U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
+		components[corePosition] = V;
+		components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
+		corePosition--;
+    }
+    
+    
+    void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
+		REQUIRE(corePosition+1 < degree(), "Can't move core right from position " << corePosition);
+		const Index left, right, ext, p, r1, r2;
+        Tensor U, S, V;
+		
+		(U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
+		components[corePosition] = U;
+		components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
+		corePosition++;
+    }
 	
 	void BlockTT::move_core(const size_t _position, const double _eps, const size_t _maxRank) {
-        REQUIRE(_position < degree(), "IE");
-        const Index left, right, ext, p, r1, r2;
-        Tensor U, S, V;
-        while(corePosition < _position) { // To right
-            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
-            components[corePosition] = U;
-            components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
-            corePosition++;
+        REQUIRE(_position < degree(), "Invalid new core position " << _position);
+        while(corePosition < _position) {
+            move_core_right( _eps, _maxRank);
         }
         
-        while(corePosition > _position) { // To left
-            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
-            components[corePosition] = V;
-            components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
-            corePosition--;
+        while(corePosition > _position) {
+            move_core_left( _eps, _maxRank);
         }
     }
     

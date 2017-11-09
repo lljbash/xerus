@@ -114,6 +114,11 @@ namespace xerus { namespace internal {
 			size_t rank(const size_t _i) const;
 			
 			
+			void move_core_left(const double _eps, const size_t _maxRank);
+		
+			void move_core_right(const double _eps, const size_t _maxRank);
+			
+			
 			/** 
 			* @brief Move the core to a new position.
 			*/
