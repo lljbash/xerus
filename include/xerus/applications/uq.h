@@ -65,6 +65,8 @@ namespace xerus {namespace uq {
 		
 		void add(const std::vector<double>& _paramVec, const Tensor& _solution);
 		
+		size_t size() const;
+		
 		void clear();
 	};
 
@@ -72,7 +74,7 @@ namespace xerus {namespace uq {
 	Tensor sample_mean(const std::vector<Tensor>& _samples);
 	
     
-	TTTensor initial_guess(const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions);
+	TTTensor initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions);
 }}
 
 

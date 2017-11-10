@@ -129,10 +129,14 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	
     void UQMeasurementSet::add(const std::vector<double>& _paramVec, const Tensor& _solution) {
 		parameterVectors.push_back(_paramVec);
 		solutions.push_back(_solution);
+	}
+	
+	
+	size_t UQMeasurementSet::size() const {
+		return parameterVectors.size();
 	}
 	
 	
@@ -140,6 +144,7 @@ namespace xerus { namespace uq {
 		parameterVectors.clear();
 		solutions.clear();
 	}
+	
 	
 	Tensor sample_mean(const std::vector<Tensor>& _samples) {
 		REQUIRE(_samples.size() > 0, "Need at least one measurment.");
