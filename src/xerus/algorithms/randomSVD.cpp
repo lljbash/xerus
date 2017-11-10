@@ -96,8 +96,6 @@ TTTensor randomTTSVD(const Tensor& _x, const std::vector<size_t>& _ranks) {
     b.reinterpret_dimensions(std::vector<size_t>({1}) | b.dimensions);
     u.set_component(0, b);
     
-    u.round(_ranks);
-    
     return u;
 }
     
