@@ -42,6 +42,7 @@
 #include "misc/sort.h"
 #include "misc/math.h"
 #include "misc/missingFunctions.h"
+#include "misc/fileUtilities.h"
 #include "misc/fileIO.h"
 #include "misc/stringFromTo.h"
 #include "misc/random.h"
