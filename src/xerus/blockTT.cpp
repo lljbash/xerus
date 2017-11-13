@@ -48,7 +48,6 @@ namespace xerus { namespace internal {
         }
         
         // Create block
-        const Index left, right, ext, p;
         components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
     }
     
