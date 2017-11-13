@@ -45,6 +45,8 @@ namespace xerus { namespace internal {
         
         std::vector<Tensor> components;
         std::vector<size_t> dimensions;
+        
+        static const Index left, right, ext, p, r1, r2;
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/

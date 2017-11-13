@@ -1271,8 +1271,7 @@ namespace xerus {
 		
 		
 		const size_t finalSize = leftDim*rightDim;
-		const size_t sparsityExpectation = size_t(double(finalSize)*(1.0 - misc::pow(1.0 - double(_lhs.sparsity()*_rhs.sparsity())/(double(_lhs.size)*double(_rhs.size)), midDim)));
-		REQUIRE(sparsityExpectation <= std::min(leftDim*_rhs.sparsity(), rightDim*_lhs.sparsity()), "IE");
+		const size_t sparsityExpectation = std::min(std::min(leftDim*_rhs.sparsity(), rightDim*_lhs.sparsity()), size_t(double(finalSize)*(1.0 - pow(1.0 - double(_lhs.sparsity())*double(_rhs.sparsity())/(double(_lhs.size)*double(_rhs.size)), double(midDim)))));
 		// TODO allow Sparse*sparse --> Full
 		const bool sparseResult = (_lhs.is_sparse() && _rhs.is_sparse()) || (finalSize > 64 && Tensor::sparsityFactor*sparsityExpectation < finalSize*2) ;
 		const Tensor::Representation resultRepresentation = sparseResult ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
