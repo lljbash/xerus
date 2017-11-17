@@ -158,4 +158,27 @@ namespace xerus { namespace internal {
         components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
     }
 	
-}} // namespace xerus
+    void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format) {
+        if(_format == misc::FileFormat::TSV) {
+            _stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
+        }
+        // storage version number
+        xerus::misc::write_to_stream<size_t>(_stream, 1, _format);
+        
+        xerus::misc::write_to_stream<size_t>(_stream, _obj.P, _format);
+        xerus::misc::write_to_stream<size_t>(_stream, _obj.corePosition, _format);
+        xerus::misc::write_to_stream<std::vector<size_t>>(_stream, _obj.dimensions, _format);
+        xerus::misc::write_to_stream<std::vector<xerus::Tensor>>(_stream, _obj.components, _format);
+    }
+    
+    void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format) {
+        size_t ver = xerus::misc::read_from_stream<size_t>(_stream, _format);
+        REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
+
+        _obj.P = xerus::misc::read_from_stream<size_t>(_stream, _format);
+        _obj.corePosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
+        _obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
+        _obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
+    }
+
+} } // namespace xerus

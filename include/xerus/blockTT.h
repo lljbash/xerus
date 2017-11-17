@@ -129,4 +129,7 @@ namespace xerus { namespace internal {
 			size_t dofs() const;
 			
 	};
+
+    void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format);
+    void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format);
 } }
