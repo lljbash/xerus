@@ -60,9 +60,9 @@
     #include "xerus/algorithms/adf.h"
     #include "xerus/algorithms/iht.h"
     #include "xerus/algorithms/largestEntry.h"
+    #include "xerus/algorithms/randomSVD.h"
     #include "xerus/applications/uq.h"
     #include "xerus/applications/uqAdf.h"
-//     #include "xerus/applications/uqRaAdf.h"
     
 	#include "xerus/examples/specificLowRankTensors.h"
 

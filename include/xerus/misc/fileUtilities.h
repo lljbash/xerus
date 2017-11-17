@@ -49,6 +49,3 @@ namespace xerus { namespace misc {
     
     #endif
 } }
-
-
-

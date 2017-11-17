@@ -48,7 +48,6 @@ namespace xerus { namespace internal {
         }
         
         // Create block
-        const Index left, right, ext, p;
         components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
     }
     
@@ -99,7 +98,6 @@ namespace xerus { namespace internal {
     
     
     Tensor BlockTT::get_average_core() const {
-        const Index left, right, ext, p, r1, r2;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         return coreCmp;
@@ -129,30 +127,63 @@ namespace xerus { namespace internal {
         return numDofs;
     }
     
+    
+	void BlockTT::move_core_left(const double _eps, const size_t _maxRank) {
+		REQUIRE(corePosition > 0, "Can't move core left from position " << corePosition);
+		
+		if(P == 1 || _maxRank == rank(corePosition-1)) {
+			Tensor Q, R;
+			
+			(R(left, p, r1), Q(r1, ext, right)) = RQ(components[corePosition](left, ext, p, right));
+			
+			components[corePosition] = Q;
+			components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*R(r1, p, right);
+		} else {
+			Tensor U, S, V;
+			
+			(U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
+			components[corePosition] = V;
+			components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
+		}
+		corePosition--;
+    }
+    
+    
+    void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
+		REQUIRE(corePosition+1 < degree(), "Can't move core right from position " << corePosition);
+			
+		if(P == 1 || _maxRank == rank(corePosition)) {
+			Tensor Q, R;
+			
+			(Q(left, ext, r1), R(r1, p, right)) = QR(components[corePosition](left, ext, p, right));
+			components[corePosition] = Q;
+			components[corePosition+1](left, ext, p, right) = R(left, p, r1)*components[corePosition+1](r1, ext, right);
+		} else {
+			Tensor U, S, V;
+			
+			(U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
+			components[corePosition] = U;
+			components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
+		}
+		corePosition++;
+    }
+	
 	
 	void BlockTT::move_core(const size_t _position, const double _eps, const size_t _maxRank) {
-        REQUIRE(_position < degree(), "IE");
-        const Index left, right, ext, p, r1, r2;
-        Tensor U, S, V;
-        while(corePosition < _position) { // To right
-            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
-            components[corePosition] = U;
-            components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
-            corePosition++;
+        REQUIRE(_position < degree(), "Invalid new core position " << _position);
+		
+        while(corePosition < _position) {
+            move_core_right(_eps, _maxRank);
         }
         
-        while(corePosition > _position) { // To left
-            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), _maxRank, _eps);
-            components[corePosition] = V;
-            components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
-            corePosition--;
+        while(corePosition > _position) {
+            move_core_left(_eps, _maxRank);
         }
     }
     
     
     
     void BlockTT::average_core() {
-        const Index left, right, ext, p;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);

@@ -45,6 +45,8 @@ namespace xerus { namespace internal {
         
         std::vector<Tensor> components;
         std::vector<size_t> dimensions;
+        
+        static const Index left, right, ext, p, r1, r2;
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -112,6 +114,11 @@ namespace xerus { namespace internal {
 			* @return The current rank of edge _i.
 			*/
 			size_t rank(const size_t _i) const;
+			
+			
+			void move_core_left(const double _eps, const size_t _maxRank);
+		
+			void move_core_right(const double _eps, const size_t _maxRank);
 			
 			
 			/** 
