@@ -185,7 +185,28 @@ namespace xerus { namespace internal {
         }
     }
     
-    
+    void BlockTT::move_core(const size_t _position, const bool _keepRank) {
+        REQUIRE(_position < degree(), "IE");
+        REQUIRE(_keepRank, "not implemented");
+        const Index left, right, ext, p, r1, r2;
+        Tensor U, S, V;
+
+        while(corePosition < _position) { // To right
+            const size_t maxRank = get_component(corePosition).dimensions[3];
+            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            components[corePosition] = U;
+            components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
+            corePosition++;
+        }
+
+        while(corePosition > _position) { // To left
+            const size_t maxRank = get_component(corePosition).dimensions[0];
+            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            components[corePosition] = V;
+            components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
+            corePosition--;
+        }
+    }
     
     void BlockTT::average_core() {
         const Index left, right, ext, p;

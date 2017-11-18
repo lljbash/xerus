@@ -123,6 +123,7 @@ namespace xerus { namespace internal {
 			* @brief Move the core to a new position.
 			*/
 			void move_core(const size_t _position, const double _eps=EPSILON, const size_t _maxRank=std::numeric_limits<size_t>::max());
+			void move_core(const size_t _position, const bool _keepRank=false);
             
             
             void average_core();
