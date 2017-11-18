@@ -48,6 +48,7 @@ namespace xerus { namespace internal {
         }
         
         // Create block
+        const Index left, right, ext, p;
         components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
     }
     
@@ -98,6 +99,7 @@ namespace xerus { namespace internal {
     
     
     Tensor BlockTT::get_average_core() const {
+        const Index left, right, ext, p;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         return coreCmp;
@@ -130,6 +132,7 @@ namespace xerus { namespace internal {
     
 	void BlockTT::move_core_left(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition > 0, "Can't move core left from position " << corePosition);
+        const Index left, right, ext, p, r1, r2;
 		
 		if(P == 1 || _maxRank == rank(corePosition-1)) {
 			Tensor Q, R;
@@ -151,6 +154,7 @@ namespace xerus { namespace internal {
     
     void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition+1 < degree(), "Can't move core right from position " << corePosition);
+        const Index left, right, ext, p, r1, r2;
 			
 		if(P == 1 || _maxRank == rank(corePosition)) {
 			Tensor Q, R;
@@ -184,6 +188,7 @@ namespace xerus { namespace internal {
     
     
     void BlockTT::average_core() {
+        const Index left, right, ext, p;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
