@@ -13,7 +13,7 @@ help:
 
 	
 # ------------------------------------------------------------------------------------------------------
-#				Set the names of the resulting binary codes 
+#				Set the names of the resulting binary codes
 # ------------------------------------------------------------------------------------------------------
 
 # Name of the test executable

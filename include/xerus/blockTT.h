@@ -46,14 +46,15 @@ namespace xerus { namespace internal {
         std::vector<Tensor> components;
         std::vector<size_t> dimensions;
         
-        static const Index left, right, ext, p, r1, r2;
-		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		/** 
 		 * @brief BlockTTs can be default construced.
 		 */
 		BlockTT() = default;
+
+        ///@brief Constructs an zero initialized TTNetwork with the given dimensions, ranks and block dimensions.
+        BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim);
 		
 		
 		///@brief BlockTTs are default copy constructable.
@@ -125,15 +126,21 @@ namespace xerus { namespace internal {
 			* @brief Move the core to a new position.
 			*/
 			void move_core(const size_t _position, const double _eps=EPSILON, const size_t _maxRank=std::numeric_limits<size_t>::max());
+			void move_core(const size_t _position, const bool _keepRank=false);
             
             
             void average_core();
-			
-			
+
+            bool all_entries_valid();
+
 			value_t frob_norm() const;
 
             
 			size_t dofs() const;
 			
 	};
+
+    void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format);
+    void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format);
+    value_t frob_norm(const BlockTT& _x);
 } }
