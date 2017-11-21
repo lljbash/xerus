@@ -55,7 +55,7 @@ namespace xerus {
 			void log_timestamp(std::ostream &_out);
 			std::ostream &get_fileStream();
 			
-			// If the LOG_BUFFER is active there is the additional option only to print the log if an error occours.
+			// If the LOG_BUFFER is active there is the additional option only to print the log if an error occurs.
 			#ifdef XERUS_LOG_BUFFER
 				enum {
 					NOT_LOGGING = 0,
