@@ -38,6 +38,35 @@
 namespace xerus { namespace internal {
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
     
+    BlockTT::BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim) :
+        P(_blockDim),
+        corePosition(_blockPosition), 
+        dimensions(_dimensions) 
+    {
+        REQUIRE(_dimensions.size() == _ranks.size()+1, "_dimensions.size() != _ranks.size()+1");
+        REQUIRE(_blockPosition < _dimensions.size(), "_blockPosition >= _dimensions.size()");
+
+        const auto numComponents = _dimensions.size();
+        for(size_t i = 0; i < numComponents; ++i) {
+            std::vector<size_t> cmpDims;
+            if (i == _blockPosition) {
+                cmpDims.reserve(4);
+                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+                cmpDims.push_back(_dimensions[i]);
+                cmpDims.push_back(_blockDim);
+                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+            }
+            else {
+                cmpDims.reserve(3);
+                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+                cmpDims.push_back(_dimensions[i]);
+                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+            }
+
+            components.emplace_back(cmpDims);
+        }
+    }
+
     BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) : P(_blockDim), corePosition(_blockPosition), dimensions(_tttensor.dimensions) {
         REQUIRE(_tttensor.canonicalized && _tttensor.corePosition == _blockPosition, "Invalid core Position");
         _tttensor.require_correct_format();
@@ -109,6 +138,7 @@ namespace xerus { namespace internal {
     value_t BlockTT::frob_norm() const {
         return components[corePosition].frob_norm();
     }
+    value_t frob_norm(const BlockTT& _x) { return _x.frob_norm(); }
     
     
     size_t BlockTT::dofs() const {
@@ -214,7 +244,7 @@ namespace xerus { namespace internal {
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
     }
-	
+
     void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format) {
         if(_format == misc::FileFormat::TSV) {
             _stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
@@ -236,6 +266,13 @@ namespace xerus { namespace internal {
         _obj.corePosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
         _obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
         _obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
+    }
+
+    bool BlockTT::all_entries_valid() {
+        for (const auto& component : components) {
+            if (! component.all_entries_valid()) { return false; }
+        }
+        return true;
     }
 
 } } // namespace xerus
