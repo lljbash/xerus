@@ -33,6 +33,9 @@ namespace xerus { namespace internal {
 	 * @brief Specialized TensorNetwork class used to represent a BlockTT
 	 */
 	class BlockTT final  {
+	private:
+		static const Index left, right, ext, p, r1, r2;
+		
 	public:
         size_t P;
 		

@@ -129,6 +129,20 @@ namespace xerus { namespace uq {
 	}
 	
 	
+	Tensor evaluate(const TTTensor& _x, const std::vector<double>& _parameters, const PolynomBasis _basisType) {
+		REQUIRE(_x.degree() > 1, "IE");
+		REQUIRE(_parameters.size()+1 == _x.degree(), "Invalid Parameters");
+		Tensor p = Tensor::ones({1});
+		for(size_t k = _x.degree()-1; k > 0; --k) {
+			contract(p, _x.get_component(k), p, 1);
+			contract(p, p, polynomial_basis_evaluation(_parameters[k-1], _basisType, _x.dimensions[k]), 1);
+		}
+		contract(p, _x.get_component(0), p, 1);
+		p.reinterpret_dimensions({_x.dimensions[0]});
+		return p;
+	}
+	
+	
     void UQMeasurementSet::add(const std::vector<double>& _paramVec, const Tensor& _solution) {
 		parameterVectors.push_back(_paramVec);
 		solutions.push_back(_solution);
