@@ -87,7 +87,7 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	std::tuple<Tensor, Tensor, Tensor> mc_moments(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N){
+	std::tuple<Tensor, Tensor, Tensor> mc_moments(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
 		Tensor m1({_x.dimensions[0]}), m2({_x.dimensions[0]}), m3({_x.dimensions[0]});
 		
 		const Tensor one = Tensor::ones({1});
@@ -109,7 +109,9 @@ namespace xerus { namespace uq {
 			m3 += entrywise_product(pSqr,p);
 		}
 		
-		return std::make_tuple(m1/double(_N), m2/double(_N), m3/double(_N));
+		volatile double dN = double(_N); // TODO GCC bug? Removing volatile results in LTO to replace dN with ~0! 
+		
+		return std::make_tuple(m1/dN, m2/dN, m3/dN);
 	}
 
 	
