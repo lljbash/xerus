@@ -212,26 +212,31 @@ namespace xerus { namespace internal {
         }
     }
     
-    void BlockTT::move_core(const size_t _position, const bool _keepRank) {
+    value_t BlockTT::move_core(const size_t _position, const size_t _maxRank) {
+		REQUIRE(_maxRank > 0, "maxRank must be larger than zero.");
         REQUIRE(_position < degree(), "IE");
-        REQUIRE(_keepRank, "not implemented");
         Tensor U, S, V;
+        value_t ret = 0; // corePosition == _position
 
         while(corePosition < _position) { // To right
-            const size_t maxRank = get_component(corePosition).dimensions[3];
-            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            const Tensor& X = components[corePosition];
+            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+
             components[corePosition] = U;
             components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
             corePosition++;
         }
 
         while(corePosition > _position) { // To left
-            const size_t maxRank = get_component(corePosition).dimensions[0];
-            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            const Tensor X = reshuffle(components[corePosition], {0,2,1,3});
+            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+
             components[corePosition] = V;
             components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
             corePosition--;
         }
+
+        return ret;
     }
     
     void BlockTT::average_core() {
