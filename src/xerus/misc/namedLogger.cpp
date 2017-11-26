@@ -55,8 +55,9 @@ namespace xerus { namespace misc { namespace internal {
 				<< ':' << std::setw(2) << std::setfill('0') <<  xerus_err_ltm->tm_min
 				<< ':' << std::setw(2) << std::setfill('0') <<  xerus_err_ltm->tm_sec << ' ' << std::left;
 		#else
+			static std::chrono::system_clock::time_point startTime = std::max(programStartTime, std::chrono::system_clock::now());
 			std::chrono::system_clock::time_point xerus_err_t = std::chrono::system_clock::now();
-			auto xerus_err_timediff = std::chrono::duration_cast<std::chrono::milliseconds>(xerus_err_t - xerus::misc::internal::programStartTime).count();
+			auto xerus_err_timediff = std::chrono::duration_cast<std::chrono::milliseconds>(xerus_err_t - startTime).count();
 			_out << std::right << '+' << std::setw(2) << std::setfill('0') << (xerus_err_timediff/3600000)
 				<< ':' << std::setw(2) << std::setfill('0') << ((xerus_err_timediff/60000)%60)
 				<< ':' << std::setw(2) << std::setfill('0') <<  ((xerus_err_timediff/1000)%60)
