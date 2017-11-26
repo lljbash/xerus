@@ -1419,7 +1419,7 @@ namespace xerus {
 		_rhs.reset(std::move(newDim), std::move(_rhsData));
 	}
 	
-	void calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps) {
+	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps) {
 		REQUIRE(0 <= _eps && _eps < 1, "Epsilon must be fullfill 0 <= _eps < 1.");
 		
 		size_t lhsSize, rhsSize, rank;
@@ -1458,6 +1458,8 @@ namespace xerus {
 			blasWrapper::svd(_U.override_dense_data(), tmpS.get(), _Vt.override_dense_data(), _input.get_unsanitized_dense_data(), lhsSize, rhsSize);
 		}
 		
+        size_t full_rank = rank;
+
 		// Account for hard threshold
 		if(_maxRank != 0) {
 			rank = std::min(rank, _maxRank);
@@ -1484,6 +1486,9 @@ namespace xerus {
 		
 		_U.resize_mode(_U.degree()-1, rank);
 		_Vt.resize_mode(0, rank);
+
+        if (rank < full_rank) { return std::abs(_input.factor)*tmpS[rank]; }
+        else { return 0; }
 	}
 	
 	

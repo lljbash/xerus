@@ -87,7 +87,7 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	std::tuple<Tensor, Tensor, Tensor> mc_moments(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N){
+	std::tuple<Tensor, Tensor, Tensor> mc_moments(const TTTensor& _x, const PolynomBasis _basisType, const size_t _N) {
 		Tensor m1({_x.dimensions[0]}), m2({_x.dimensions[0]}), m3({_x.dimensions[0]});
 		
 		const Tensor one = Tensor::ones({1});
@@ -109,7 +109,9 @@ namespace xerus { namespace uq {
 			m3 += entrywise_product(pSqr,p);
 		}
 		
-		return std::make_tuple(m1/double(_N), m2/double(_N), m3/double(_N));
+		volatile double dN = double(_N); // TODO GCC bug? Removing volatile results in LTO to replace dN with ~0! 
+		
+		return std::make_tuple(m1/dN, m2/dN, m3/dN);
 	}
 
 	
@@ -126,6 +128,20 @@ namespace xerus { namespace uq {
 		skew.modify_entries([&sigmaSqr](value_t& _val, const size_t _idx){ _val /= std::pow(sigmaSqr[_idx], 1.5); });
 		
 		return std::make_tuple(std::get<0>(_moments), sigmaSqr, skew);
+	}
+	
+	
+	Tensor evaluate(const TTTensor& _x, const std::vector<double>& _parameters, const PolynomBasis _basisType) {
+		REQUIRE(_x.degree() > 1, "IE");
+		REQUIRE(_parameters.size()+1 == _x.degree(), "Invalid Parameters");
+		Tensor p = Tensor::ones({1});
+		for(size_t k = _x.degree()-1; k > 0; --k) {
+			contract(p, _x.get_component(k), p, 1);
+			contract(p, p, polynomial_basis_evaluation(_parameters[k-1], _basisType, _x.dimensions[k]), 1);
+		}
+		contract(p, _x.get_component(0), p, 1);
+		p.reinterpret_dimensions({_x.dimensions[0]});
+		return p;
 	}
 	
 	

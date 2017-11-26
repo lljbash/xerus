@@ -52,6 +52,10 @@ namespace xerus {namespace uq {
 
 	///@brief Calculates mean, variance and skewness using the first three stochastical moments.
 	std::tuple<Tensor, Tensor, Tensor> mean_var_skew(const std::tuple<Tensor, Tensor, Tensor>& _moments);
+	
+	
+	///@brief Evaluates the solution for the specified parameters
+	Tensor evaluate(const TTTensor& _x, const std::vector<double>& _parameters, const PolynomBasis _basisType);
 
 
 	class UQMeasurementSet {

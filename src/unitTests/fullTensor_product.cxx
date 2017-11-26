@@ -404,15 +404,15 @@ static misc::UnitTest tensor_prod1000("Tensor", "Product_1000x1000", [](){
     Tensor C({1000,1000}, Tensor::Representation::Dense);
     Index i, J, K;
 
-    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, &B[0], false);
+    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, B.get_dense_data(), false);
     res(i,K) = A(i,J) * B(J,K);
-    TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
+    MTEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0, "Error: " << frob_norm(res-C));
     
-    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, &B[0], true);
+    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, B.get_dense_data(), true);
     res(i,K) = A(i,J) * B(K,J);
     TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
     
-    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), true, 1000, &B[0], true);
+    blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), true, 1000, B.get_dense_data(), true);
     res(i,K) = A(J,i) * B(K,J);
     TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
 });

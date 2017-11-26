@@ -36,8 +36,38 @@
 #include <xerus/misc/basicArraySupport.h>
 
 namespace xerus { namespace internal {
+	const Index BlockTT::left, BlockTT::right, BlockTT::ext, BlockTT::p, BlockTT::r1, BlockTT::r2;
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
     
+    BlockTT::BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim) :
+        P(_blockDim),
+        corePosition(_blockPosition), 
+        dimensions(_dimensions) 
+    {
+        REQUIRE(_dimensions.size() == _ranks.size()+1, "_dimensions.size() != _ranks.size()+1");
+        REQUIRE(_blockPosition < _dimensions.size(), "_blockPosition >= _dimensions.size()");
+
+        const auto numComponents = _dimensions.size();
+        for(size_t i = 0; i < numComponents; ++i) {
+            std::vector<size_t> cmpDims;
+            if (i == _blockPosition) {
+                cmpDims.reserve(4);
+                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+                cmpDims.push_back(_dimensions[i]);
+                cmpDims.push_back(_blockDim);
+                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+            }
+            else {
+                cmpDims.reserve(3);
+                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+                cmpDims.push_back(_dimensions[i]);
+                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+            }
+
+            components.emplace_back(cmpDims);
+        }
+    }
+
     BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) : P(_blockDim), corePosition(_blockPosition), dimensions(_tttensor.dimensions) {
         REQUIRE(_tttensor.canonicalized && _tttensor.corePosition == _blockPosition, "Invalid core Position");
         _tttensor.require_correct_format();
@@ -48,7 +78,6 @@ namespace xerus { namespace internal {
         }
         
         // Create block
-        const Index left, right, ext, p;
         components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
     }
     
@@ -99,7 +128,6 @@ namespace xerus { namespace internal {
     
     
     Tensor BlockTT::get_average_core() const {
-        const Index left, right, ext, p;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         return coreCmp;
@@ -109,6 +137,7 @@ namespace xerus { namespace internal {
     value_t BlockTT::frob_norm() const {
         return components[corePosition].frob_norm();
     }
+    value_t frob_norm(const BlockTT& _x) { return _x.frob_norm(); }
     
     
     size_t BlockTT::dofs() const {
@@ -132,9 +161,8 @@ namespace xerus { namespace internal {
     
 	void BlockTT::move_core_left(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition > 0, "Can't move core left from position " << corePosition);
-        const Index left, right, ext, p, r1, r2;
 		
-		if(P == 1 || _maxRank == rank(corePosition-1)) {
+		if(P == 1) {
 			Tensor Q, R;
 			
 			(R(left, p, r1), Q(r1, ext, right)) = RQ(components[corePosition](left, ext, p, right));
@@ -154,9 +182,8 @@ namespace xerus { namespace internal {
     
     void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition+1 < degree(), "Can't move core right from position " << corePosition);
-        const Index left, right, ext, p, r1, r2;
 			
-		if(P == 1 || _maxRank == rank(corePosition)) {
+		if(P == 1) {
 			Tensor Q, R;
 			
 			(Q(left, ext, r1), R(r1, p, right)) = QR(components[corePosition](left, ext, p, right));
@@ -185,36 +212,40 @@ namespace xerus { namespace internal {
         }
     }
     
-    void BlockTT::move_core(const size_t _position, const bool _keepRank) {
+    value_t BlockTT::move_core(const size_t _position, const size_t _maxRank) {
+		REQUIRE(_maxRank > 0, "maxRank must be larger than zero.");
         REQUIRE(_position < degree(), "IE");
-        REQUIRE(_keepRank, "not implemented");
-        const Index left, right, ext, p, r1, r2;
         Tensor U, S, V;
+        value_t ret = 0; // corePosition == _position
 
         while(corePosition < _position) { // To right
-            const size_t maxRank = get_component(corePosition).dimensions[3];
-            (U(left, ext, r1), S(r1, r2), V(r2, p, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            const Tensor& X = components[corePosition];
+            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+
             components[corePosition] = U;
             components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
             corePosition++;
         }
 
         while(corePosition > _position) { // To left
-            const size_t maxRank = get_component(corePosition).dimensions[0];
-            (U(left, p, r1), S(r1, r2), V(r2, ext, right)) = SVD(components[corePosition](left, ext, p, right), maxRank, 0);
+            const Tensor X = reshuffle(components[corePosition], {0,2,1,3});
+            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+
             components[corePosition] = V;
             components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
             corePosition--;
         }
+
+        return ret;
     }
     
     void BlockTT::average_core() {
-        const Index left, right, ext, p;
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
     }
-	
+    
+
     void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format) {
         if(_format == misc::FileFormat::TSV) {
             _stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
@@ -228,6 +259,7 @@ namespace xerus { namespace internal {
         xerus::misc::write_to_stream<std::vector<xerus::Tensor>>(_stream, _obj.components, _format);
     }
     
+    
     void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format) {
         size_t ver = xerus::misc::read_from_stream<size_t>(_stream, _format);
         REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
@@ -236,6 +268,14 @@ namespace xerus { namespace internal {
         _obj.corePosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
         _obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
         _obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
+    }
+    
+
+    bool BlockTT::all_entries_valid() {
+        for (const auto& component : components) {
+            if (! component.all_entries_valid()) { return false; }
+        }
+        return true;
     }
 
 } } // namespace xerus
