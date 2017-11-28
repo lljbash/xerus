@@ -271,9 +271,9 @@ namespace xerus { namespace internal {
     }
     
 
-    bool BlockTT::all_entries_valid() {
-        for (const auto& component : components) {
-            if (! component.all_entries_valid()) { return false; }
+    bool BlockTT::all_entries_valid() const {
+        for (const auto& comp : components) {
+            if (! comp.all_entries_valid()) { return false; }
         }
         return true;
     }
