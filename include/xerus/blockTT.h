@@ -134,7 +134,7 @@ namespace xerus { namespace internal {
             
             void average_core();
 
-            bool all_entries_valid();
+            bool all_entries_valid() const;
 
 			value_t frob_norm() const;
 
