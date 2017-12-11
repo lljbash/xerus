@@ -45,6 +45,7 @@ namespace xerus { namespace internal {
 		 * with smaller index are then left-orthogonalized and all components with larger index right-orthogonalized.
 		 */
 		size_t corePosition;
+		size_t blockPosition;
         
         std::vector<Tensor> components;
         std::vector<size_t> dimensions;

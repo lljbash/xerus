@@ -42,6 +42,7 @@ namespace xerus { namespace internal {
     BlockTT::BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim) :
         P(_blockDim),
         corePosition(_blockPosition), 
+        blockPosition(_blockPosition), 
         dimensions(_dimensions) 
     {
         REQUIRE(_dimensions.size() == _ranks.size()+1, "_dimensions.size() != _ranks.size()+1");
@@ -68,7 +69,12 @@ namespace xerus { namespace internal {
         }
     }
 
-    BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) : P(_blockDim), corePosition(_blockPosition), dimensions(_tttensor.dimensions) {
+    BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) :
+        P(_blockDim), 
+        corePosition(_blockPosition), 
+        blockPosition(_blockPosition), 
+        dimensions(_tttensor.dimensions) 
+    {
         REQUIRE(_tttensor.canonicalized && _tttensor.corePosition == _blockPosition, "Invalid core Position");
         _tttensor.require_correct_format();
         
@@ -177,6 +183,7 @@ namespace xerus { namespace internal {
 			components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
 		}
 		corePosition--;
+		blockPosition--;
     }
     
     
@@ -197,6 +204,7 @@ namespace xerus { namespace internal {
 			components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
 		}
 		corePosition++;
+		blockPosition++;
     }
 	
 	
@@ -225,6 +233,7 @@ namespace xerus { namespace internal {
             components[corePosition] = U;
             components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
             corePosition++;
+            blockPosition++;
         }
 
         while(corePosition > _position) { // To left
@@ -234,6 +243,7 @@ namespace xerus { namespace internal {
             components[corePosition] = V;
             components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
             corePosition--;
+            blockPosition--;
         }
 
         return ret;
@@ -255,6 +265,7 @@ namespace xerus { namespace internal {
         
         xerus::misc::write_to_stream<size_t>(_stream, _obj.P, _format);
         xerus::misc::write_to_stream<size_t>(_stream, _obj.corePosition, _format);
+        xerus::misc::write_to_stream<size_t>(_stream, _obj.blockPosition, _format);
         xerus::misc::write_to_stream<std::vector<size_t>>(_stream, _obj.dimensions, _format);
         xerus::misc::write_to_stream<std::vector<xerus::Tensor>>(_stream, _obj.components, _format);
     }
@@ -265,7 +276,8 @@ namespace xerus { namespace internal {
         REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
 
         _obj.P = xerus::misc::read_from_stream<size_t>(_stream, _format);
-        _obj.corePosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
+        _obj.corePosition  = xerus::misc::read_from_stream<size_t>(_stream, _format);
+        _obj.blockPosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
         _obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
         _obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
     }
