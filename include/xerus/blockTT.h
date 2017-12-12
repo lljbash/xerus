@@ -111,6 +111,9 @@ namespace xerus { namespace internal {
 			* @return A vector containing the current ranks.
 			*/
 			std::vector<size_t> ranks() const;
+            
+            ///@brief Return the number of components
+            size_t num_components() const;
 			
 			
 			/** 

@@ -99,6 +99,8 @@ namespace xerus { namespace internal {
 		}
 		return res;
 	}
+
+    size_t BlockTT::num_components() const { return components.size(); }
 	
 	size_t BlockTT::rank(const size_t _idx) const {
         REQUIRE(_idx+1 < degree(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree() << " components.");
