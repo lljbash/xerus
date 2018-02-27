@@ -1300,9 +1300,10 @@ namespace xerus {
 			const Tensor& componentA = _A.get_component(i);
 			const Tensor& componentB = _B.get_component(i);
 			const Tensor::Representation newRep = componentA.is_sparse() && componentB.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
-			Tensor newComponent(isOperator ? 
-				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions[2], componentA.dimensions.back()*componentB.dimensions.back()}) : 
-				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions.back()*componentB.dimensions.back()}), newRep);
+			Tensor newComponent(isOperator ?
+				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions[2], componentA.dimensions.back()*componentB.dimensions.back()}) :
+				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions.back()*componentB.dimensions.back()}), 
+			newRep);
 			
 			perform_component_product<isOperator>(newComponent, componentA, componentB);
 			

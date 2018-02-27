@@ -33,32 +33,30 @@
 
 namespace xerus {
 
-	void decomposition_als(TTTensor& _x, const Tensor& _b, const double _eps, const size_t _maxIterations) {
+	void decomposition_als(TTTensor& _x, const Tensor& _b, const double _eps, const size_t _numHalfSweeps) {
 		Index k, iU, iX, iL, rU, rL;
 		Tensor newXi;
 		
 		double lastResidual = frob_norm(Tensor(_x) - _b);
-//         LOG(bla, "Initial residual " << lastResidual);
 		
-		for(size_t iteration = 0; iteration < _maxIterations; ++iteration) {
+		for(size_t iteration = 0; iteration < _numHalfSweeps; iteration += 2) {
 			// Move right
 			for(size_t pos = 0; pos < _x.degree(); ++pos) { XERUS_REQUIRE_TEST;
-//                 LOG(bla, "Optimizing position " << pos);
 				_x.move_core(pos);
 				std::pair<TensorNetwork, TensorNetwork> split = _x.chop(pos);
 				_x.component(pos)(rU, iX, rL) = split.first(iU&1, rU)*split.second(rL, iL&1)*_b(iU^pos, iX, iL&(pos+1));
 			}
 			
 			// Move left
-			for(size_t pos = _x.degree()-2; pos > 0; --pos) { XERUS_REQUIRE_TEST;
-//                 LOG(bla, "Optimizing position " << pos);
-				_x.move_core(pos);
-				std::pair<TensorNetwork, TensorNetwork> split = _x.chop(pos);
-				_x.component(pos)(rU, iX, rL) = split.first(iU&1, rU)*split.second(rL, iL&1)*_b(iU^pos, iX, iL&(pos+1));
+			if(iteration+1 < _numHalfSweeps) {
+				for(size_t pos = _x.degree()-2; pos > 0; --pos) { XERUS_REQUIRE_TEST;
+					_x.move_core(pos);
+					std::pair<TensorNetwork, TensorNetwork> split = _x.chop(pos);
+					_x.component(pos)(rU, iX, rL) = split.first(iU&1, rU)*split.second(rL, iL&1)*_b(iU^pos, iX, iL&(pos+1));
+				}
 			}
 			
 			double residual = frob_norm(Tensor(_x) - _b);
-// 			LOG(bla, "New residual " << residual << ", residual change " << (lastResidual-residual)/residual);
 			if(residual < EPSILON || (lastResidual-residual)/residual < _eps) { return; }
 			lastResidual = residual;
 		}

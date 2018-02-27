@@ -112,5 +112,7 @@ TTTensor randomTTSVD(const Tensor& _x, const std::vector<size_t>& _ranks, const 
     return ttX;
 }
 
+
+
 } // namespace xerus
 

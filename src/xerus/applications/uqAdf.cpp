@@ -45,7 +45,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		const size_t d;
 		
 		const double targetResidual;
-		const size_t maxRank = 40;
+		const size_t maxRank = 50;
 		const double minRankEps = 1e-8;
 		const double epsDecay = 0.8;
 		
