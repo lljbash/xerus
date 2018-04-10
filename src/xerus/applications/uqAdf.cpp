@@ -146,7 +146,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			outX(_x),
 			x(_x, 0, P),
 			rightStack(d, std::vector<Tensor>(N)),
-			leftIsStack(d, std::vector<Tensor>(N)), 
+			leftIsStack(d, std::vector<Tensor>(N)),
 			leftOughtStack(d, std::vector<Tensor>(N)),
 			rankEps(_initalRankEps),
 			prevRanks(tracking+1, _x.ranks())
@@ -172,20 +172,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				
 			} else { // _corePosition > 0
 				const Tensor shuffledX = reshuffle(x.get_component(_position), {1, 0, 2});
-				Tensor measCmp, tmp;
-				#pragma omp parallel for firstprivate(measCmp, tmp)
-				for(size_t j = 0; j < N; ++j) {
-					contract(measCmp, positions[_position][j], shuffledX, 1);
-					
-					if(_position > 1) {
-						contract(tmp, measCmp, true, leftIsStack[_position-1][j], false,  1);
-						contract(leftIsStack[_position][j], tmp, measCmp, 1);
-					} else { // _corePosition == 1
-						contract(leftIsStack[_position][j], measCmp, true, measCmp, false, 1);
-					}
-					
-					contract(leftOughtStack[_position][j], leftOughtStack[_position-1][j], measCmp, 1);
-				}
 			}
 		}
 		

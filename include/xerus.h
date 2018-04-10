@@ -58,6 +58,7 @@
     #include "xerus/algorithms/cg.h"
     #include "xerus/algorithms/decompositionAls.h"
     #include "xerus/algorithms/adf.h"
+    #include "xerus/algorithms/asd.h"
     #include "xerus/algorithms/iht.h"
     #include "xerus/algorithms/largestEntry.h"
     #include "xerus/algorithms/randomSVD.h"
