@@ -113,6 +113,17 @@ namespace xerus {
 		return std::sqrt(norm);
 	}
 	
+	
+	void SinglePointMeasurementSet::add_noise(const double _epsilon) {
+		const auto cSize = size();
+		const auto noiseTensor = Tensor::random({size()});
+		const double norm = xerus::frob_norm(noiseTensor);
+		
+		for(size_t i = 0; i < cSize; ++i) {
+			measuredValues[i] += (_epsilon/norm)*noiseTensor[i];
+		}
+	}
+	
 
 	void SinglePointMeasurementSet::measure(std::vector<value_t>& _values, const Tensor& _solution) const {
 		const auto cSize = size();
@@ -259,9 +270,6 @@ namespace xerus {
 	
 	
 	
-	
-	
-	
 	// --------------------- RankOneMeasurementSet -----------------
 	
 	
@@ -380,6 +388,17 @@ namespace xerus {
 			norm += misc::sqr(measuredValues[i]);
 		}
 		return std::sqrt(norm);
+	}
+	
+	
+	void RankOneMeasurementSet::add_noise(const double _epsilon) {
+		const auto cSize = size();
+		const auto noiseTensor = Tensor::random({size()});
+		const double norm = xerus::frob_norm(noiseTensor);
+		
+		for(size_t i = 0; i < cSize; ++i) {
+			measuredValues[i] += (_epsilon/norm)*noiseTensor[i];
+		}
 	}
 	
 	
@@ -516,7 +535,7 @@ namespace xerus {
 			positions.push_back(randOnePosition);
 		}
 		
-		measuredValues.resize(_numMeasurements, 0);
+		measuredValues.resize(_numMeasurements, 0.0);
 	}
 	
 	

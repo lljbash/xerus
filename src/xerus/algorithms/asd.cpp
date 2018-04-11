@@ -510,7 +510,7 @@ namespace xerus { namespace impl_TrASD {
 
 
 	void ASDVariant::operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData) const {
-		impl_TrASD::InternalSolver<3> solver(_x, _measurments, *this, initialRankEps, _x.ranks(), _perfData);
+		impl_TrASD::InternalSolver<1> solver(_x, _measurments, *this, initialRankEps, _x.ranks(), _perfData);
 		solver.solve();
 	}
 	

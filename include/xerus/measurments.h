@@ -76,6 +76,8 @@ namespace xerus {
 		
 		void sort(const bool _positionsOnly = false);
 		
+		void add_noise(const double _epsilon);
+		
 		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
 		
 // 		void measure(std::vector<value_t>& _values, const TTTensor& _solution) const; NICE: Minor speedup
@@ -142,6 +144,8 @@ namespace xerus {
 		void sort(const bool _positionsOnly);
 		
 		void normalize();
+		
+		void add_noise(const double _epsilon);
 		
 		
 		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;

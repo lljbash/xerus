@@ -55,7 +55,7 @@ void expose_leastSquaresAlgorithms() {
 			.def("get_runtime", &PerformanceData::get_runtime)
 			.def("add", +[](PerformanceData &_this, size_t _itr, const double _res, const TTTensor &_x, const size_t _flags) {
 				_this.add(_itr, _res, _x, _flags);
-			}, (arg("iterationCount"), arg("residual"), arg("x"), arg("flags")=0) )
+			}, (arg("iteration"), arg("residual"), arg("x"), arg("flags")=0) )
 			.def("add", +[](PerformanceData &_this, const double _res, const TTTensor &_x, size_t _flags) {
 				_this.add(_res, _x, _flags);
 			}, (arg("residual"), arg("x"), arg("flags")=0) )
@@ -68,7 +68,7 @@ void expose_leastSquaresAlgorithms() {
 		;
 		
 		class_<PerformanceData::DataPoint>("DataPoint", no_init)
-			.def_readonly("iterationCount", &PerformanceData::DataPoint::iterationCount)
+			.def_readonly("iteration", &PerformanceData::DataPoint::iteration)
 			.def_readonly("elapsedTime", &PerformanceData::DataPoint::elapsedTime)
 			.def_readonly("residuals", &PerformanceData::DataPoint::residuals)
 			.def_readonly("error", &PerformanceData::DataPoint::error)
