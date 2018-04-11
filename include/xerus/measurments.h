@@ -76,18 +76,25 @@ namespace xerus {
 		
 		void sort(const bool _positionsOnly = false);
 		
-		void measure(std::vector<value_t>& _values, );
+		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
+		
+// 		void measure(std::vector<value_t>& _values, const TTTensor& _solution) const; NICE: Minor speedup
+		
+		void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const;
 		
 		void measure(const Tensor& _solution);
 		
-// 		void measure(const TTTensor& _solution); NICE: Minor speedup
+		void measure(const TTTensor& _solution);
 		
 		void measure(const TensorNetwork& _solution);
 		
 		void measure(std::function<value_t(const std::vector<size_t>&)> _callback);
 		
-		
 		double test(const Tensor& _solution) const;
+		
+		double test(const TTTensor& _solution) const;
 		
 		double test(const TensorNetwork& _solution) const;
 		
@@ -137,16 +144,25 @@ namespace xerus {
 		void normalize();
 		
 		
+		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, const TTTensor& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<Tensor>&)> _callback) const;
+		
 		void measure(const Tensor& _solution);
 		
-		void measure(const TTTensor& _solution); 
+		void measure(const TTTensor& _solution);
 		
 		void measure(const TensorNetwork& _solution);
 		
 		void measure(std::function<value_t(const std::vector<Tensor>&)> _callback);
 		
-		
 		double test(const Tensor& _solution) const;
+		
+		double test(const TTTensor& _solution) const;
 		
 		double test(const TensorNetwork& _solution) const;
 		

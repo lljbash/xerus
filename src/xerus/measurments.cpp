@@ -37,6 +37,17 @@
  
 
 namespace xerus {
+	double relative_l2_difference(const std::vector<value_t>& _ref, const std::vector<value_t>& _test) {
+		const auto cSize = _ref.size();
+		double error = 0.0, norm = 0.0;
+		for(size_t i = 0; i < cSize; ++i) {
+			error += misc::sqr(_ref[i] - _test[i]);
+			norm += misc::sqr(_ref[i]);
+		}
+		
+		return std::sqrt(error/norm);
+	}
+	
 	// --------------------- SinglePointMeasurementSet -----------------
 	
 	SinglePointMeasurementSet SinglePointMeasurementSet::random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
@@ -102,15 +113,17 @@ namespace xerus {
 		return std::sqrt(norm);
 	}
 	
-	
-	void SinglePointMeasurementSet::measure(const Tensor& _solution) {
+
+	void SinglePointMeasurementSet::measure(std::vector<value_t>& _values, const Tensor& _solution) const {
 		const auto cSize = size();
 		for(size_t i = 0; i < cSize; ++i) {
-			measuredValues[i] = _solution[positions[i]];
+			_values[i] = _solution[positions[i]];
 		}
 	}
 	
-	void SinglePointMeasurementSet::measure(const TensorNetwork& _solution) {
+// 		void SinglePointMeasurementSet::measure(std::vector<value_t>& _values, const TTTensor& _solution) const; NICE: Minor speedup
+	
+	void SinglePointMeasurementSet::measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const {
 		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
 		std::vector<TensorNetwork> stack(degree()+1);
 		stack[0] = _solution;
@@ -136,73 +149,60 @@ namespace xerus {
 				stack[i+1].reduce_representation();
 			}
 			
-			measuredValues[j] = stack.back()[0];
+			_values[j] = stack.back()[0];
+		}
+	}
+	
+	void SinglePointMeasurementSet::measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const {
+		const auto cSize = size();
+		for(size_t i = 0; i < cSize; ++i) {
+			_values[i] = _callback(positions[i]);
 		}
 	}
 	
 	
+	void SinglePointMeasurementSet::measure(const Tensor& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
+	void SinglePointMeasurementSet::measure(const TTTensor& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
+	void SinglePointMeasurementSet::measure(const TensorNetwork& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
 	void SinglePointMeasurementSet::measure(std::function<value_t(const std::vector<size_t>&)> _callback) {
-		const auto cSize = size();
-		for(size_t i = 0; i < cSize; ++i) {
-			measuredValues[i] = _callback(positions[i]);
-		}
+		measure(measuredValues, _callback);
 	}
 	
 	
 	double SinglePointMeasurementSet::test(const Tensor& _solution) const {
-		const auto cSize = size();
-		double error = 0.0, norm = 0.0;
-		for(size_t i = 0; i < cSize; ++i) {
-			error += misc::sqr(measuredValues[i] - _solution[positions[i]]);
-			norm += misc::sqr(measuredValues[i]);
-		}
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
+	}
+	
+	
+	double SinglePointMeasurementSet::test(const TTTensor& _solution) const {
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
 	}
 	
 	
 	double SinglePointMeasurementSet::test(const TensorNetwork& _solution) const {
-		const auto cSize = size();
-		double error = 0.0, norm = 0.0;
-		
-		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
-		std::vector<TensorNetwork> stack(degree()+1);
-		stack[0] = _solution;
-		stack[0].reduce_representation();
-		
-		for(size_t j = 0; j < cSize; ++j) {
-			size_t rebuildIndex = 0;
-			
-			if(j > 0) {
-				// Find the maximal recyclable stack position
-				for(; rebuildIndex < degree(); ++rebuildIndex) {
-					if(positions[j-1][rebuildIndex] != positions[j][rebuildIndex]) {
-						break;
-					}
-				}
-			}
-			
-			// Rebuild stack
-			for(size_t i = rebuildIndex; i < degree(); ++i) {
-				stack[i+1] = stack[i];
-				stack[i+1].fix_mode(0, positions[j][i]);
-				stack[i+1].reduce_representation();
-			}
-			
-			error += misc::sqr(measuredValues[j] - stack.back()[0]);
-			norm += misc::sqr(measuredValues[j]);
-		}
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
 	}
 	
 	
 	double SinglePointMeasurementSet::test(std::function<value_t(const std::vector<size_t>&)> _callback) const {
-		const auto cSize = size();
-		double error = 0.0, norm = 0.0;
-		for(size_t i = 0; i < cSize; ++i) {
-			error += misc::sqr(measuredValues[i] - _callback(positions[i]));
-			norm += misc::sqr(measuredValues[i]);
-		}
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _callback);
+		return relative_l2_difference(measuredValues, testValues);
 	}
 	
 	
@@ -383,7 +383,8 @@ namespace xerus {
 	}
 	
 	
-	void RankOneMeasurementSet::measure(const Tensor& _solution) {
+	
+	void RankOneMeasurementSet::measure(std::vector<value_t>& _values, const Tensor& _solution) const {
 		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
 		std::vector<Tensor> stack(degree()+1);
 		stack[0] = _solution;
@@ -395,11 +396,12 @@ namespace xerus {
 			}
 			
 			REQUIRE(stack.back().degree() == 0, "IE");
-			measuredValues[j] = stack.back()[0];
+			_values[j] = stack.back()[0];
 		}
 	}
 	
-	void RankOneMeasurementSet::measure(const TTTensor& _solution) {
+	
+	void RankOneMeasurementSet::measure(std::vector<value_t>& _values, const TTTensor& _solution) const {
 		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
 		std::vector<Tensor> stack(degree()+1);
 		stack[0] = Tensor::ones({1});
@@ -414,11 +416,12 @@ namespace xerus {
 			
 			stack.back().reinterpret_dimensions({});
 			REQUIRE(stack.back().degree() == 0, "IE");
-			measuredValues[j] = stack.back()[0];
+			_values[j] = stack.back()[0];
 		}
 	}
 	
-	void RankOneMeasurementSet::measure(const TensorNetwork& _solution) {
+	
+	void RankOneMeasurementSet::measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const {
 		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
 		std::vector<TensorNetwork> stack(degree()+1);
 		stack[0] = _solution;
@@ -436,101 +439,64 @@ namespace xerus {
 			}
 			
 			REQUIRE(stack.back().degree() == 0, "IE");
-			measuredValues[j] = stack.back()[0];
+			_values[j] = stack.back()[0];
 		}
 	}
 	
 	
-	void RankOneMeasurementSet::measure(std::function<value_t(const std::vector<Tensor>&)> _callback) {
+	void RankOneMeasurementSet::measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<Tensor>&)> _callback) const {
 		const auto cSize = size();
 		for(size_t i = 0; i < cSize; ++i) {
-			measuredValues[i] = _callback(positions[i]);
+			_values[i] = _callback(positions[i]);
 		}
+	}
+	
+	
+	void RankOneMeasurementSet::measure(const Tensor& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
+	void RankOneMeasurementSet::measure(const TTTensor& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
+	void RankOneMeasurementSet::measure(const TensorNetwork& _solution) {
+		measure(measuredValues, _solution);
+	}
+	
+	void RankOneMeasurementSet::measure(std::function<value_t(const std::vector<Tensor>&)> _callback) {
+		measure(measuredValues, _callback);
 	}
 	
 	
 	double RankOneMeasurementSet::test(const Tensor& _solution) const {
-		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
-		const auto cSize = size();
-		double error = 0.0, norm = 0.0;
-		
-		std::vector<Tensor> stack(degree()+1);
-		stack[0] = _solution;
-		
-		for(size_t j = 0; j < cSize; ++j) {
-			size_t rebuildIndex = 0;
-			
-			if(j > 0) {
-				// Find the maximal recyclable stack position
-				for(; rebuildIndex < degree(); ++rebuildIndex) {
-					if(!approx_equal(positions[j-1][rebuildIndex], positions[j][rebuildIndex])) {
-						break;
-					}
-				}
-			}
-			
-			// Rebuild stack
-			for(size_t i = rebuildIndex; i < degree(); ++i) {
-				contract(stack[i+1], positions[j][i], false, stack[i], false, 1);
-			}
-			
-			error += misc::sqr(measuredValues[j] - stack.back()[0]);
-			norm += misc::sqr(measuredValues[j]);
-		}
-		
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
+	}
+	
+	
+	double RankOneMeasurementSet::test(const TTTensor& _solution) const {
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
 	}
 	
 	
 	double RankOneMeasurementSet::test(const TensorNetwork& _solution) const {
-		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
-		const auto cSize = size();
-        const Index l, k;
-        
-        double error = 0.0, norm = 0.0;
-        
-        #pragma omp parallel reduction(+:error, norm)
-        {
-            std::vector<TensorNetwork> stack(degree()+1);
-            stack[degree()] = _solution;
-            stack[degree()].reduce_representation();
-            
-            bool init = true;
-            #pragma omp for
-            for(size_t j = 0; j < cSize; ++j) {
-                size_t unchangedModes = 0;
-                
-                if(!init) {
-                    // Find the maximal recyclable stack position
-                    for(; unchangedModes < degree(); ++unchangedModes) {
-                        if(!approx_equal(positions[j-1][degree()-1-unchangedModes], positions[j][degree()-1-unchangedModes])) { break; }
-                    }
-                } else { init = false; }
-                
-                // Rebuild stack
-                for(long i = long(degree())-1-long(unchangedModes); i >= 0; --i) {
-					stack[size_t(i)](k&0) = stack[size_t(i+1)](k&1, l) * positions[j][size_t(i)](l);
-					stack[size_t(i)].reduce_representation();
-                }
-                
-                error += misc::sqr(measuredValues[j] - stack.front()[0]);
-                norm += misc::sqr(measuredValues[j]);
-            }
-		}
-		
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _solution);
+		return relative_l2_difference(measuredValues, testValues);
 	}
 	
 	
 	double RankOneMeasurementSet::test(std::function<value_t(const std::vector<Tensor>&)> _callback) const {
-		const auto cSize = size();
-		double error = 0.0, norm = 0.0;
-		for(size_t i = 0; i < cSize; ++i) {
-			error += misc::sqr(measuredValues[i] - _callback(positions[i]));
-			norm += misc::sqr(measuredValues[i]);
-		}
-		return std::sqrt(error/norm);
+		std::vector<value_t> testValues(size());
+		measure(testValues, _callback);
+		return relative_l2_difference(measuredValues, testValues);
 	}
+	
+	
 	
 	
 	
