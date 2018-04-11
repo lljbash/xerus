@@ -73,9 +73,9 @@ void expose_leastSquaresAlgorithms() {
 		class_<PerformanceData::DataPoint>("DataPoint", no_init)
 			.def_readonly("iterationCount", &PerformanceData::DataPoint::iterationCount)
 			.def_readonly("elapsedTime", &PerformanceData::DataPoint::elapsedTime)
-			.def_readonly("residual", &PerformanceData::DataPoint::residual)
+			.def_readonly("residuals", &PerformanceData::DataPoint::residuals)
 			.def_readonly("error", &PerformanceData::DataPoint::error)
-			.def_readonly("ranks", &PerformanceData::DataPoint::ranks)
+			.def_readonly("dofs", &PerformanceData::DataPoint::dofs)
 			.def_readonly("flags", &PerformanceData::DataPoint::flags)
 		;
 	}
