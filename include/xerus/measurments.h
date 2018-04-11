@@ -76,6 +76,7 @@ namespace xerus {
 		
 		void sort(const bool _positionsOnly = false);
 		
+		void measure(std::vector<value_t>& _values, );
 		
 		void measure(const Tensor& _solution);
 		
