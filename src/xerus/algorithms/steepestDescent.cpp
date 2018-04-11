@@ -115,7 +115,7 @@ namespace xerus {
 		};
 		
 		auto updatePerfdata = [&]() {
-			_perfData.add(currResidual);
+			_perfData.add(currResidual, _x);
 		};
 		updateResidual();
 		updatePerfdata();

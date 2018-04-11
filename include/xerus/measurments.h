@@ -36,6 +36,9 @@
 namespace xerus {
 	class Tensor;
 	class TensorNetwork;
+	template<bool isOperator> class TTNetwork;
+	typedef TTNetwork<false> TTTensor;
+	typedef TTNetwork<true> TTOperator;
 	
 	/** 
 	* @brief Class used to represent a single point measurments.
@@ -56,6 +59,8 @@ namespace xerus {
 		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
 		
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
+		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
 		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<size_t>&)> _callback);
@@ -73,6 +78,8 @@ namespace xerus {
 		
 		
 		void measure(const Tensor& _solution);
+		
+// 		void measure(const TTTensor& _solution); NICE: Minor speedup
 		
 		void measure(const TensorNetwork& _solution);
 		
@@ -109,6 +116,8 @@ namespace xerus {
 		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
 		
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
+		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
 		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<Tensor>&)> _callback);
@@ -128,6 +137,8 @@ namespace xerus {
 		
 		
 		void measure(const Tensor& _solution);
+		
+		void measure(const TTTensor& _solution); 
 		
 		void measure(const TensorNetwork& _solution);
 		

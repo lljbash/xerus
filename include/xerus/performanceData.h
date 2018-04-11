@@ -35,7 +35,6 @@
 
 namespace xerus {
 	template<bool isOperator> class TTNetwork;
-	
 	typedef TTNetwork<false> TTTensor;
 	typedef TTNetwork<true> TTOperator;
 	
@@ -43,15 +42,15 @@ namespace xerus {
 	class PerformanceData {
 	public:
 		struct DataPoint {
-			size_t iterationCount;
+			size_t iteration;
 			size_t elapsedTime;
-			double residual;
+			std::vector<double> residuals;
 			double error;
-			TensorNetwork::RankTuple ranks;
+			size_t dofs;
 			size_t flags;
 			
-			DataPoint(const size_t _itrCount, const size_t _time, const value_t _residual, const value_t _error, const TensorNetwork::RankTuple _ranks, const size_t _flags) 
-				: iterationCount(_itrCount), elapsedTime(_time), residual(_residual), error(_error), ranks(_ranks), flags(_flags) {}
+			DataPoint(const size_t _itrCount, const size_t _time, const std::vector<double>& _residual, const value_t _error, const size_t _dofs, const size_t _flags) 
+				: iteration(_itrCount), elapsedTime(_time), residuals(_residual), error(_error), dofs(_dofs), flags(_flags) {}
 		};
 		
 		const bool active;
@@ -68,73 +67,31 @@ namespace xerus {
 		std::string additionalInformation;
 		
 		
-		explicit PerformanceData(const bool _printProgress = false, const bool _active = true) : 
-			active(_active), printProgress(_printProgress), startTime(~0ul), stopTime(~0ul) {}
+		explicit PerformanceData(const bool _printProgress = false, const bool _active = true);
 		
-		explicit PerformanceData(const ErrorFunction& _errorFunction, const bool _printProgress = false, const bool _active = true) : 
-			active(_active), printProgress(_printProgress), errorFunction(_errorFunction), startTime(~0ul), stopTime(~0ul) {}
+		explicit PerformanceData(const ErrorFunction& _errorFunction, const bool _printProgress = false, const bool _active = true);
 		
-		void start() {
-			using ::xerus::misc::operator<<;
-			if (active) {
-				if(printProgress) {
-					std::stringstream ss(additionalInformation);
-					while (ss) {
-						std::string line;
-						std::getline(ss, line);
-						XERUS_LOG_SHORT(PerformanceData, line);
-					}
-				}
-				startTime = misc::uTime();
-			}
-		}
+		void start();
 		
-		void stop_timer() {
-			if (active) {
-				stopTime = misc::uTime();
-			}
-		}
+		void stop_timer();
 		
-		void continue_timer() {
-			if (active) {
-				size_t currtime = misc::uTime();
-				startTime += currtime - stopTime;
-				stopTime = ~0ul;
-			}
-		}
+		void continue_timer();
 		
-		void reset() {
-			if (active) {
-				data.clear();
-				additionalInformation.clear();
-				startTime = ~0ul;
-				stopTime = ~0ul;
-			}
-		}
+		void reset();
 		
-		size_t get_elapsed_time() const {
-			return misc::uTime() - startTime;
-		}
+		size_t get_elapsed_time() const;
 		
-		size_t get_runtime() const {
-			if (stopTime != ~0ul) {
-				return stopTime - startTime;
-			} else {
-				return misc::uTime() - startTime;
-			}
-		}
+		size_t get_runtime() const;
 		
-		void add(const size_t _itrCount, const value_t _residual, const TensorNetwork::RankTuple _ranks = TensorNetwork::RankTuple(), const size_t _flags = 0);
+		void add(const double _residual, const TTTensor& _x, const size_t _flags = 0);
 		
-		void add(const size_t _itrCount, const value_t _residual, const TTTensor& _x, const size_t _flags = 0);
+		void add(const std::vector<double>& _residuals, const TTTensor& _x, const size_t _flags = 0);
 		
-		void add(const value_t _residual, const TensorNetwork::RankTuple _ranks = TensorNetwork::RankTuple(), const size_t _flags = 0);
+		void add(const size_t _itrCount, const double _residual, const TTTensor& _x, const size_t _flags = 0);
 		
-		void add(const value_t _residual, const TTTensor& _x, const size_t _flags = 0);
+		void add(const size_t _itrCount, const std::vector<double>& _residuals, const TTTensor& _x, const size_t _flags);
 		
-		operator bool() const {
-			return active;
-		}
+		operator bool() const { return active; }
 		
 		/// @brief The pipe operator allows to add everything that can be converted to string to the additional information in the header. 
 		template<class T>

@@ -105,6 +105,9 @@ namespace xerus { namespace internal {
             
 			Tensor get_average_core() const;
 			
+            
+			TTTensor get_average_tt() const;
+			
 			
 			/** 
 			* @brief Gets the ranks of the TTNetwork.

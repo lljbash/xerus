@@ -42,12 +42,18 @@ namespace xerus {
 	SinglePointMeasurementSet SinglePointMeasurementSet::random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
 		SinglePointMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _dimensions);
-		result.measuredValues.resize(_numMeasurements, 0);
 		return result;
 	}
 	
 	
 	SinglePointMeasurementSet SinglePointMeasurementSet::random(const size_t _numMeasurements, const Tensor& _solution) {
+		SinglePointMeasurementSet result;
+		result.create_random_positions(_numMeasurements, _solution.dimensions);
+		result.measure(_solution);
+		return result;
+	}
+	
+	SinglePointMeasurementSet SinglePointMeasurementSet::random(const size_t _numMeasurements, const TTTensor& _solution) {
 		SinglePointMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _solution.dimensions);
 		result.measure(_solution);
@@ -84,24 +90,6 @@ namespace xerus {
 		REQUIRE(positions.empty() || _position.size() == positions.back().size(), "Given _position has incorrect degree " << _position.size() << ". Expected " << positions.back().size() << ".");
 		positions.emplace_back(_position);
 		measuredValues.emplace_back(_measuredValue);
-	}
-	
-	void SinglePointMeasurementSet::sort(const bool _positionsOnly) {
-		const auto comperator = [](const std::vector<size_t>& _lhs, const std::vector<size_t>& _rhs) {
-			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions."); 
-			for (size_t i = 0; i < _lhs.size(); ++i) {
-				if (_lhs[i] < _rhs[i]) { return true; }
-				if (_lhs[i] > _rhs[i]) { return false; }
-			}
-			return false; // equality
-		};
-		
-		if(_positionsOnly) {
-			std::sort(positions.begin(), positions.end(), comperator);
-		} else {
-			REQUIRE(positions.size() == measuredValues.size(), "Inconsitend SinglePointMeasurementSet encountered.");
-			misc::simultaneous_sort(positions, measuredValues, comperator);
-		}
 	}
 	
 	
@@ -218,9 +206,31 @@ namespace xerus {
 	}
 	
 	
+	struct vec_compare {
+		bool operator() (const std::vector<size_t>& _lhs, const std::vector<size_t>& _rhs) const {
+			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions."); 
+			for (size_t i = 0; i < _lhs.size(); ++i) {
+				if (_lhs[i] < _rhs[i]) { return true; }
+				if (_lhs[i] > _rhs[i]) { return false; }
+			}
+			return false; // equality
+		}
+	};
+	
+	
+	void SinglePointMeasurementSet::sort(const bool _positionsOnly) {
+		const vec_compare comperator;
+
+		if(_positionsOnly) {
+			std::sort(positions.begin(), positions.end(), comperator);
+		} else {
+			REQUIRE(positions.size() == measuredValues.size(), "Inconsitend SinglePointMeasurementSet encountered.");
+			misc::simultaneous_sort(positions, measuredValues, comperator);
+		}
+	}
+	
 	
 	void SinglePointMeasurementSet::create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
-		using ::xerus::misc::operator<<;
 		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
 		
 		// Create distributions
@@ -229,23 +239,23 @@ namespace xerus {
 			indexDist.emplace_back(0, _dimensions[i]-1);
 		}
 		
-		std::set<size_t> measuredPositions;
+		std::set<std::vector<size_t>, vec_compare> measuredPositions;
 		std::vector<size_t> multIdx(_dimensions.size());
-		while (positions.size() < _numMeasurements) {
-			size_t pos = 0;
+		while (measuredPositions.size() < _numMeasurements) {
 			for (size_t i = 0; i < _dimensions.size(); ++i) {
 				multIdx[i] = indexDist[i](misc::randomEngine);
-				pos *= _dimensions[i]; pos += multIdx[i];
 			}
-			if (!misc::contains(measuredPositions, pos)) {
-				measuredPositions.insert(pos);
-				positions.push_back(multIdx);
-			}
+			measuredPositions.insert(multIdx);
 		}
 		
-		sort(true);
-		measuredValues.resize(_numMeasurements);
+		for(const auto& pos : measuredPositions) {
+			positions.push_back(pos);
+		}
+		
+		measuredValues.resize(_numMeasurements, 0.0);
 	}
+	
+	
 	
 	
 	
@@ -273,7 +283,6 @@ namespace xerus {
 	RankOneMeasurementSet RankOneMeasurementSet::random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
 		RankOneMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _dimensions);
-		result.measuredValues.resize(_numMeasurements, 0);
 		return result;
 	}
 	
@@ -281,27 +290,34 @@ namespace xerus {
 	RankOneMeasurementSet RankOneMeasurementSet::random(const size_t _numMeasurements, const Tensor& _solution) {
 		RankOneMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _solution.dimensions);
-		result.measure(_solution);
+		result.measure(_solution );
 		return result;
 	}
 		
+	RankOneMeasurementSet RankOneMeasurementSet::random(const size_t _numMeasurements, const TTTensor& _solution) {
+		RankOneMeasurementSet result;
+		result.create_random_positions(_numMeasurements, _solution.dimensions);
+		result.measure(_solution );
+		return result;
+	}
+	
 	RankOneMeasurementSet RankOneMeasurementSet::random(const size_t _numMeasurements, const TensorNetwork& _solution) {
 		RankOneMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _solution.dimensions);
-		result.measure(_solution);
+		result.measure(_solution );
 		return result;
 	}
 	
 	RankOneMeasurementSet RankOneMeasurementSet::random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<Tensor>&)> _callback) {
 		RankOneMeasurementSet result;
 		result.create_random_positions(_numMeasurements, _dimensions);
-		result.measure(_callback);
+		result.measure(_callback );
 		return result;
 	}
 	
 	
 	size_t RankOneMeasurementSet::size() const {
-		REQUIRE(positions.size() == measuredValues.size(), "Inconsitend SinglePointMeasurementSet encountered.");
+		REQUIRE(positions.size() == measuredValues.size(), "Inconsitend RankOneMeasurementSet encountered.");
 		return positions.size();
 	}
 	
@@ -374,22 +390,30 @@ namespace xerus {
 		
 		const auto cSize = size();
 		for(size_t j = 0; j < cSize; ++j) {
-			size_t rebuildIndex = 0;
-			
-			if(j > 0) {
-				// Find the maximal recyclable stack position
-				for(; rebuildIndex < degree(); ++rebuildIndex) {
-					if(!approx_equal(positions[j-1][rebuildIndex], positions[j][rebuildIndex])) {
-						break;
-					}
-				}
+			for(size_t i = 0; i < degree(); ++i) {
+				contract(stack[i+1], positions[j][i], stack[i], 1);
 			}
 			
-			// Rebuild stack
-			for(size_t i = rebuildIndex; i < degree(); ++i) {
-				contract(stack[i+1], positions[j][i], false, stack[i], false, 1);
+			REQUIRE(stack.back().degree() == 0, "IE");
+			measuredValues[j] = stack.back()[0];
+		}
+	}
+	
+	void RankOneMeasurementSet::measure(const TTTensor& _solution) {
+		REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
+		std::vector<Tensor> stack(degree()+1);
+		stack[0] = Tensor::ones({1});
+		
+		Tensor tmp;
+		const auto cSize = size();
+		for(size_t j = 0; j < cSize; ++j) {
+			for(size_t i = 0; i < degree(); ++i) {
+				contract(tmp, stack[i], _solution.get_component(i) , 1);
+				contract(stack[i+1], positions[j][i], tmp, 1);
 			}
 			
+			stack.back().reinterpret_dimensions({});
+			REQUIRE(stack.back().degree() == 0, "IE");
 			measuredValues[j] = stack.back()[0];
 		}
 	}
@@ -400,27 +424,18 @@ namespace xerus {
 		stack[0] = _solution;
 		stack[0].reduce_representation();
 		
-		Index l, k;
+		const Index l, k;
 		
 		const auto cSize = size();
 		for(size_t j = 0; j < cSize; ++j) {
-			size_t rebuildIndex = 0;
-			
-			if(j > 0) {
-				// Find the maximal recyclable stack position
-				for(; rebuildIndex < degree(); ++rebuildIndex) {
-					if(!approx_equal(positions[j-1][rebuildIndex], positions[j][rebuildIndex])) {
-						break;
-					}
-				}
-			}
 			
 			// Rebuild stack
-			for(size_t i = rebuildIndex; i < degree(); ++i) {
+			for(size_t i = 0; i < degree(); ++i) {
 				stack[i+1](k&0) = positions[j][i](l) * stack[i](l, k&1);
 				stack[i+1].reduce_representation();
 			}
 			
+			REQUIRE(stack.back().degree() == 0, "IE");
 			measuredValues[j] = stack.back()[0];
 		}
 	}
@@ -523,24 +538,19 @@ namespace xerus {
 		using ::xerus::misc::operator<<;
 		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
 		
-		// Create distributions
-		std::vector<std::uniform_int_distribution<size_t>> indexDist;
-		for (size_t i = 0; i < _dimensions.size(); ++i) {
-			indexDist.emplace_back(0, _dimensions[i]-1);
-		}
-		
 		std::vector<Tensor> randOnePosition(_dimensions.size());
 		while (positions.size() < _numMeasurements) {
 			for (size_t i = 0; i < _dimensions.size(); ++i) {
 				randOnePosition[i] = Tensor::random({_dimensions[i]});
+				randOnePosition[i] /= xerus::frob_norm(randOnePosition[i]);
+				randOnePosition[i].apply_factor();
 			}
 			
 			// NOTE Assuming our random generator works, no identical positions should occour.
 			positions.push_back(randOnePosition);
 		}
 		
-		sort(true);
-		measuredValues.resize(_numMeasurements);
+		measuredValues.resize(_numMeasurements, 0);
 	}
 	
 	

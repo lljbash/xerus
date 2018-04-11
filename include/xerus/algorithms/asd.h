@@ -33,9 +33,18 @@ namespace xerus {
 	
 	class ASDVariant : public OptimizationAlgorithm {
 	public:
-		/// fully defining constructor. alternatively ALSVariants can be created by copying a predefined variant and modifying it
-        ASDVariant(const size_t _maxIteration, const double _targetResidual, const double _minimalResidualDecrease)
-                : OptimizationAlgorithm(_maxIteration, _targetResidual, _minimalResidualDecrease) { }
+
+		double minRankEps = 1e-8;
+		
+		double epsDecay = 0.8;
+		
+		double controlSetFraction = 0.1;
+		
+		double initialRankEps = 0.01;
+		
+		/// Basic constructor
+        ASDVariant(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease)
+                : OptimizationAlgorithm(0, _maxIterations, _targetRelativeResidual, _minimalResidualNormDecrease) { }
         
         /**
 		* @brief Tries to reconstruct the (low rank) tensor _x from the given measurments. 

@@ -415,7 +415,7 @@ namespace xerus {
 	size_t TTNetwork<isOperator>::degrees_of_freedom(const std::vector<size_t> &_dimensions, const std::vector<size_t> &_ranks) {
 		if (_dimensions.empty()) { return 1; }
 		const size_t numComponents = _dimensions.size()/N;
-		REQUIRE(_dimensions.size()%N == 0, "invalid number of dimensions for TTOperator");
+		REQUIRE(_dimensions.size()%N == 0, "Invalid number of dimensions for TTOperator");
 		REQUIRE(numComponents == _ranks.size()+1, "Invalid number of ranks ("<<_ranks.size()<<") or dimensions ("<<_dimensions.size()<<") given.");
 		size_t result = 0;
 		for (size_t i=0; i<numComponents; ++i) {
@@ -432,7 +432,7 @@ namespace xerus {
 	}
 	
 	template<bool isOperator>
-	size_t TTNetwork<isOperator>::degrees_of_freedom() {
+	size_t TTNetwork<isOperator>::degrees_of_freedom() const {
 		return degrees_of_freedom(dimensions, ranks());
 	}
 	

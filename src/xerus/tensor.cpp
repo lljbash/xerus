@@ -330,13 +330,14 @@ namespace xerus {
 		
 		if(is_dense()) {
 			return denseData.get()[_position];
+		} else {
+			value_t& result = (*sparseData)[_position];
+			use_dense_representation_if_desirable();
+			if (is_dense()) {
+				return denseData.get()[_position];
+			}
+			return result;
 		}
-		value_t& result = (*sparseData)[_position];
-		use_dense_representation_if_desirable();
-		if (is_dense()) {
-			return denseData.get()[_position];
-		}
-		return result;
 	}
 	
 
@@ -345,12 +346,13 @@ namespace xerus {
 		
 		if(is_dense()) {
 			return factor*denseData.get()[_position];
-		} 
-		const std::map<size_t, value_t>::const_iterator entry = sparseData->find(_position);
-		if(entry == sparseData->end()) {
-			return 0.0;
+		} else {
+			const std::map<size_t, value_t>::const_iterator entry = sparseData->find(_position);
+			if(entry == sparseData->end()) {
+				return 0.0;
+			}
+			return factor*entry->second;
 		}
-		return factor*entry->second;
 	}
 	
 	

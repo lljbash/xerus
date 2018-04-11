@@ -33,16 +33,23 @@ namespace xerus {
 	*/
 	class OptimizationAlgorithm {
 	public:
-		///@brief Maximal allowed number of iterations
-		const size_t maxIterations; 
+		///@brief Minimal number of iterations.
+		size_t minIterations;
 		
-		///@brief The target relative residual at which the algorithm shall stop.
-		const double targetRelativeResidual;
+		///@brief Maximal allowed number of iterations.
+		size_t maxIterations;
+		
+		///@brief The target residual norm at which the algorithm shall stop.
+		double targetRelativeResidual;
 		
 		///@brief Minimal relative decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
-		const double minimalResidualNormDecrease;
+		double minimalResidualNormDecrease;
+		
+		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
+		size_t tracking = 100;
+		
 		
 	protected:
-		OptimizationAlgorithm(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease);
+		OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease);
 	};
 } // namespace xerus

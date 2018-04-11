@@ -293,7 +293,7 @@ namespace xerus {
 		/** 
 		 * @brief calculates the number of degrees of freedom of the manifold of fixed tt-rank that the given TTTensor is part of
 		 */
-		size_t degrees_of_freedom();
+		size_t degrees_of_freedom() const;
 		
 		virtual void fix_mode(const size_t _mode, const size_t _slatePosition) override;
 		
