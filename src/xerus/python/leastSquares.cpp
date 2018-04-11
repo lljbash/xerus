@@ -53,13 +53,13 @@ void expose_leastSquaresAlgorithms() {
 			.def("reset", &PerformanceData::reset)
 			.def("get_elapsed_time", &PerformanceData::get_elapsed_time)
 			.def("get_runtime", &PerformanceData::get_runtime)
-			.def("add", +[](PerformanceData &_this, size_t _itr,  value_t _res){
+			.def("add", +[](PerformanceData &_this, size_t _itr,  const std::vector<double>& _res){
 				_this.add(_itr, _res);
 			})
-			.def("add", +[](PerformanceData &_this, size_t _itr,  value_t _res, const TTTensor &_x, size_t _flags){
+			.def("add", +[](PerformanceData &_this, size_t _itr,  const std::vector<double>& _res, const TTTensor &_x, size_t _flags){
 				_this.add(_itr, _res, _x, _flags);
 			}, (arg("iterationCount"), arg("residual"), arg("x"), arg("flags")=0) )
-			.def("add", +[](PerformanceData &_this, value_t _res, const TTTensor &_x, size_t _flags){
+			.def("add", +[](PerformanceData &_this, const std::vector<double>& _res, const TTTensor &_x, size_t _flags){
 				_this.add(_res, _x, _flags);
 			}, (arg("residual"), arg("x"), arg("flags")=0) )
 			.def("__nonzero__", +[](PerformanceData &_this){ return bool(_this); })
