@@ -105,6 +105,8 @@ namespace xerus {
 		
 	private:
 		void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+		
+		void create_slice_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
 	};
 	
 	

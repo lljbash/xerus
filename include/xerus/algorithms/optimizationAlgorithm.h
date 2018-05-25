@@ -46,7 +46,7 @@ namespace xerus {
 		double minimalResidualNormDecrease;
 		
 		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
-		size_t tracking = 100;
+		size_t tracking = 10;
 		
 		
 	protected:

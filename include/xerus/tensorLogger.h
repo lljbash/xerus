@@ -34,7 +34,7 @@ XERUS_SET_LOGGING(unit_test, xerus::misc::internal::LOGGING_ON_ERROR)
 XERUS_SET_LOGGING(unit_tests, xerus::misc::internal::LOGGING_ON_ERROR)
 XERUS_SET_LOGGING(largestEntry, xerus::misc::internal::LOGGING_ON_ERROR)
 XERUS_SET_LOGGING(pydebug, xerus::misc::internal::LOGGING_ON_ERROR)
-// XERUS_SET_LOGGING(ADF, xerus::misc::internal::LOGGING_ON_ERROR)
+XERUS_SET_LOGGING(ADF, xerus::misc::internal::LOGGING_ON_ERROR)
 // XERUS_SET_LOGGING(ADFx, xerus::misc::internal::LOGGING_ON_ERROR)
 XERUS_SET_LOGGING(UQ, xerus::misc::internal::LOGGING_ON_ERROR)
 /* */

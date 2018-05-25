@@ -34,13 +34,15 @@ namespace xerus {
 	class ASDVariant : public OptimizationAlgorithm {
 	public:
 
-		double minRankEps = 1e-8;
+		double minRankEps = 1e-4;
 		
-		double epsDecay = 0.8;
+// 		double maxRankEps = 1e-1;
+		
+		double epsDecay = 1.1;
 		
 		double controlSetFraction = 0.1;
 		
-		double initialRankEps = 0.01;
+		double initialRankEps = 5e-2;
 		
 		/// Basic constructor
         ASDVariant(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease)

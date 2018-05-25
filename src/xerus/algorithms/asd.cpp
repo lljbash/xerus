@@ -113,6 +113,32 @@ namespace xerus { namespace impl_TrASD {
 		std::vector<std::vector<Tensor>> rightStack;
 		
 	public:
+		
+		void shuffle_sets() {
+			//Reset all sets
+			for(size_t setId = 0; setId < P; ++setId) {
+				sets[setId].clear();
+			}
+			
+			//Create the P sets used for optimization
+			std::uniform_int_distribution<size_t> setDist(0, P-1);
+			
+			for(size_t i = 0; i < numMeasurments; ++i ) {
+				if(!misc::contains(sets[P], i)) {
+					sets[setDist(misc::randomEngine)].push_back( i );
+				}
+			}
+			
+			// Calculate the measurment norms
+			for(size_t setId = 0; setId < P; ++setId) {
+				setNorms[setId] = 0.0;
+				for(const auto i : sets[setId]) {
+					setNorms[setId] += misc::sqr(measurments.measuredValues[i]);
+				}
+				setNorms[setId] = std::sqrt(setNorms[setId]);
+			}
+		}
+		
 		InternalSolver(	TTTensor& _x,
 						const RankOneMeasurementSet& _measurments,
 						const ASDVariant& _optiSettings,
@@ -137,7 +163,7 @@ namespace xerus { namespace impl_TrASD {
 			minRankEps(_optiSettings.minRankEps),
 			epsDecay(_optiSettings.epsDecay),
 			
-			controlSetFraction(_optiSettings.controlSetFraction),
+			controlSetFraction(P == 1 ? 0.0 : _optiSettings.controlSetFraction),
 			
 			perfData(_perfData),
 			
@@ -159,29 +185,23 @@ namespace xerus { namespace impl_TrASD {
 				XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
 				XERUS_REQUIRE(measurments.degree() == degree, "Measurment degree must coincide with x degree.");
 				
-				//Create the P sets used for optimization + one test set
+				// Create test set
 				std::uniform_real_distribution<double> stochDist(0.0, 1.0);
-				std::uniform_int_distribution<size_t> setDist(0, P-1);
 				
-				for(size_t i = 0; i < numMeasurments; ++i ) {
-					if(stochDist(misc::randomEngine) > controlSetFraction) {
-						sets[setDist(misc::randomEngine)].push_back( i );
-					} else {
-						sets[P].push_back(i);
-					}
-				}
-				
-				// Calculate the measurment norms
 				optNorm = 0.0;
-				for(size_t setId = 0; setId < P+1; ++setId ) {
-					setNorms[setId] = 0.0;
-					for(const auto i : sets[setId]) {
-						setNorms[setId] += misc::sqr(measurments.measuredValues[i]);
+				setNorms[P] = 0.0;
+				for(size_t i = 0; i < numMeasurments; ++i ) {
+					if(stochDist(misc::randomEngine) < controlSetFraction) {
+						sets[P].push_back(i);
+						setNorms[P] += misc::sqr(measurments.measuredValues[i]);
+					} else {
+						optNorm += misc::sqr(measurments.measuredValues[i]);
 					}
-					if(setId < P) { optNorm += setNorms[setId]; }
-					setNorms[setId] = std::sqrt(setNorms[setId]);
 				}
 				optNorm = std::sqrt(optNorm);
+				setNorms[P] = std::sqrt(setNorms[P]);
+				
+				shuffle_sets();
 			}
 			
 	private:
@@ -437,10 +457,12 @@ namespace xerus { namespace impl_TrASD {
 				double optResidual, testResidual;
 				std::vector<double> setResiduals;
 				std::tie(optResidual, testResidual, setResiduals) = calc_residuals();
-				residuals.push_back(optResidual);
-				prevRanks.push_back(x.ranks());
 				
-				if(testResidual < 0.9999*bestTestResidual) {
+				residuals.push_back(optResidual);
+				
+// 				prevRanks.push_back(x.ranks());
+				
+				if(P == 1 || testResidual < 0.99*bestTestResidual) {
 					bestX = x;
 					bestTestResidual = testResidual;
 					nonImprovementCounter = 0;
@@ -448,43 +470,35 @@ namespace xerus { namespace impl_TrASD {
 					nonImprovementCounter++;
 				}
 				
-						
+				
 // 				LOG(ADFx, "Residual " << std::scientific << residuals.back() << " " << /*setResiduals*/ -1 << ". NonImpCnt: " << nonImprovementCounter << ", Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs() << ". Norm: " << frob_norm(x.get_average_core()));
 				
-				if(residuals.back() < targetRelativeResidual || nonImprovementCounter >= 1000) {
-					finish(iteration);
-					LOG(adoff, "Target or MaxIter");
-					return;
+// 				bool maxRankReached = true;
+// 				for(size_t k = 0; k+1 < x.degree(); ++k ) {
+// 					maxRankReached = maxRankReached && (x.rank(k) == maxRanks[k]);
+// 				}
+				
+				if(P > 1 && nonImprovementCounter > 2) {
+					rankEps = std::min(0.25, 2*rankEps);
+					perfData << rankEps;
 				}
 				
-				if(residuals.back() > std::pow(minimalResidualNormDecrease, tracking)*residuals[0]) {
-					bool maxRankReached = false;
-					bool rankMaxed = false;
-					for(size_t k = 0; k < x.degree()-1; ++k ) {
-						maxRankReached = maxRankReached || (x.rank( k ) == maxRanks[k]);
-						rankMaxed = rankMaxed || (x.rank( k ) == prevRanks[0][k]+1);
-					}
-					
-					if(misc::hard_equal(rankEps, minRankEps) || maxRankReached) {
-						LOG(adoff, "MinRankEps or maxRank.");
-						finish(iteration);
-						return; // We are done!
-					}
-					
-					if(!rankMaxed) {
-						LOG(ADFx, "Reduce rankEps to " << std::max(minRankEps, epsDecay*rankEps));
-						rankEps = std::max(minRankEps, epsDecay*rankEps);
-					}
+				if(optResidual < targetRelativeResidual || nonImprovementCounter >= 25 || ( P == 1 && residuals.back() > std::pow(minimalResidualNormDecrease, tracking)*residuals[0])) {
+					finish(iteration);
+					return; // We are done!
 				}
+
 				
 				perfData.add(iteration, std::vector<double>{optResidual, testResidual} | setResiduals, x.get_average_tt(), 0);
+				
+				if(P>1) { shuffle_sets(); }
 					
 				// Forward sweep
 				for(size_t corePosition = 0; corePosition+1 < degree; ++corePosition) {
 					update_core(corePosition);
 					
 					
-					x.move_core_right(rankEps, std::min(maxRanks[corePosition], prevRanks[1][corePosition]+1));
+					x.move_core_right(rankEps, /*std::min(*/maxRanks[corePosition]/*, prevRanks[0][corePosition]+1)*/);
 					update_left_stack(corePosition);
 				}
 				
@@ -493,13 +507,13 @@ namespace xerus { namespace impl_TrASD {
 				
 				// Backward sweep
 				for(size_t corePosition = degree-1; corePosition > 0; --corePosition) {
-// 					update_core(corePosition);
+					update_core(corePosition);
 					
-					x.move_core_left(rankEps, std::min(maxRanks[corePosition-1], prevRanks[1][corePosition-1]+1));
+					x.move_core_left(rankEps, /*std::min(*/maxRanks[corePosition-1]/*, prevRanks[0][corePosition-1]+1)*/);
 					update_right_stack(corePosition);
 				}
 				
-// 				update_core(0);
+				update_core(0);
 			}
 			
 			finish(maxIterations);
@@ -520,5 +534,5 @@ namespace xerus { namespace impl_TrASD {
 		solver.solve();
 	}
 	
-	const ASDVariant TRASD(1000, 1e-10, 0.99999);
+	const ASDVariant TRASD(1000, 1e-10, 0.9995);
 } // namespace xerus

@@ -72,10 +72,10 @@ namespace xerus {
 	
 	void PerformanceData::reset() {
 		if (active) {
-			data.clear();
-			additionalInformation.clear();
 			startTime = ~0ul;
 			stopTime = ~0ul;
+			data.clear();
+			additionalInformation.clear();
 		}
 	}
 	

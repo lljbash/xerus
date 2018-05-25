@@ -242,6 +242,8 @@ namespace xerus {
 	
 	
 	void SinglePointMeasurementSet::create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
+// 		create_slice_random_positions(_numMeasurements, _dimensions);
+		
 		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
 		
 		// Create distributions
@@ -264,6 +266,45 @@ namespace xerus {
 		}
 		
 		measuredValues.resize(_numMeasurements, 0.0);
+	}
+	
+	
+	void SinglePointMeasurementSet::create_slice_random_positions(const size_t _sliceDensity, const std::vector<size_t>& _dimensions) {
+		// Create distributions
+		std::vector<std::uniform_int_distribution<size_t>> indexDist;
+		for (size_t i = 0; i < _dimensions.size(); ++i) {
+			indexDist.emplace_back(0, _dimensions[i]-1);
+		}
+		
+		std::set<std::vector<size_t>, vec_compare> measuredPositions;
+				std::vector<size_t> multIdx(_dimensions.size());
+		
+		for(size_t mu = 0; mu < _dimensions.size(); ++mu) {
+			XERUS_REQUIRE(misc::product(_dimensions) >= _sliceDensity*_dimensions[mu], "It's impossible to perform as many measurements as requested. " << _sliceDensity << " > " << _dimensions);
+			for(size_t k = 0; k < _dimensions[mu]; ++k) {
+				size_t added = 0;
+				while (added < _sliceDensity) {
+					for (size_t i = 0; i < _dimensions.size(); ++i) {
+						if(i == mu) {
+							multIdx[i] = k;
+						} else {
+							multIdx[i] = indexDist[i](misc::randomEngine);
+						}
+					}
+					
+					if(!misc::contains(measuredPositions, multIdx)) {
+						measuredPositions.insert(multIdx);
+						added++;
+					}
+				}
+			}
+		}
+		
+		for(const auto& pos : measuredPositions) {
+			positions.push_back(pos);
+		}
+		
+		measuredValues.resize(positions.size(), 0.0);
 	}
 	
 	
@@ -521,7 +562,7 @@ namespace xerus {
 	
 	void RankOneMeasurementSet::create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
 		using ::xerus::misc::operator<<;
-		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
+// 		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
 		
 		std::vector<Tensor> randOnePosition(_dimensions.size());
 		while (positions.size() < _numMeasurements) {
