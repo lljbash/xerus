@@ -479,7 +479,7 @@ namespace xerus { namespace impl_TrASD {
 // 				}
 				
 				if(P > 1 && nonImprovementCounter > 2) {
-					rankEps = std::min(0.25, 2*rankEps);
+					rankEps = std::min(0.32, 2*rankEps);
 					perfData << rankEps;
 				}
 				

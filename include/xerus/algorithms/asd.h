@@ -42,7 +42,7 @@ namespace xerus {
 		
 		double controlSetFraction = 0.1;
 		
-		double initialRankEps = 5e-2;
+		double initialRankEps = 5e-3;
 		
 		/// Basic constructor
         ASDVariant(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease)
