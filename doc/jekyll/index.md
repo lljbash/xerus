@@ -5,18 +5,18 @@ subtitle: "a general purpose tensor library"
 ---
 
 # Xerus
-**master:** <a href="https://git.hemio.de/xerus/xerus/commits/master"><img alt="build status" src="https://git.hemio.de/xerus/xerus/badges/master/build.svg" /></a> 
-<a href="https://git.hemio.de/xerus/xerus/commits/master"><img alt="coverage report" src="https://git.hemio.de/xerus/xerus/badges/master/coverage.svg" /></a> 
+**master:** <a href="https://git.hemio.de/xerus/xerus/commits/master"><img alt="build status" src="https://git.hemio.de/xerus/xerus/badges/master/build.svg" /></a>
+<a href="https://git.hemio.de/xerus/xerus/commits/master"><img alt="coverage report" src="https://git.hemio.de/xerus/xerus/badges/master/coverage.svg" /></a>
 <a href="https://git.hemio.de/xerus/xerus/commits/master">
 __breakFix1
 {% include version.svp %}
 __breakFix2
-**development:**  <a href="https://git.hemio.de/xerus/xerus/commits/development"><img alt="build status" src="https://git.hemio.de/xerus/xerus/badges/development/build.svg" /></a> 
+**development:**  <a href="https://git.hemio.de/xerus/xerus/commits/development"><img alt="build status" src="https://git.hemio.de/xerus/xerus/badges/development/build.svg" /></a>
 <a href="https://git.hemio.de/xerus/xerus/commits/development"><img alt="coverage report" src="https://git.hemio.de/xerus/xerus/badges/development/coverage.svg" /></a>
 
 
 The `xerus` library is a general purpose library for numerical calculations with higher order tensors, Tensor-Train Decompositions / Matrix Product States and general Tensor Networks.
-The focus of development was the simple usability and adaptibility to any setting that requires higher order tensors or decompositions thereof. 
+The focus of development was the simple usability and adaptibility to any setting that requires higher order tensors or decompositions thereof.
 
 The key features include:
 * Modern code and concepts incorporating many features of the `C++11` standard.
@@ -31,7 +31,7 @@ The key features include:
 
 ## Getting Started
 
-`xerus` can be obtained via [git](https://git.hemio.de/xerus/xerus) or as an archived download via the same link. 
+`xerus` can be obtained via [git](https://git.hemio.de/xerus/xerus) or as an archived download via the same link.
 To build and install the library you might want to check our the [Building xerus](/building_xerus) guide.
 
 Where to go from there depends on what you want to do with `xerus` and how you learn. You can quickly get a feeling for the library
@@ -50,13 +50,13 @@ Should you have any problems with the library do not hesitate to contact us at [
 The `xerus` library is published under the AGPL v3.0. With proper attribution you are thus allowed to freely use and modify the source code but if you distribute your software including the `xerus`
 library (or you provide a service based on this library) you have to provide the full source code under a compatible licence. For more information see the [AGPL](http://www.gnu.org/licenses/agpl-3.0.html).
 
-If this library proved useful in your scientific research we would be grateful for any contributions to the source code and citations. As there is no related article yet, a corresponding bibtex 
+If this library proved useful in your scientific research we would be grateful for any contributions to the source code and citations. As there is no related article yet, a corresponding bibtex
 entry might look as follows
 ~~~
 @Misc{xerus,
 	author = {Huber, Benjamin and Wolf, Sebastian},
 	title = {Xerus - A General Purpose Tensor Library},
 	howpublished = {\url{https://libxerus.org/}},
-	year = {2014--2017}
+	year = {2014--2018}
 }
 ~~~
