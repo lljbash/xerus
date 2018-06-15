@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -53,13 +53,10 @@ void expose_leastSquaresAlgorithms() {
 			.def("reset", &PerformanceData::reset)
 			.def("get_elapsed_time", &PerformanceData::get_elapsed_time)
 			.def("get_runtime", &PerformanceData::get_runtime)
-			.def("add", +[](PerformanceData &_this, size_t _itr,  value_t _res){
-				_this.add(_itr, _res);
-			})
-			.def("add", +[](PerformanceData &_this, size_t _itr,  value_t _res, const TTTensor &_x, size_t _flags){
+			.def("add", +[](PerformanceData &_this, size_t _itr, const double _res, const TTTensor &_x, const size_t _flags) {
 				_this.add(_itr, _res, _x, _flags);
-			}, (arg("iterationCount"), arg("residual"), arg("x"), arg("flags")=0) )
-			.def("add", +[](PerformanceData &_this, value_t _res, const TTTensor &_x, size_t _flags){
+			}, (arg("iteration"), arg("residual"), arg("x"), arg("flags")=0) )
+			.def("add", +[](PerformanceData &_this, const double _res, const TTTensor &_x, size_t _flags) {
 				_this.add(_res, _x, _flags);
 			}, (arg("residual"), arg("x"), arg("flags")=0) )
 			.def("__nonzero__", +[](PerformanceData &_this){ return bool(_this); })
@@ -71,11 +68,11 @@ void expose_leastSquaresAlgorithms() {
 		;
 		
 		class_<PerformanceData::DataPoint>("DataPoint", no_init)
-			.def_readonly("iterationCount", &PerformanceData::DataPoint::iterationCount)
+			.def_readonly("iteration", &PerformanceData::DataPoint::iteration)
 			.def_readonly("elapsedTime", &PerformanceData::DataPoint::elapsedTime)
-			.def_readonly("residual", &PerformanceData::DataPoint::residual)
+			.def_readonly("residuals", &PerformanceData::DataPoint::residuals)
 			.def_readonly("error", &PerformanceData::DataPoint::error)
-			.def_readonly("ranks", &PerformanceData::DataPoint::ranks)
+			.def_readonly("dofs", &PerformanceData::DataPoint::dofs)
 			.def_readonly("flags", &PerformanceData::DataPoint::flags)
 		;
 	}

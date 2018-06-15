@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -58,6 +58,7 @@
     #include "xerus/algorithms/cg.h"
     #include "xerus/algorithms/decompositionAls.h"
     #include "xerus/algorithms/adf.h"
+    #include "xerus/algorithms/asd.h"
     #include "xerus/algorithms/iht.h"
     #include "xerus/algorithms/largestEntry.h"
     #include "xerus/algorithms/randomSVD.h"

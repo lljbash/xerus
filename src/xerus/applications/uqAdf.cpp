@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -45,7 +45,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         const size_t d;
 
         const double targetResidual;
-        const size_t maxRank = 40;
+        const size_t maxRank = 50;
         const double minRankEps = 1e-8;
         const double epsDecay = 0.8;
 

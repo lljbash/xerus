@@ -18,16 +18,13 @@
 // or contact us at contact@libXerus.org.
 
 /**
- * @file
- * @brief compilation unit for the version constants
- */
+* @file
+* @brief Implementation of the OptimizationAlgorithm class.
+*/
 
-#include <xerus/misc/standard.h>
+#include <xerus/algorithms/optimizationAlgorithm.h>
+
 
 namespace xerus {
-	const int VERSION_MAJOR = XERUS_VERSION_MAJOR;
-	const int VERSION_MINOR = XERUS_VERSION_MINOR;
-	const int VERSION_REVISION = XERUS_VERSION_REVISION;
-	const int VERSION_COMMIT = XERUS_VERSION_COMMIT;
-}
-
+	OptimizationAlgorithm::OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease) : minIterations(_minIterations), maxIterations(_maxIterations), targetRelativeResidual(_targetRelativeResidual), minimalResidualNormDecrease(_minimalResidualNormDecrease) {}
+} // namespace xerus

@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -36,6 +36,9 @@
 namespace xerus {
 	class Tensor;
 	class TensorNetwork;
+	template<bool isOperator> class TTNetwork;
+	typedef TTNetwork<false> TTTensor;
+	typedef TTNetwork<true> TTOperator;
 	
 	/** 
 	* @brief Class used to represent a single point measurments.
@@ -56,6 +59,8 @@ namespace xerus {
 		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
 		
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
+		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
 		
 		static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<size_t>&)> _callback);
@@ -71,15 +76,27 @@ namespace xerus {
 		
 		void sort(const bool _positionsOnly = false);
 		
+		void add_noise(const double _epsilon);
+		
+		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
+		
+// 		void measure(std::vector<value_t>& _values, const TTTensor& _solution) const; NICE: Minor speedup
+		
+		void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const;
 		
 		void measure(const Tensor& _solution);
+		
+		void measure(const TTTensor& _solution);
 		
 		void measure(const TensorNetwork& _solution);
 		
 		void measure(std::function<value_t(const std::vector<size_t>&)> _callback);
 		
-		
 		double test(const Tensor& _solution) const;
+		
+		double test(const TTTensor& _solution) const;
 		
 		double test(const TensorNetwork& _solution) const;
 		
@@ -88,6 +105,8 @@ namespace xerus {
 		
 	private:
 		void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+		
+		void create_slice_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
 	};
 	
 	
@@ -109,6 +128,8 @@ namespace xerus {
 		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
 		
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
+		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
 		
 		static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<Tensor>&)> _callback);
@@ -126,15 +147,28 @@ namespace xerus {
 		
 		void normalize();
 		
+		void add_noise(const double _epsilon);
+		
+		
+		void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, const TTTensor& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
+		
+		void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<Tensor>&)> _callback) const;
 		
 		void measure(const Tensor& _solution);
+		
+		void measure(const TTTensor& _solution);
 		
 		void measure(const TensorNetwork& _solution);
 		
 		void measure(std::function<value_t(const std::vector<Tensor>&)> _callback);
 		
-		
 		double test(const Tensor& _solution) const;
+		
+		double test(const TTTensor& _solution) const;
 		
 		double test(const TensorNetwork& _solution) const;
 		

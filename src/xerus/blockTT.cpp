@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -139,6 +139,21 @@ namespace xerus { namespace internal {
         Tensor coreCmp;
         coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
         return coreCmp;
+    }
+    
+    
+    TTTensor BlockTT::get_average_tt() const {
+        TTTensor ttRep(dimensions);
+		
+		for(size_t i = 0; i < degree(); i++) {
+			if(i == corePosition) {
+				ttRep.set_component(i, get_average_core());
+			} else {
+				ttRep.set_component(i, get_component(i));
+			}
+		}
+		
+		return ttRep;
     }
             
     

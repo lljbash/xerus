@@ -24,7 +24,6 @@
 
 #include "misc.h"
 
-
 // TODO get_copy() wrapper in python correct manner
 BOOST_PYTHON_MODULE(xerus) {
 	using namespace xerus;
@@ -51,7 +50,7 @@ BOOST_PYTHON_MODULE(xerus) {
 	expose_ttnetwork();
 	
 	expose_leastSquaresAlgorithms();
-// 	expose_recoveryAlgorithms();
+ 	expose_recoveryAlgorithms();
 	
 	expose_misc();
 }

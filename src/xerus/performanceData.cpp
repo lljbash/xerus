@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -31,77 +31,140 @@
 
 namespace xerus {
 	
-	void PerformanceData::add(const size_t _itrCount, const xerus::value_t _residual, const std::vector<size_t> _ranks, const size_t _flags) {
+	PerformanceData::PerformanceData(const bool _printProgress, const bool _active) : 
+		active(_active), printProgress(_printProgress), startTime(~0ul), stopTime(~0ul) {}
+		
+		
+	PerformanceData::PerformanceData(const ErrorFunction& _errorFunction, const bool _printProgress, const bool _active) : 
+		active(_active), printProgress(_printProgress), errorFunction(_errorFunction), startTime(~0ul), stopTime(~0ul) {}
+	
+	
+	void PerformanceData::start() {
 		if (active) {
-			if (startTime == ~0ul) {
-				start();
-			}
-			data.emplace_back(_itrCount, get_elapsed_time(), _residual, 0.0, _ranks, _flags);
-			
 			if(printProgress) {
-				LOG_SHORT(PerformanceData, "Iteration " << std::setw(4) << std::setfill(' ') << _itrCount 
-					<< " Time: " << std::right << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << double(data.back().elapsedTime)*1e-6 
-					<< "s Residual: " <<  std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().residual 
-					<< " Flags: " << _flags << " Ranks: " << _ranks);
+				std::stringstream ss(additionalInformation);
+				while (ss) {
+					std::string line;
+					std::getline(ss, line);
+					XERUS_LOG_SHORT(PerformanceData, line);
+				}
 			}
+			startTime = misc::uTime();
 		}
 	}
 	
-	void PerformanceData::add(const size_t _itrCount, const xerus::value_t _residual, const TTTensor& _x, const size_t _flags) {
-		if(!errorFunction) { add(_itrCount, _residual, _x.ranks(), _flags); return; }
-		
+	
+	void PerformanceData::stop_timer() {
+		if (active) {
+			stopTime = misc::uTime();
+		}
+	}
+	
+	
+	void PerformanceData::continue_timer() {
+		if (active) {
+			size_t currtime = misc::uTime();
+			startTime += currtime - stopTime;
+			stopTime = ~0ul;
+		}
+	}
+	
+	
+	void PerformanceData::reset() {
+		if (active) {
+			startTime = ~0ul;
+			stopTime = ~0ul;
+			data.clear();
+			additionalInformation.clear();
+		}
+	}
+	
+	
+	size_t PerformanceData::get_elapsed_time() const {
+		return misc::uTime() - startTime;
+	}
+	
+	
+	size_t PerformanceData::get_runtime() const {
+		if (stopTime != ~0ul) {
+			return stopTime - startTime;
+		} else {
+			return misc::uTime() - startTime;
+		}
+	}
+	
+	
+	void PerformanceData::add(const value_t _residual, const TTTensor& _x, const size_t _flags) {
+		if (data.empty()) {
+			add(0, std::vector<double>(1, _residual), _x, _flags);
+		} else {
+			add(data.back().iteration+1, std::vector<double>(1, _residual), _x, _flags);
+		}
+	}
+	
+	
+	void PerformanceData::add(const std::vector<double>& _residuals, const TTTensor& _x, const size_t _flags) {
+		if (data.empty()) {
+			add(0, _residuals, _x, _flags);
+		} else {
+			add(data.back().iteration+1, _residuals, _x, _flags);
+		}
+	}
+	
+	
+	void PerformanceData::add(const size_t _itrCount, double _residual, const TTTensor& _x, const size_t _flags) {
+		add(_itrCount, std::vector<double>(1, _residual), _x, _flags);
+	}
+	
+	
+	void PerformanceData::add(const size_t _itrCount, const std::vector<double>& _residuals, const TTTensor& _x, const size_t _flags) {
 		if (active) {
 			if (startTime == ~0ul) {
 				start();
 			}
 			stop_timer();
 			
-			data.emplace_back(_itrCount, get_elapsed_time(), _residual, errorFunction(_x), _x.ranks(), _flags);
+			REQUIRE(!_residuals.empty(), "Need at least one residual");
+			
+			const double error = errorFunction ? errorFunction(_x) : 0.0;
+			data.emplace_back(_itrCount, get_elapsed_time(), _residuals, error, _x.degrees_of_freedom(), _flags);
+
 			
 			if (printProgress) {
-				LOG_SHORT(PerformanceData, "Iteration " << std::setw(4) << std::setfill(' ') << _itrCount 
-					<< " Time: " << std::right << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << double(data.back().elapsedTime)*1e-6 
-					<< "s Residual: " <<  std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().residual 
-					<< " Error: " << std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().error
-					<< " Flags: " << _flags << " Ranks: " << _x.ranks()); // NOTE using data.back().ranks causes segmentation fault in gcc
+				if(errorFunction) {
+					LOG_SHORT(PerformanceData, "Iteration " << std::setw(4) << std::setfill(' ') << _itrCount 
+						<< " Time: " << std::right << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << double(data.back().elapsedTime)*1e-6
+						<< "s Residuals: " <<  std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().residuals
+						<< " Error: " << std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().error
+						<< " Dofs: " << data.back().dofs << " Flags: " << _flags);
+				} else {
+					LOG_SHORT(PerformanceData, "Iteration " << std::setw(4) << std::setfill(' ') << _itrCount 
+						<< " Time: " << std::right << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << double(data.back().elapsedTime)*1e-6
+						<< "s Residuals: " <<  std::setw(11) << std::setfill(' ') << std::scientific << std::setprecision(6) << data.back().residuals
+						<< " Dofs: " << data.back().dofs << " Flags: " << _flags);
+				}
 			}
 			continue_timer();
 		}
 	}
 	
-	void PerformanceData::add(const xerus::value_t _residual, const TensorNetwork::RankTuple _ranks, const size_t _flags) {
-		if (active) {
-			if (data.empty()) {
-				add(0, _residual, _ranks, _flags);
-			} else {
-				add(data.back().iterationCount+1, _residual, _ranks, _flags);
-			}
-		}
-	}
 	
-	void PerformanceData::add(const value_t _residual, const TTTensor& _x, const size_t _flags) {
-		if (active) {
-			if (data.empty()) {
-				add(0, _residual, _x, _flags);
-			} else {
-				add(data.back().iterationCount+1, _residual, _x, _flags);
-			}
-		}
-	}
-
 	void PerformanceData::dump_to_file(const std::string &_fileName) const {
+		REQUIRE(active && !data.empty(), "Inactive or empty PerformanceData cannot be dumped to file");
 		std::string header;
 		header += "# ";
 		header += additionalInformation;
 		misc::replace(header, "\n", "\n# ");
-		header += "\n# \n#itr \ttime[us] \tresidual \terror \tflags \tranks...\n";
 		std::ofstream out(_fileName);
 		out << header;
-		for (const DataPoint &d : data) {
-			out << d.iterationCount << '\t' << d.elapsedTime << '\t' << d.residual << '\t' << d.error << '\t' << d.flags;
-			for (size_t r : d.ranks) {
-				out << '\t' << r;
+		out << "\n#itr \ttime[us] \tresiduals("<<data.back().residuals.size()<<") \terror \tdofs \tflags \n";
+		for (const auto& d : data) {
+			out << d.iteration << '\t' << d.elapsedTime << '\t';
+			for (const auto r : d.residuals) {
+				out << r << '\t';
 			}
+			
+			out << d.error << '\t' << d.dofs << '\t' << d.flags;
 			out << '\n';
 		}
 		out.close();
@@ -111,21 +174,21 @@ namespace xerus {
 		misc::LogHistogram hist(_base);
 		std::vector<PerformanceData::DataPoint> convergenceData(data);
 		if (_assumeConvergence) {
-			value_t finalResidual = data.back().residual;
+			value_t finalResidual = data.back().residuals[0];
 			convergenceData.pop_back();
 			for (auto &p : convergenceData) {
-				p.residual -= finalResidual;
+				p.residuals[0] -= finalResidual;
 			}
 		}
 		
 		for (size_t i = 1; i<convergenceData.size(); ++i) {
-			if (convergenceData[i].residual <= 0 || convergenceData[i-1].residual <= 0
-				|| convergenceData[i].residual >= convergenceData[i-1].residual) {
+			if (convergenceData[i].residuals[0] <= 0 || convergenceData[i-1].residuals[0] <= 0
+				|| convergenceData[i].residuals[0] >= convergenceData[i-1].residuals[0]) {
 				continue;
 			}
 			
 			// assume x_2 = x_1 * 2^(-alpha * delta-t)
-			value_t relativeChange = convergenceData[i].residual/convergenceData[i-1].residual;
+			value_t relativeChange = convergenceData[i].residuals[0]/convergenceData[i-1].residuals[0];
 			value_t exponent = log(relativeChange) / log(2);
 			size_t delta_t = convergenceData[i].elapsedTime - convergenceData[i-1].elapsedTime;
 			if (delta_t == 0) {

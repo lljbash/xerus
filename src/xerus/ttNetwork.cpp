@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -415,7 +415,7 @@ namespace xerus {
 	size_t TTNetwork<isOperator>::degrees_of_freedom(const std::vector<size_t> &_dimensions, const std::vector<size_t> &_ranks) {
 		if (_dimensions.empty()) { return 1; }
 		const size_t numComponents = _dimensions.size()/N;
-		REQUIRE(_dimensions.size()%N == 0, "invalid number of dimensions for TTOperator");
+		REQUIRE(_dimensions.size()%N == 0, "Invalid number of dimensions for TTOperator");
 		REQUIRE(numComponents == _ranks.size()+1, "Invalid number of ranks ("<<_ranks.size()<<") or dimensions ("<<_dimensions.size()<<") given.");
 		size_t result = 0;
 		for (size_t i=0; i<numComponents; ++i) {
@@ -432,7 +432,7 @@ namespace xerus {
 	}
 	
 	template<bool isOperator>
-	size_t TTNetwork<isOperator>::degrees_of_freedom() {
+	size_t TTNetwork<isOperator>::degrees_of_freedom() const {
 		return degrees_of_freedom(dimensions, ranks());
 	}
 	
@@ -1300,9 +1300,10 @@ namespace xerus {
 			const Tensor& componentA = _A.get_component(i);
 			const Tensor& componentB = _B.get_component(i);
 			const Tensor::Representation newRep = componentA.is_sparse() && componentB.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
-			Tensor newComponent(isOperator ? 
-				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions[2], componentA.dimensions.back()*componentB.dimensions.back()}) : 
-				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions.back()*componentB.dimensions.back()}), newRep);
+			Tensor newComponent(isOperator ?
+				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions[2], componentA.dimensions.back()*componentB.dimensions.back()}) :
+				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions.back()*componentB.dimensions.back()}), 
+			newRep);
 			
 			perform_component_product<isOperator>(newComponent, componentA, componentB);
 			
