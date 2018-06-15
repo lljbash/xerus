@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -24,7 +24,8 @@
 
 
 #include "misc.h"
-/*
+// using namespace uq;
+
 void expose_recoveryAlgorithms() {
 	// ------------------------------------------------------------- measurements
 	
@@ -158,22 +159,35 @@ void expose_recoveryAlgorithms() {
 	
 	
 	
-	class_<UQMeasurementSet>("UQMeasurementSet")
-	.def(init<const UQMeasurementSet&>())
-	.def("add", &UQMeasurementSet::add)
-	.def("add_initial", &UQMeasurementSet::add_initial)
+	class_<uq::UQMeasurementSet>("UQMeasurementSet")
+	.def(init<const uq::UQMeasurementSet&>())
+	.def("add", &uq::UQMeasurementSet::add)
+	 //.def("add_initial", &UQMeasurementSet::add_initial)
 	;
 	
 	
-	def("uq_avg", &uq_avg);
+	// def("uq_avg", &uq_avg);
 	
 	VECTOR_TO_PY(std::vector<double>, "DoubleVectorVector");
 	py_pair<std::vector<std::vector<double>>, std::vector<Tensor>>();
-	def("uq_mc", &uq_mc);
+	// def("uq_mc", &uq_mc);
 	
-	def("uq_adf", +[](const UQMeasurementSet& _measurments, const TTTensor& _guess) {
-		return uq_adf(_measurments, _guess);
-	}, ( arg("measurments"), arg("guess")) );
-	
+	//def("uq_adf", +[](const UQMeasurementSet& _measurments, const TTTensor& _guess) {
+	//	return uq_adf(_measurments, _guess);
+	//}, ( arg("measurments"), arg("guess")) );
+	def("uq_ra_adf", +[](const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
+			return uq::uq_ra_adf(_measurements, _basisType, _dimensions, _targetEps, _maxItr);
+			}, (arg("measurements"), arg("polynombasis"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
+	   );
+
+	def("uq_tt_evaluate", +[](const TTTensor& _x, const std::vector<double>& _parameters, const uq::PolynomBasis _basisType) {
+			return uq::evaluate(_x, _parameters, _basisType);
+			}, (arg("x"), arg("parameters"), arg("basisType"))
+	   );
+
+	enum_<uq::PolynomBasis>("PolynomBasis")
+		.value("Hermite", uq::PolynomBasis::Hermite)
+		.value("Legendre", uq::PolynomBasis::Legendre)
+	;
 }
-*/
+

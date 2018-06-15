@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -23,7 +23,6 @@
  */
 
 #include "misc.h"
-
 
 // TODO get_copy() wrapper in python correct manner
 BOOST_PYTHON_MODULE(xerus) {
@@ -51,7 +50,7 @@ BOOST_PYTHON_MODULE(xerus) {
 	expose_ttnetwork();
 	
 	expose_leastSquaresAlgorithms();
-// 	expose_recoveryAlgorithms();
+ 	expose_recoveryAlgorithms();
 	
 	expose_misc();
 }
