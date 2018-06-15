@@ -11,7 +11,7 @@ help:
 	\t\ttest \t\t -- Build and run the xerus unit tests.\n \
 	\t\tclean \t\t -- Remove all object, library and executable files.\n"
 
-	
+
 # ------------------------------------------------------------------------------------------------------
 #				Set the names of the resulting binary codes
 # ------------------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ DEBUG += -DXERUS_VERSION_COMMIT=$(XERUS_COMMIT_V)
 
 
 # ------------------------------------------------------------------------------------------------------
-#				Register source files for the xerus library      
+#				Register source files for the xerus library
 # ------------------------------------------------------------------------------------------------------
 
 # Register the source files
@@ -77,7 +77,7 @@ TEST_DEPS    = $(TEST_SOURCES:%.cpp=build/.testObjects/%.d)
 UNIT_TEST_OBJECTS = $(UNIT_TEST_SOURCES:%.cxx=build/.unitTestObjects/%.o)
 UNIT_TEST_DEPS    = $(UNIT_TEST_SOURCES:%.cxx=build/.unitTestObjects/%.d)
 
-TUTORIALS 	= $(TUTORIAL_SOURCES:%.cpp=build/.tutorialObjects/%)
+TUTORIALS	= $(TUTORIAL_SOURCES:%.cpp=build/.tutorialObjects/%)
 TUTORIAL_DEPS   = $(TUTORIAL_SOURCES:%.cpp=build/.tutorialObjects/%.d)
 
 
@@ -92,14 +92,14 @@ include makeIncludes/optimization.mk
 
 
 # ------------------------------------------------------------------------------------------------------
-#		  			Set additional compiler options 
+#					Set additional compiler options
 # ------------------------------------------------------------------------------------------------------
 
 
 
 
 # ------------------------------------------------------------------------------------------------------
-#		  			Convinience variables
+#					Convinience variables
 # ------------------------------------------------------------------------------------------------------
 
 # Small hack to get newlines...
@@ -126,7 +126,7 @@ MINIMAL_DEPS = Makefile config.mk makeIncludes/general.mk makeIncludes/warnings.
 
 
 # ------------------------------------------------------------------------------------------------------
-#					Make Rules      
+#					Make Rules
 # ------------------------------------------------------------------------------------------------------
 
 opt:
@@ -138,12 +138,12 @@ warn:
 
 
 # Fake rule to create arbitary headers, to prevent errors if files are moved/renamed
-%.h: 
+%.h:
 
 ifdef BUILD_PYTHON_BINDINGS
 shared: build/libxerus_misc.so build/libxerus.so build/xerus.so
 else
-shared: build/libxerus_misc.so build/libxerus.so 
+shared: build/libxerus_misc.so build/libxerus.so
 endif
 
 build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
@@ -214,6 +214,11 @@ endif
 $(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
 	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
+build/print_boost_version: src/print_boost_version.cpp
+	@$(CXX) -o $@ $<
+
+printBoostVersion: build/print_boost_version
+	@build/print_boost_version
 
 test:  $(TEST_NAME)
 	./$(TEST_NAME) all
@@ -242,13 +247,13 @@ benchmark: $(MINIMAL_DEPS) $(LOCAL_HEADERS) benchmark.cxx $(LIB_NAME_STATIC)
 
 # Build rule for normal misc objects
 build/.miscObjects/%.o: %.cpp $(MINIMAL_DEPS)
-	mkdir -p $(dir $@) 
+	mkdir -p $(dir $@)
 	$(CXX) -I include $< -c $(FLAGS) -MMD -o $@
 
 
 # Build rule for normal lib objects
 build/.libObjects/%.o: %.cpp $(MINIMAL_DEPS)
-	mkdir -p $(dir $@) 
+	mkdir -p $(dir $@)
 	$(CXX) -I include $< -c $(FLAGS) -MMD -o $@
 
 
@@ -281,7 +286,7 @@ build/.tutorialObjects/%: %.cpp $(MINIMAL_DEPS) build/libxerus.a build/libxerus_
 	mkdir -p $(dir $@)
 	$(CXX) -I include $< build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) $(FLAGS) -MMD -o $@
 
-	
+
 # Build rule for the preCompileHeader
 build/.preCompileHeaders/xerus.h.gch: include/xerus.h $(MINIMAL_DEPS) .git/ORIG_HEAD
 	mkdir -p $(dir $@)
