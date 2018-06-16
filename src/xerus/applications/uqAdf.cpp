@@ -170,7 +170,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					contract(leftOughtStack[_position][j], solutions[j], shuffledX, 1);
 				}
 				
-			} else { // _corePosition > 0
+			} else { // _position > 0
 				const Tensor shuffledX = reshuffle(x.get_component(_position), {1, 0, 2});
                 Tensor measCmp, tmp;
 				#pragma omp parallel for firstprivate(measCmp, tmp)
@@ -180,7 +180,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					if(_position > 1) {
 						contract(tmp, measCmp, true, leftIsStack[_position-1][j], false,  1);
 						contract(leftIsStack[_position][j], tmp, measCmp, 1);
-					} else { // _corePosition == 1
+					} else { // _position == 1
 						contract(leftIsStack[_position][j], measCmp, true, measCmp, false, 1);
 					}
 					
