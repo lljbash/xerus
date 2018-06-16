@@ -1,25 +1,25 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
-// 
+// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+//
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
 // by the Free Software Foundation, either version 3 of the License,
 // or (at your option) any later version.
-// 
+//
 // Xerus is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with Xerus. If not, see <http://www.gnu.org/licenses/>.
 //
-// For further information on Xerus visit https://libXerus.org 
+// For further information on Xerus visit https://libXerus.org
 // or contact us at contact@libXerus.org.
 
 /**
  * @file
- * @brief Implementation of the ADF variants. 
+ * @brief Implementation of the ADF variants.
  */
 
 #include <xerus/applications/uqAdf.h>
@@ -32,7 +32,7 @@
 #include <boost/circular_buffer.hpp>
 
 #ifdef _OPENMP
-	#include <omp.h>
+    #include <omp.h>
 #endif
 
 namespace xerus { namespace uq { namespace impl_uqRaAdf {
@@ -201,7 +201,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					contract(tmp, positions[_position][j], shuffledX, 1);
 					contract(rightStack[_position][j], tmp, rightStack[_position+1][j], 1);
 				}
-			} else { // _corePosition == d-1
+			} else { // _position == d-1
 				shuffledX.reinterpret_dimensions({shuffledX.dimensions[0], shuffledX.dimensions[1]}); // Remove dangling 1-mode
 				#pragma omp parallel for
 				for(size_t j = 0; j < N; ++j) {
@@ -464,61 +464,60 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			finish(maxIterations);
 		}
 	};
-	
 }
 
-	void uq_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
-		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
-		
+    void uq_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
+        REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
+        REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
+
         impl_uqRaAdf::InternalSolver<1> solver(_x, _measurments, _basisType, _maxItr, _targetEps, 0.0);
         solver.solve();
     }
-    
-    
-    TTTensor uq_adf(const UQMeasurementSet& _initalMeasurments, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
-		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
-		
-		TTTensor x = initial_guess(sample_mean(_measurments.solutions), _initalMeasurments, _basisType, _dimensions);
-		impl_uqRaAdf::InternalSolver<1> solver(x, _measurments, _basisType, _maxItr, _targetEps, 0.0);
-		solver.solve();
-        return x;
-	}
-	
-	
-	
-	void uq_ra_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr, const double _initalRankEps) {
-		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
-		
-		impl_uqRaAdf::InternalSolver<2> solver(_x, _measurments, _basisType, _maxItr, _targetEps, _initalRankEps);
-		solver.solve();
-	}
-	
-	
-	TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
-		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-		REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
-		
-		LOG(UQ, "Calculating Average as start.");
 
-		TTTensor x(_dimensions);
-			
-		Tensor mean = sample_mean(_measurments.solutions);
-		
-		// Set mean
-		mean.reinterpret_dimensions({1, x.dimensions[0], 1});
-		x.set_component(0, mean);
-		for(size_t k = 1; k < x.degree(); ++k) {
-			x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
-		}
-		x.assume_core_position(0);
-		
-		impl_uqRaAdf::InternalSolver<2> solver(x, _measurments, _basisType, _maxItr, _targetEps, 1e-1);
-		solver.solve();
-		return x;
-	}
-	
-	
+
+    TTTensor uq_adf(const UQMeasurementSet& _initalMeasurments, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
+        REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
+        REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
+
+        TTTensor x = initial_guess(sample_mean(_measurments.solutions), _initalMeasurments, _basisType, _dimensions);
+        impl_uqRaAdf::InternalSolver<1> solver(x, _measurments, _basisType, _maxItr, _targetEps, 0.0);
+        solver.solve();
+        return x;
+    }
+
+
+
+    void uq_ra_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr, const double _initalRankEps) {
+        REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
+        REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
+
+        impl_uqRaAdf::InternalSolver<2> solver(_x, _measurments, _basisType, _maxItr, _targetEps, _initalRankEps);
+        solver.solve();
+    }
+
+
+    TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
+        REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
+        REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
+
+        LOG(UQ, "Calculating Average as start.");
+
+        TTTensor x(_dimensions);
+
+        Tensor mean = sample_mean(_measurments.solutions);
+
+        // Set mean
+        mean.reinterpret_dimensions({1, x.dimensions[0], 1});
+        x.set_component(0, mean);
+        for(size_t k = 1; k < x.degree(); ++k) {
+            x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
+        }
+        x.assume_core_position(0);
+
+        impl_uqRaAdf::InternalSolver<2> solver(x, _measurments, _basisType, _maxItr, _targetEps, 1e-1);
+        solver.solve();
+        return x;
+    }
+
+
 }} // namespace  uq | xerus

@@ -1,5 +1,6 @@
 # Sets: CXX, CALLSTACK_LIBS, LOCAL_HEADERS, LOCAL_HPP, TEST_HXX
-# Uses: USE_CLANG, 
+# Modifies: DEBUG
+# Uses: USE_CLANG
 
 # Set Compiler used
 ifneq (,$(findstring clang, $(CXX)))
@@ -26,7 +27,7 @@ ifdef XERUS_NO_FANCY_CALLSTACK
 	CALLSTACK_LIBS =
 	DEBUG += -D XERUS_NO_FANCY_CALLSTACK
 else
-	CALLSTACK_LIBS = -lbfd -liberty -lz -ldl 
+	CALLSTACK_LIBS = -lbfd -liberty -lz -ldl
 endif
 
 
