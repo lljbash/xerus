@@ -1,3 +1,5 @@
+.PHONY: help shared static python doc install test clean opt warn printBoostVersion
+
 # ------------------------------------------------------------------------------------------------------
 #				Default rule should be the help message
 # ------------------------------------------------------------------------------------------------------
