@@ -57,6 +57,10 @@ namespace xerus {
 		*/
 		size_t corePosition;		
 		
+		/**
+		 * @brief Number of Components
+		 */
+		size_t numberOfComponents;
 
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		/** 
@@ -268,7 +272,7 @@ namespace xerus {
 		
 		
 		///@brief Return the number of ranks, i.e. 0 for degree zero and degree()/N-1 otherwise.
-//		size_t num_ranks() const;
+		size_t num_ranks() const;
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 //	public:
@@ -333,7 +337,7 @@ namespace xerus {
 		* @param _T Tensor to use as the new component tensor.
 		* @param i_isleave true if the component set is a leave false if it is an inner component
 		*/
-		void set_component(const size_t _idx, Tensor _T, const bool _isleave);
+		void set_component(const size_t _idx, Tensor _T);
 		
 		
 		/** 
