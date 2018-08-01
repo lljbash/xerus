@@ -93,13 +93,13 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Constructs a THNetwork from the given Tensor.
+		* @brief Constructs a HTNetwork from the given Tensor.
 		* @details  The higher order SVD algorithm is used to decompose the given Tensor into the HT format.
 		* @param _tensor The Tensor to decompose.
 		* @param _eps the accuracy to be used in the decomposition.
 		* @param _maxRank the maximal allowed rank (applies to all positions).
 		*/
-		//explicit HTNetwork(const Tensor& _tensor, const double _eps=EPSILON, const size_t _maxRank=std::numeric_limits<size_t>::max());
+		explicit HTNetwork(const Tensor& _tensor, const double _eps=EPSILON, const size_t _maxRank=std::numeric_limits<size_t>::max());
 		
 		
 		/** 

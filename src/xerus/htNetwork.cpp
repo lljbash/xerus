@@ -46,10 +46,10 @@ namespace xerus {
 	HTNetwork<isOperator>::HTNetwork() : TensorNetwork(), canonicalized(false) {}
 	
 	
-//	template<bool isOperator>
-//	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-//		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : _tensor.degree()/N-1, _maxRank)) {}
-//
+	template<bool isOperator>
+	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
+		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : _tensor.degree()/N, _maxRank)) {}
+
 	
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(const size_t _degree) : HTNetwork(std::vector<size_t>(_degree, 1)) { }
@@ -113,15 +113,17 @@ namespace xerus {
 		//Loop for the leafs
 		for (size_t i = 0; i < numLeaves; ++i) {
 			neighbors.clear();
+			// First come the external dimension then comes the internal dimension for the leaf
+			// -1 one is a placeholder for external nodes
+			neighbors.emplace_back(-1, i, dimensions[i], true);
+			if(isOperator) { neighbors.emplace_back(-1, numLeaves + i, dimensions[numLeaves + i], true); }
+
 			//The leafs are the last nodes, numIntCom .. numIntCom + numFullLeaves
 			//A parent node is calculated by ((numIntCom + i)+1) / 2 -1 , where i is the linear position in the node vector
 			//The parent nodes first index is its parent node 0 then first child 1 then the second child 2
 			//This means from a leafs perspective it is mod 2, which translate wrt i to i%2 + 1
 			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, i%2 + 1, 1, false);
-			// -1 one is a placeholder for external nodes
-			neighbors.emplace_back(-1, i, dimensions[i], true);
-			if(isOperator) { neighbors.emplace_back(-1, numLeaves + i, dimensions[numLeaves + i], true); }
-			
+
 			if(!isOperator) {
 				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[i]}, 0)), std::move(neighbors) );
 			} else {
@@ -148,7 +150,7 @@ namespace xerus {
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const TensorNetwork::RankTuple& _maxRanks): HTNetwork(_tensor.degree()) {
 		REQUIRE(_tensor.degree()%N==0, "Number of indices must be even for HTOperator");
 		REQUIRE(_eps >= 0 && _eps < 1, "_eps must be positive and smaller than one. " << _eps << " was given.");
-		REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
+		//REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Maximal ranks must be strictly positive. Here: " << _maxRanks);
 
 		const size_t numExternalComponent = degree()/N;
@@ -185,13 +187,39 @@ namespace xerus {
 
 
 		Tensor singularValues, newNode;
-		//for the leaves
-		for(size_t pos = numberOfComponents - numExternalComponent; pos  < numberOfComponents; ++pos) {
-			calculate_svd(newNode, singularValues, remains, remains, pos, _maxRanks[pos], _eps);
+		//for the leaves TODO add operator functionality
+		for(size_t pos = numberOfComponents - numExternalComponent,i = 0; pos  < numberOfComponents; ++pos, ++i) {
+
+			std::vector<size_t> ithmode(_tensor.degree());
+
+			for(size_t j = 0; j < numExternalComponent; ++j) {
+							ithmode[j] = j == 0 ? i : (j == i ? 0 : j);
+						}
+			LOG(info,"i th Mode = " << ithmode);
+			LOG(info,"degree remain = " << remains.degree());
+			LOG(info,"degree remain dim = " << remains.dimensions);
+
+			xerus::reshuffle(remains, remains, ithmode);
+			LOG(info,"degree remain = " << remains.degree());
+			LOG(info,"degree remain dim = " << remains.dimensions);
+
+			calculate_svd(newNode, singularValues, remains, remains, 1, _maxRanks[i], _eps);
+			LOG(info,"degree remain = " << remains.degree());
+			LOG(info,"degree remain dim = " << remains.dimensions);
+			LOG(info,"singularValues  = " << singularValues.degree());
+			LOG(info,"singularValues dim  = " << singularValues.dimensions);
+			LOG(info,"newNode  = " << newNode.degree());
+			LOG(info,"newNode dim  = " << newNode.dimensions);
+
+			xerus::reshuffle(remains, remains, ithmode);
+			LOG(info,"degree remain = " << remains.degree());
+			LOG(info,"degree remain dim = " << remains.dimensions);
 
 			set_component(pos, std::move(newNode));
 			newNode.reset();
-			xerus::contract(remains, remains, false, singularValues, false, 1);
+			xerus::contract(remains, singularValues, false, remains, false, 1);
+			LOG(info,"degree remain = " << remains.degree());
+			LOG(info,"degree remain dim = " << remains.dimensions);
 		}
 
 		//set_component(0, remains);
