@@ -138,9 +138,10 @@ namespace xerus {
 		static HTNetwork XERUS_warn_unused random(std::vector<size_t> _dimensions, const std::vector<size_t> &_ranks, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
 
 			const size_t numIntComp = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
-			const size_t numComponents = numIntComp + _dimensions.size()/N;
-			const size_t numOfLeaves = _dimensions.size();
-			XERUS_REQUIRE(numOfLeaves%N==0, "Illegal number of dimensions/Leaves for HTOperator.");
+			const size_t numOfLeaves = _dimensions.size()/N;
+			const size_t numComponents = numIntComp + numOfLeaves;
+
+			XERUS_REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions/Leaves for HTOperator.");
 			XERUS_REQUIRE(_ranks.size()+1 == numComponents,"Non-matching amount of ranks given to HTNetwork::random.");
 			XERUS_REQUIRE(numIntComp >= 0,"No internal Components! ");
 			XERUS_REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
@@ -168,7 +169,6 @@ namespace xerus {
 						result.set_component(i, rndComp);
 					} else {
 						const auto rndComp = Tensor::random({parentRank, _dimensions[i - numIntComp]}, _dist, _rnd);
-						LOG(info,"dimension random = " << rndComp.dimensions);
 						result.set_component(i, rndComp);
 					}
 				}

@@ -168,7 +168,6 @@ namespace xerus {
 				shuffle[i] = 2*i;
 				shuffle[numExternalComponent + i] = 2*i+1;
 			}
-
 			xerus::reshuffle(remains, _tensor, shuffle);
 		} else {
 			remains = _tensor;
@@ -177,18 +176,38 @@ namespace xerus {
 		Tensor singularValues, newNode;
 		//for the leaves TODO add operator functionality
 		for(size_t pos = numberOfComponents - numExternalComponent,i = 0; pos  < numberOfComponents; ++pos, ++i) {
-			std::vector<size_t> ithmode(_tensor.degree());
-			for(size_t j = 0; j < numExternalComponent; ++j) {
-							ithmode[j] = j == 0 ? i : (j == i ? 0 : j);
+			std::vector<size_t> ithmode(remains.degree());
+			std::vector<size_t> ithmodeinv(remains.degree() - 1);
+
+			if(isOperator) {
+				size_t lengthrem = remains.degree();
+				for(size_t j = 0; j < lengthrem ; ++j) {
+					ithmode[j] = j == i ? 0 : (j== i + 1 ? 1 : j < i ? j + 2 : j );
+				}
+				for(size_t j = 0; j < lengthrem - 1; ++j) {
+					ithmodeinv[j] = j == 0 ? i : (j <= i ? j - 1 : j);
+				}
+			} else {
+				for(size_t j = 0; j < numExternalComponent; ++j) {
+					ithmode[j] = j == 0 ? i : (j == i ? 0 : j);
+				}
 			}
 
 			xerus::reshuffle(remains, remains, ithmode);
-			calculate_svd(newNode, singularValues, remains, remains, 1, _maxRanks[pos - 1], _eps);
-	    xerus::reshuffle(newNode, newNode, {1,0});
+			calculate_svd(newNode, singularValues, remains, remains, N, _maxRanks[pos - 1], _eps);
+			if (isOperator){
+				xerus::reshuffle(newNode, newNode, {1,2,0});
+			} else {
+				xerus::reshuffle(newNode, newNode, {1,0});
+			}
 			set_component(pos, std::move(newNode));
 			newNode.reset();
 			xerus::contract(remains, singularValues, false, remains, false, 1);
-			xerus::reshuffle(remains, remains, ithmode);
+			if (isOperator){
+				xerus::reshuffle(remains, remains, ithmodeinv);
+			} else {
+				xerus::reshuffle(remains, remains, ithmode);
+			}
 		}
 		//for the internal components
 		size_t lvl = static_cast<size_t>(std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
@@ -551,8 +570,7 @@ namespace xerus {
 			size_t order = _T.degree();
 			//size_t numberOfDummyComponents = static_cast<size_t>(numberOfComponents) - 2 * degree()/N + 1; //TODO check this
 			TensorNode& currNode = nodes[_idx];
-			LOG(info, "dimension = " << _T.dimensions);
-			LOG(info, "iodx = " << _idx);
+
 			*currNode.tensorObject = std::move(_T);
 			for (size_t i = 0; i < order; ++i) {
 				currNode.neighbors[i].dimension = currNode.tensorObject->dimensions[i];
