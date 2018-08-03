@@ -173,7 +173,7 @@ namespace xerus {
 					}
 				}
 			}
-			//result.move_core(0);
+			result.move_core(0);
 			return result;
 		}
 		
@@ -277,7 +277,7 @@ namespace xerus {
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-//	protected:
+	protected:
 		///@brief Constructs a TTNetwork in _out by decomposing the given Tensor _A.
 //		static void construct_train_from_full(TensorNetwork& _out, const Tensor& _A, const double _eps);
 		
@@ -293,8 +293,26 @@ namespace xerus {
 		///@brief Return the number of ranks, i.e. 0 for degree zero and degree()/N-1 otherwise.
 		size_t num_ranks() const;
 		
+		/**
+		 * @brief returns the path from one node to another in the binary tree
+		 * @details this function is used to shift the core tensor along this path when the core tensor is moved, e.g. in a level 3 hierachical where 0 is the root
+		 * and 3,4,5,6 are the leaves the path from 1 to 6 would be 1 -> 0 -> 2 -> 6
+		 * @param start node
+		 * @param end node
+		 */
+		std::vector<size_t> get_path(size_t start, size_t end) const;
+
+		/**
+		 * @brief function to recursively find the path from the root to a destination
+		 * @param root starting point for the downward search is 0 for the first call
+		 * @param dest destination node
+		 * @param path path from root to dest
+		 */
+		bool get_path_from_root(size_t root, size_t dest, std::vector<size_t>& path ) const;
+
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-//	public:
+	public:
+
 		/** 
 		 * @brief Reduces the given ranks to the maximal possible.
 		 * @details If a given rank is already smaller or equal it is left unchanged.
@@ -335,7 +353,7 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Read access to a specific component of the TT decomposition.
+		* @brief Read access to a specific component of the HT decomposition.
 		* @details This function should be used to access the components, instead of direct access via
 		* nodes[...], because the implementation does not store the first component in nodes[0] but rather as
 		* nodes[1] etc. nodes[0] is an order one node with dimension one only used to allow the first component
@@ -343,7 +361,7 @@ namespace xerus {
 		* @param _idx index of the component to access.
 		* @returns a const reference to the requested component.
 		*/
-//		const Tensor& get_component(const size_t _idx) const;
+		const Tensor& get_component(const size_t _idx) const;
 		
 		
 		/** 
@@ -429,12 +447,12 @@ namespace xerus {
 		/** 
 		* @brief Move the core to a new position.
 		* @details The core is moved to @a _position and the nodes between the old and the new position are orthogonalized
-		* accordingly. If the TTNetwork is not yet canonicalized it will be with @a _position as new corePosition.
+		* accordingly. If the HTNetwork is not yet canonicalized it will be with @a _position as new corePosition.
 		* @param _position the new core position.
 		* @param _keepRank by default a rank revealing QR decomposition is used to move the core and the ranks are reduced
 		* accordingly. If @a _keepRank is set the rank is not reduced, this is need e.g. in the ALS.
 		*/
-//		void move_core(const size_t _position, const bool _keepRank=false);
+		void move_core(const size_t _position, const bool _keepRank=false);
 		
 		
 		/**
@@ -488,6 +506,7 @@ namespace xerus {
 //		virtual void require_correct_format() const override;
 		
 		
+
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
 		/** 
 		* @brief Adds a given TTNetwork to this one.

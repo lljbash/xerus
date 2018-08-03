@@ -255,16 +255,16 @@ namespace xerus {
 //
 //
 //	template<bool isOperator>
-//	TTNetwork<isOperator> TTNetwork<isOperator>::ones(const std::vector<size_t>& _dimensions) {
+//	HTNetwork<isOperator> HTNetwork<isOperator>::ones(const std::vector<size_t>& _dimensions) {
 //		REQUIRE(_dimensions.size()%N == 0, "Illegal number of dimensions for ttOperator");
 //		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a TTTensor with dimension 0 is not possible.");
 //
 //		if(_dimensions.empty()) {
-//			return TTNetwork(Tensor::ones({}));
+//			return HTNetwork(Tensor::ones({}));
 //		}
 //
-//		TTNetwork result(_dimensions.size());
-//		const size_t numNodes = _dimensions.size()/N;
+//		HTNetwork result(_dimensions.size());
+//		const size_t numNodes = result.numberOfComponents;
 //
 //		std::vector<size_t> dimensions(isOperator ? 4 : 3, 1);
 //		for(size_t i = 0; i < numNodes; ++i) {
@@ -452,6 +452,39 @@ namespace xerus {
 		return degree() == 0 ? 0 : numberOfComponents - 1;
 	}
 
+	template<bool isOperator>
+	std::vector<size_t> HTNetwork<isOperator>::get_path(size_t start, size_t end) const {
+		std::vector<size_t> path_start;
+		std::vector<size_t> path_end;
+		std::vector<size_t> result;
+
+		REQUIRE(get_path_from_root(0, start, path_start ), "start point is wrong");
+		REQUIRE(get_path_from_root(0, end, path_end ), "end point is wrong");
+		while(!path_start.empty()){
+			size_t tmp = path_start.back();
+			path_start.pop_back();
+			auto tmp_found = std::find(path_end.begin(), path_end.end(), tmp);
+			if (path_end.end() == tmp_found){ result.emplace_back(tmp);}
+			else{
+				result.insert(result.end(), tmp_found, path_end.end());
+				break;
+			}
+		}
+		std::reverse(result.begin(),result.end());
+		return result;
+	}
+
+	template<bool isOperator>
+	bool HTNetwork<isOperator>::get_path_from_root(size_t root, size_t dest, std::vector<size_t>& path ) const {
+		if (root > numberOfComponents) { return false;}
+		path.emplace_back(root);
+		if (root == dest) { return true;}
+		if(get_path_from_root(root*2+1,dest,path) || get_path_from_root(root*2+2,dest,path)) {return true;}
+		path.pop_back();
+		return false;
+
+	}
+
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
 //	template<bool isOperator>
@@ -548,13 +581,13 @@ namespace xerus {
 //	}
 //
 //
-//	template<bool isOperator>
-//	const Tensor& TTNetwork<isOperator>::get_component(const size_t _idx) const {
-//		REQUIRE(_idx == 0 || _idx < degree()/N, "Illegal index " << _idx <<" in TTNetwork::get_component.");
-//		return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
-//	}
-//
-//
+	template<bool isOperator>
+	const Tensor& HTNetwork<isOperator>::get_component(const size_t _idx) const {
+		REQUIRE(_idx <= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in TTNetwork::get_component.");
+		return *nodes[degree() == 0 ? 0 : _idx].tensorObject;
+	}
+
+
 	template<bool isOperator>
 	void HTNetwork<isOperator>::set_component(const size_t _idx, Tensor _T) {
 		if(degree() == 0) {
@@ -671,34 +704,28 @@ namespace xerus {
 //	}
 //
 //
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::move_core(const size_t _position, const bool _keepRank) {
-//		const size_t numComponents = degree()/N;
-//		REQUIRE(_position < numComponents || (_position == 0 && degree() == 0), "Illegal core-position " << _position << " chosen for TTNetwork with " << numComponents << " components");
-//		require_correct_format();
-//
-//		if(canonicalized) {
-//			// Move right?
-//			for (size_t n = corePosition; n < _position; ++n) {
-//				transfer_core(n+1, n+2, !_keepRank);
-//			}
-//
-//			// Move left?
-//			for (size_t n = corePosition; n > _position; --n) {
-//				transfer_core(n+1, n, !_keepRank);
-//			}
-//		} else {
-//			// Move right?
-//			for (size_t n = 0; n < _position; ++n) {
-//				transfer_core(n+1, n+2, !_keepRank);
-//			}
-//
-//			// Move left?
-//			for (size_t n = numComponents; n > _position+1; --n) {
-//				transfer_core(n, n-1, !_keepRank);
-//			}
-//		}
-//
+	template<bool isOperator>
+	void HTNetwork<isOperator>::move_core(const size_t _position, const bool _keepRank) {
+		const size_t numComponents = numberOfComponents;
+		REQUIRE(_position < numComponents || (_position == 0 && degree() == 0), "Illegal core-position " << _position << " chosen for TTNetwork with " << numComponents << " components");
+		require_correct_format();
+
+		if (!canonicalized){
+			for (size_t n = numComponents - 1; n > _position; --n) {
+			  transfer_core(n, (n + 1) / 2 - 1, !_keepRank);
+			  corePosition = 0;
+			}
+		}
+		std::vector<size_t> path = get_path(corePosition, _position);
+
+		while (path.size() > 1){
+			size_t start = path.back();
+			path.pop_back();
+			size_t end = path.back();
+				transfer_core(start, end, !_keepRank);
+		}
+
+// TODO whz is this here??
 //		while (exceeds_maximal_ranks()) {
 //			// Move left from given CorePosition
 //			for (size_t n = _position; n > 0; --n) {
@@ -715,10 +742,10 @@ namespace xerus {
 //				transfer_core(n, n-1, !_keepRank);
 //			}
 //		}
-//
-//		canonicalized = true;
-//		corePosition = _position;
-//	}
+
+		canonicalized = true;
+		corePosition = _position;
+	}
 //
 //
 //	template<bool isOperator>
