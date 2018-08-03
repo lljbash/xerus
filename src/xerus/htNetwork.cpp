@@ -48,7 +48,7 @@ namespace xerus {
 	
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : _tensor.degree()/N, _maxRank)) {}
+		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N) , _maxRank)) {}
 
 	
 	template<bool isOperator>
@@ -57,7 +57,7 @@ namespace xerus {
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(Tensor::DimensionTuple _dimensions) : TensorNetwork(ZeroNode::None), canonicalized(true), corePosition(0) {
 		dimensions = std::move(_dimensions);
-		REQUIRE(dimensions.size()%N==0, "Illegal degree for TTOperator.");
+		REQUIRE(dimensions.size()%N==0, "Illegal degree for HTOperator.");
 		REQUIRE(!misc::contains(dimensions, size_t(0)), "Zero is no valid dimension.");
 		//Number of Leafs
 		const size_t numLeaves = dimensions.size()/N;
@@ -68,11 +68,6 @@ namespace xerus {
 
 		// set number of components
 		numberOfComponents = numLeaves + numIntCom; //TODO rethink this
-
-		LOG(info,"Number of Leaves:" << numLeaves);
-		LOG(info,"Number of Full Leaves:" << numFullLeaves);
-		LOG(info,"Number of Internal Components:" << numIntCom);
-		LOG(info,"Number of  Components:" << numberOfComponents);
 
 		if (numLeaves == 0) {
 			nodes.emplace_back(std::make_unique<Tensor>());
@@ -113,16 +108,18 @@ namespace xerus {
 		//Loop for the leafs
 		for (size_t i = 0; i < numLeaves; ++i) {
 			neighbors.clear();
-			// First come the external dimension then comes the internal dimension for the leaf
-			// -1 one is a placeholder for external nodes
-			neighbors.emplace_back(-1, i, dimensions[i], true);
-			if(isOperator) { neighbors.emplace_back(-1, numLeaves + i, dimensions[numLeaves + i], true); }
+
 
 			//The leafs are the last nodes, numIntCom .. numIntCom + numFullLeaves
 			//A parent node is calculated by ((numIntCom + i)+1) / 2 -1 , where i is the linear position in the node vector
 			//The parent nodes first index is its parent node 0 then first child 1 then the second child 2
 			//This means from a leafs perspective it is mod 2, which translate wrt i to i%2 + 1
 			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, i%2 + 1, 1, false);
+
+			// First come the external dimension then comes the internal dimension for the leaf
+			// -1 one is a placeholder for external nodes
+			neighbors.emplace_back(-1, i, dimensions[i], true);
+			if(isOperator) { neighbors.emplace_back(-1, numLeaves + i, dimensions[numLeaves + i], true); }
 
 			if(!isOperator) {
 				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[i]}, 0)), std::move(neighbors) );
@@ -150,7 +147,7 @@ namespace xerus {
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const TensorNetwork::RankTuple& _maxRanks): HTNetwork(_tensor.degree()) {
 		REQUIRE(_tensor.degree()%N==0, "Number of indices must be even for HTOperator");
 		REQUIRE(_eps >= 0 && _eps < 1, "_eps must be positive and smaller than one. " << _eps << " was given.");
-		//REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
+		REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Maximal ranks must be strictly positive. Here: " << _maxRanks);
 
 		const size_t numExternalComponent = degree()/N;
@@ -177,53 +174,58 @@ namespace xerus {
 			remains = _tensor;
 		}
 
-		// Add ghost dimensions used in the nodes
-//		std::vector<size_t> extDimensions;
-//		extDimensions.reserve(remains.degree()+2);
-//		extDimensions.emplace_back(1);
-//		extDimensions.insert(extDimensions.end(), remains.dimensions.begin(), remains.dimensions.end());
-//		extDimensions.emplace_back(1);
-//		remains.reinterpret_dimensions(extDimensions);
-
-
 		Tensor singularValues, newNode;
 		//for the leaves TODO add operator functionality
 		for(size_t pos = numberOfComponents - numExternalComponent,i = 0; pos  < numberOfComponents; ++pos, ++i) {
-
 			std::vector<size_t> ithmode(_tensor.degree());
-
 			for(size_t j = 0; j < numExternalComponent; ++j) {
 							ithmode[j] = j == 0 ? i : (j == i ? 0 : j);
-						}
-			LOG(info,"i th Mode = " << ithmode);
-			LOG(info,"degree remain = " << remains.degree());
-			LOG(info,"degree remain dim = " << remains.dimensions);
+			}
 
 			xerus::reshuffle(remains, remains, ithmode);
-			LOG(info,"degree remain = " << remains.degree());
-			LOG(info,"degree remain dim = " << remains.dimensions);
-
-			calculate_svd(newNode, singularValues, remains, remains, 1, _maxRanks[i], _eps);
-			LOG(info,"degree remain = " << remains.degree());
-			LOG(info,"degree remain dim = " << remains.dimensions);
-			LOG(info,"singularValues  = " << singularValues.degree());
-			LOG(info,"singularValues dim  = " << singularValues.dimensions);
-			LOG(info,"newNode  = " << newNode.degree());
-			LOG(info,"newNode dim  = " << newNode.dimensions);
-
-			xerus::reshuffle(remains, remains, ithmode);
-			LOG(info,"degree remain = " << remains.degree());
-			LOG(info,"degree remain dim = " << remains.dimensions);
-
+			calculate_svd(newNode, singularValues, remains, remains, 1, _maxRanks[pos - 1], _eps);
+	    xerus::reshuffle(newNode, newNode, {1,0});
 			set_component(pos, std::move(newNode));
 			newNode.reset();
 			xerus::contract(remains, singularValues, false, remains, false, 1);
-			LOG(info,"degree remain = " << remains.degree());
-			LOG(info,"degree remain dim = " << remains.dimensions);
+			xerus::reshuffle(remains, remains, ithmode);
 		}
+		//for the internal components
+		size_t lvl = static_cast<size_t>(std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
+		//add dummy dimensions to remainder
+		Tensor::DimensionTuple wdummydim(static_cast<size_t>(std::pow(2,lvl + 1)));
+		for (size_t i = 0; i < std::pow(2,lvl + 1); i++){
+			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
+		}
+		remains.reinterpret_dimensions(wdummydim);
+		for(; lvl  > 0; --lvl) {
+			for (size_t pos = 0; pos < std::pow(2,lvl); ++pos){
+				std::vector<size_t> ithmode(remains.degree());
+				std::vector<size_t> ithmodeinv(remains.degree() - 1);
 
-		//set_component(0, remains);
-		//assume_core_position(0);
+				size_t lengthrem = remains.degree();
+				for(size_t j = 0; j < lengthrem ; ++j) {
+					ithmode[j] = j == pos ? 0 : (j== pos + 1 ? 1 : j < pos ? j + 2 : j );
+				}
+				for(size_t j = 0; j < lengthrem - 1; ++j) {
+					ithmodeinv[j] = j == 0 ? pos : (j <= pos ? j - 1 : j);
+				}
+				xerus::reshuffle(remains, remains, ithmode);
+
+				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[static_cast<size_t>(std::pow(2,lvl)) + pos - 2], _eps); // TODO fix maxRanks
+				xerus::reshuffle(newNode, newNode, {1,2,0}); // first parent then children
+				set_component(static_cast<size_t>(std::pow(2,lvl)) + pos - 1, std::move(newNode));
+				newNode.reset();
+				xerus::contract(remains, singularValues, false, remains, false, 1);
+				xerus::reshuffle(remains, remains, ithmodeinv);
+
+			}
+		}
+		Tensor::DimensionTuple wdummydimroot({remains.dimensions[0], remains.dimensions[1], 1});
+		remains.reinterpret_dimensions(wdummydimroot);
+		xerus::reshuffle(remains, remains, {1,2,0}); // first parent then children
+		set_component(0, remains);
+		assume_core_position(0);
 	}
 //
 //
@@ -430,13 +432,13 @@ namespace xerus {
 	size_t HTNetwork<isOperator>::num_ranks() const {
 		return degree() == 0 ? 0 : numberOfComponents - 1;
 	}
-//
-//	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-//
+
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
 //	template<bool isOperator>
-//	std::vector<size_t> TTNetwork<isOperator>::reduce_to_maximal_ranks(std::vector<size_t> _ranks, const std::vector<size_t>& _dimensions) {
-//		const size_t numComponents = _dimensions.size()/N;
-//		REQUIRE(_dimensions.size()%N == 0, "invalid number of dimensions for TTOperator");
+//	std::vector<size_t> HTNetwork<isOperator>::reduce_to_maximal_ranks(std::vector<size_t> _ranks, const std::vector<size_t>& _dimensions) {
+//		const size_t numComponents = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1 + _dimensions.size()/N;
+//		REQUIRE(_dimensions.size()%N == 0, "invalid number of dimensions for HTOperator");
 //		REQUIRE(numComponents == _ranks.size()+1, "Invalid number of ranks ("<<_ranks.size()<<") or dimensions ("<<_dimensions.size()<<") given.");
 //
 //		// Left to right sweep
@@ -467,7 +469,7 @@ namespace xerus {
 //
 //		return _ranks;
 //	}
-//
+
 //
 //	template<bool isOperator>
 //	size_t TTNetwork<isOperator>::degrees_of_freedom(const std::vector<size_t> &_dimensions, const std::vector<size_t> &_ranks) {
@@ -549,6 +551,8 @@ namespace xerus {
 			size_t order = _T.degree();
 			//size_t numberOfDummyComponents = static_cast<size_t>(numberOfComponents) - 2 * degree()/N + 1; //TODO check this
 			TensorNode& currNode = nodes[_idx];
+			LOG(info, "dimension = " << _T.dimensions);
+			LOG(info, "iodx = " << _idx);
 			*currNode.tensorObject = std::move(_T);
 			for (size_t i = 0; i < order; ++i) {
 				currNode.neighbors[i].dimension = currNode.tensorObject->dimensions[i];
@@ -802,12 +806,12 @@ namespace xerus {
 //	}
 //
 //
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::assume_core_position(const size_t _pos) {
-//		REQUIRE(_pos < degree()/N || (degree() == 0 && _pos == 0), "Invalid core position.");
-//		corePosition = _pos;
-//		canonicalized = true;
-//	}
+	template<bool isOperator>
+	void HTNetwork<isOperator>::assume_core_position(const size_t _pos) {
+		REQUIRE(_pos < degree()/N || (degree() == 0 && _pos == 0), "Invalid core position.");
+		corePosition = _pos;
+		canonicalized = true;
+	}
 //
 //
 //	template<bool isOperator>

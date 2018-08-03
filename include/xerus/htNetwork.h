@@ -36,6 +36,11 @@
 #include "indexedTensorMoveable.h"
 #include "indexedTensorList.h"
 
+#include <xerus/misc/internal.h>
+
+
+
+
 namespace xerus {
 	/**
 	* @brief Specialized TensorNetwork class used to represent HTTensor and HToperators.
@@ -129,49 +134,63 @@ namespace xerus {
 		 * @param _rnd the random engine to be passed to the constructor of the component tensors.
 		 * @param _dist the random distribution to be passed to the constructor of the component tensors.
 		 */
-//		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
-//		static HTNetwork XERUS_warn_unused random(std::vector<size_t> _dimensions, const std::vector<size_t> &_ranks, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
-//			const size_t numComponents = _dimensions.size()/N;
-//			XERUS_REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for TTOperator.");
-//			XERUS_REQUIRE(_ranks.size()+1 == numComponents,"Non-matching amount of ranks given to TTNetwork::random.");
-//			XERUS_REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a TTTensor with dimension 0 is not possible.");
-//			XERUS_REQUIRE(!misc::contains(_ranks, size_t(0)), "Trying to construct random TTTensor with rank 0 is illegal.");
-//
-//
-//
-//			TTNetwork result(_dimensions.size());
-//			const std::vector<size_t> targetRank = reduce_to_maximal_ranks(_ranks, _dimensions);
-//
-//			for(size_t i = 0; i < numComponents; ++i) {
-//				const size_t leftRank = i==0 ? 1 : targetRank[i-1];
-//				const size_t rightRank = (i==numComponents-1) ? 1 : targetRank[i];
-//
-//				if(isOperator) {
-//					const auto rndComp = Tensor::random({leftRank, _dimensions[i], _dimensions[numComponents+i], rightRank}, _dist, _rnd);
-//					result.set_component(i, rndComp);
-//				} else {
-//					const auto rndComp = Tensor::random({leftRank, _dimensions[i], rightRank}, _dist, _rnd);
-//					result.set_component(i, rndComp);
-//				}
-//			}
-//			result.move_core(0);
-//			return result;
-//		}
+		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
+		static HTNetwork XERUS_warn_unused random(std::vector<size_t> _dimensions, const std::vector<size_t> &_ranks, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
+
+			const size_t numIntComp = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
+			const size_t numComponents = numIntComp + _dimensions.size()/N;
+			const size_t numOfLeaves = _dimensions.size();
+			XERUS_REQUIRE(numOfLeaves%N==0, "Illegal number of dimensions/Leaves for HTOperator.");
+			XERUS_REQUIRE(_ranks.size()+1 == numComponents,"Non-matching amount of ranks given to HTNetwork::random.");
+			XERUS_REQUIRE(numIntComp >= 0,"No internal Components! ");
+			XERUS_REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
+			XERUS_REQUIRE(!misc::contains(_ranks, size_t(0)), "Trying to construct random HTTensor with rank 0 is illegal.");
+
+
+			HTNetwork result(_dimensions.size());
+
+			//const std::vector<size_t> targetRank = reduce_to_maximal_ranks(_ranks, _dimensions);
+			const std::vector<size_t> targetRank = std::move(_ranks);
+
+			for(size_t i = 0; i < numComponents; ++i) {
+				//Create inner components
+				if (i < numIntComp){
+					const size_t child1Rank = 2 * i >= numComponents - 1 ? 1 : targetRank[2 * i];
+					const size_t child2Rank = 2 * i + 1 >= numComponents - 1 ? 1 : targetRank[2 * i + 1];
+					const size_t parentRank = i == 0 ? 1 : targetRank[i - 1];
+					const auto rndComp = Tensor::random({parentRank, child1Rank, child2Rank}, _dist, _rnd);
+					result.set_component(i, rndComp);
+				}
+				else {
+					const size_t parentRank = targetRank[i - 1];
+					if(isOperator) {
+						const auto rndComp = Tensor::random({parentRank, _dimensions[i - numIntComp], _dimensions[numOfLeaves + i - numIntComp]}, _dist, _rnd);
+						result.set_component(i, rndComp);
+					} else {
+						const auto rndComp = Tensor::random({parentRank, _dimensions[i - numIntComp]}, _dist, _rnd);
+						LOG(info,"dimension random = " << rndComp.dimensions);
+						result.set_component(i, rndComp);
+					}
+				}
+			}
+			//result.move_core(0);
+			return result;
+		}
 		
 		
 		/** 
-		 * @brief Random constructs a TTNetwork with the given dimensions and ranks limited by the given rank. 
+		 * @brief Random constructs a HTNetwork with the given dimensions and ranks limited by the given rank.
 		 * @details The entries of the componend tensors are sampled independendly using the provided random generator and distribution.
 		 * @param _dimensions the dimensions of the to be created TTNetwork.
 		 * @param _rank the maximal allowed rank. 
 		 * @param _rnd the random engine to be passed to the constructor of the component tensors.
 		 * @param _dist the random distribution to be passed to the constructor of the component tensors.
 		 */
-//		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
-//		static TTNetwork XERUS_warn_unused random(const std::vector<size_t>& _dimensions, const size_t _rank, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
-//			return TTNetwork::random(_dimensions, std::vector<size_t>(_dimensions.size()/N-1, _rank), _dist, _rnd);
-//		}
-//
+		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
+		static HTNetwork XERUS_warn_unused random(const std::vector<size_t>& _dimensions, const size_t _rank, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
+			return HTNetwork::random(_dimensions, std::vector<size_t>((static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 2 + _dimensions.size()/N), _rank), _dist, _rnd);
+		}
+
 		
 		/**
 		 * @brief Random constructs a TTNetwork with the given dimensions and ranks. 
@@ -283,7 +302,7 @@ namespace xerus {
 		 * @param _dimensions the dimensions used to calculate the maximal ranks.
 		 * @return the reduced ranks.
 		 */
-//		static std::vector<size_t> reduce_to_maximal_ranks(std::vector<size_t> _ranks, const std::vector<size_t>& _dimensions);
+		//static std::vector<size_t> reduce_to_maximal_ranks(std::vector<size_t> _ranks, const std::vector<size_t>& _dimensions);
 		
 		/** 
 		 * @brief calculates the number of degrees of freedom of the manifold of fixed tt-rank @a _ranks with the given @a _dimensions
@@ -423,7 +442,7 @@ namespace xerus {
 		* @details this is particularly useful after constructing an own TT tensor with set_component calls
 		* as these will assume that all orthogonalities are destroyed
 		*/
-//		void assume_core_position(const size_t _pos);
+		void assume_core_position(const size_t _pos);
 		
 		
 		/** 
