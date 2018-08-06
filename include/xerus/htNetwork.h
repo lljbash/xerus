@@ -36,7 +36,7 @@
 #include "indexedTensorMoveable.h"
 #include "indexedTensorList.h"
 
-#include <xerus/misc/internal.h>
+//#include <xerus/misc/internal.h>
 
 
 
@@ -232,7 +232,7 @@ namespace xerus {
 		 * @brief: Returns a the (rank one) HT-Tensor with all entries equal to one.
 		 * @param _dimensions the dimensions of the new tensor.
 		 */
-//		static HTNetwork XERUS_warn_unused ones(const std::vector<size_t>& _dimensions);
+		static HTNetwork XERUS_warn_unused ones(const std::vector<size_t>& _dimensions);
 		
 		
 		/** 
@@ -464,10 +464,10 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Move the core to the left.
+		* @brief Move the core to the root.
 		* @details Basically calls move_core() with _position = 0
 		*/
-//		void canonicalize_left();
+		void canonicalize_root();
 		
 		
 		/** 
