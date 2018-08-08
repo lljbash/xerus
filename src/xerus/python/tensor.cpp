@@ -26,6 +26,7 @@
 #define NO_IMPORT_ARRAY
 #include "misc.h"
 #include <stdexcept>
+#include <cstdlib>
 
 void expose_tensor() {
     enum_<Tensor::Representation>("Representation", "Possible representations of Tensor objects.")
@@ -110,14 +111,18 @@ void expose_tensor() {
                 if (_this.is_dense()) {
                     pyObj = PyArray_SimpleNewFromData(int(_this.degree()), &dimensions[0], NPY_DOUBLE, _this.get_dense_data());
                 } else {
-                    throw std::runtime_error("conversion of sparse tensors to numpy arrays is not implemented");
-                    /* Tensor cpy(_this); // NOTE leaves _this as a sparse tensor */
-                    //TODO cpy is destructed when it goes out of scope and cpy.get_dense_data() is a dangeling reference
-                    //     use pyObj = PyArray_SimpleNew(int(_this.degree()), &dimensions[0], NPY_DOUBLE);
-                    //     and memcpy
-                    /* pyObj = PyArray_SimpleNewFromData(int(_this.degree()), &dimensions[0], NPY_DOUBLE, cpy.get_dense_data()); */
+                    int nd = int(_this.degree());
+                    npy_intp* dims = &dimensions[0];
+                    int typenum = NPY_DOUBLE;
+                    void* data = calloc(_this.size, sizeof(double));
+
+                    pyObj = PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_OWNDATA, NULL);
+
+                    Tensor tmp(_this); // leaves _this as a sparse tensor
+                    misc::copy(static_cast<double*>(data), tmp.get_dense_data(), tmp.size);
                 }
-                PyObject * res = PyArray_Copy(reinterpret_cast<PyArrayObject*>(pyObj));  // copy due to lifetime issues (copy is owned by numpy instead of us)
+                //TODO: remove copy?
+                PyObject * res = PyArray_Copy(reinterpret_cast<PyArrayObject*>(pyObj)); // copy due to lifetime issues (copy is owned by numpy instead of us)
                 Py_DECREF(pyObj);
                 return res;
                 #pragma GCC diagnostic pop
