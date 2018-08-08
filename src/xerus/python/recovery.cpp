@@ -23,6 +23,7 @@
  */
 
 
+#define NO_IMPORT_ARRAY
 #include "misc.h"
 // using namespace uq;
 
