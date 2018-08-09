@@ -213,12 +213,12 @@ namespace xerus {
 		size_t lvl = static_cast<size_t>(std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
 		//add dummy dimensions to remainder
 		Tensor::DimensionTuple wdummydim(static_cast<size_t>(std::pow(2.,static_cast<double>(lvl + 1))));
-		for (size_t i = 0; i < std::pow(2,lvl + 1); i++){
+		for (size_t i = 0; i < std::pow(2.,static_cast<double>(lvl + 1)); i++){
 			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
 		}
 		remains.reinterpret_dimensions(wdummydim);
 		for(; lvl  > 0; --lvl) {
-			for (size_t pos = 0; pos < std::pow(2,static_cast<double>(lvl)); ++pos){
+			for (size_t pos = 0; pos < std::pow(2.,static_cast<double>(lvl)); ++pos){
 				std::vector<size_t> ithmode(remains.degree());
 				std::vector<size_t> ithmodeinv(remains.degree() - 1);
 
@@ -231,9 +231,9 @@ namespace xerus {
 				}
 				xerus::reshuffle(remains, remains, ithmode);
 
-				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[static_cast<size_t>(std::pow(2,lvl)) + pos - 2], _eps); // TODO fix maxRanks
+				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[static_cast<size_t>(std::pow(2.,static_cast<double>(lvl))) + pos - 2], _eps); // TODO fix maxRanks
 				xerus::reshuffle(newNode, newNode, {1,2,0}); // first parent then children
-				set_component(static_cast<size_t>(std::pow(2,lvl)) + pos - 1, std::move(newNode));
+				set_component(static_cast<size_t>(std::pow(2.,static_cast<double>(lvl))) + pos - 1, std::move(newNode));
 				newNode.reset();
 				xerus::contract(remains, singularValues, false, remains, false, 1);
 				xerus::reshuffle(remains, remains, ithmodeinv);
@@ -259,7 +259,7 @@ namespace xerus {
 		REQUIRE(_dimensions.size()%N == 0, "Illegal number of dimensions for htOperator");
 		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
 
-		const size_t numIntComp = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
+		const size_t numIntComp = static_cast<size_t>(std::pow(2.,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
 		const size_t numOfLeaves = _dimensions.size()/N;
 		const size_t numComponents = numIntComp + numOfLeaves;
 
