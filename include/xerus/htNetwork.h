@@ -349,7 +349,7 @@ namespace xerus {
 		* @param _idx index of the component to access.
 		* @returns a reference to the requested component.
 		*/
-//		Tensor& component(const size_t _idx);
+		Tensor& component(const size_t _idx);
 		
 		
 		/** 
@@ -430,14 +430,14 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Gets the ranks of the TTNetwork.
+		* @brief Gets the ranks of the HTNetwork.
 		* @return A vector containing the current ranks.
 		*/
 //		std::vector<size_t> ranks() const;
 		
 		
 		/** 
-		* @brief Gets the rank of a specific egde of the TTNetwork.
+		* @brief Gets the rank of a specific egde of the HTNetwork.
 		* @param _i Position of the edge in question.
 		* @return The current rank of edge _i.
 		*/
@@ -490,13 +490,13 @@ namespace xerus {
 //		}
 		
 		
-//		virtual TensorNetwork* get_copy() const override;
+		virtual TensorNetwork* get_copy() const override;
 		
 		
 //		virtual void contract_unconnected_subnetworks() override;
 		
 		
-//		virtual value_t frob_norm() const override;
+		virtual value_t frob_norm() const override;
 		
 		
 		/** 
@@ -509,37 +509,37 @@ namespace xerus {
 
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
 		/** 
-		* @brief Adds a given TTNetwork to this one.
+		* @brief Adds a given HTNetwork to this one.
 		* @details To be well-defined it is required that the dimensions of this and @a _other coincide. 
 		* The rank of the result are in general the entrywise sum of the ranks of this and @a _other.
-		* @param _other the TTNetwork to add.
-		* @return reference to this TTNetwork.
+		* @param _other the HTNetwork to add.
+		* @return reference to this HTNetwork.
 		*/
-//		TTNetwork& operator+=(const TTNetwork& _other);
+		HTNetwork& operator+=(const HTNetwork& _other);
 		
 		
 		/** 
-		* @brief Subtracts the @a _other TTNetwork entrywise from this one.
+		* @brief Subtracts the @a _other HTNetwork entrywise from this one.
 		* @details To be well-defined it is required that the dimensions of this and @a _other coincide. 
 		* The rank of the result are in general the entrywise sum of the ranks of this and @a _other.
 		* @param _other the Tensor to be subtracted to this one.
-		* @return a reference to this TTNetwork.
+		* @return a reference to this HTNetwork.
 		*/
-//		TTNetwork& operator-=(const TTNetwork& _other);
+		HTNetwork& operator-=(const HTNetwork& _other);
 		
 		/** 
 		* @brief Calculates the entrywise multiplication of this TensorNetwork with a constant @a _factor.
 		* @details Internally this only results in a change in the global factor.
 		* @param _factor the factor.
 		*/
-//		virtual void operator*=(const value_t _factor) override;
+		virtual void operator*=(const value_t _factor) override;
 		
 		/** 
 		* @brief Calculates the entrywise divison of this TensorNetwork by a constant @a _divisor.
 		* @details Internally this only results in a change in the global factor.
 		* @param _divisor the divisor.
 		*/
-//		virtual void operator/=(const value_t _divisor) override;
+		virtual void operator/=(const value_t _divisor) override;
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Operator specializations - - - - - - - - - - - - - - - - - - - - - - - - - - */
 //		static bool specialized_contraction_f(std::unique_ptr<internal::IndexedTensorMoveable<TensorNetwork>>& _out, internal::IndexedTensorReadOnly<TensorNetwork>&& _me, internal::IndexedTensorReadOnly<TensorNetwork>&& _other);
@@ -560,64 +560,64 @@ namespace xerus {
 
 	typedef HTNetwork<false> HTTensor;
 	typedef HTNetwork<true> HTOperator;
-//
-//
-//	/**
-//	* @brief Calculates the entrywise sum of the given TTNetworks @a _lhs and @a _rhs.
-//	* @details To be well-defined it is required that the dimensions of @a _lhs and @a _rhs coincide.
-//	* The rank of the result are in general the entrywise sum of the ranks of @a _lhs and @a _rhs.
-//	* @param _lhs the first summand.
-//	* @param _rhs the second summand.
-//	* @return the sum.
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator+(TTNetwork<isOperator> _lhs, const TTNetwork<isOperator>& _rhs);
-//
-//
-//	/**
-//	* @brief Calculates the entrywise difference of the given TTNetworks @a _lhs and @a _rhs.
-//	* @details To be well-defined it is required that the dimensions of @a _lhs and @a _rhs coincide.
-//	* The rank of the result are in general the entrywise sum of the ranks of @a _lhs and @a _rhs.
-//	* @param _lhs the minuend.
-//	* @param _rhs the subtrahend.
-//	* @return the difference.
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator-(TTNetwork<isOperator> _lhs, const TTNetwork<isOperator>& _rhs);
-//
-//
-//	/**
-//	* @brief Calculates the entrywise multiplication of the given TTNetwork @a _network with a constant @a _factor.
-//	* @details Internally this only results in a change in the global factor.
-//	* @param _network the TTNetwork,
-//	* @param _factor the factor,
-//	* @return the resulting scaled TTNetwork.
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator*(TTNetwork<isOperator> _network, const value_t _factor);
-//
-//
-//	/**
-//	* @brief Calculates the entrywise multiplication of the given TTNetwork @a _network with a constant @a _factor.
-//	* @details Internally this only results in a change in the global factor.
-//	* @param _factor the factor,
-//	* @param _network the TTNetwork,
-//	* @return the resulting scaled TTNetwork.
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator*(const value_t _factor, TTNetwork<isOperator> _network);
-//
-//
-//	/**
-//	* @brief Calculates the entrywise divison of this TTNetwork by a constant @a _divisor.
-//	* @details Internally this only results in a change in the global factor.
-//	* @param _divisor the divisor,
-//	* @return the resulting scaled TTNetwork.
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator/(TTNetwork<isOperator> _network, const value_t _divisor);
-//
-//
+
+
+	/**
+	* @brief Calculates the entrywise sum of the given HTNetworks @a _lhs and @a _rhs.
+	* @details To be well-defined it is required that the dimensions of @a _lhs and @a _rhs coincide.
+	* The rank of the result are in general the entrywise sum of the ranks of @a _lhs and @a _rhs.
+	* @param _lhs the first summand.
+	* @param _rhs the second summand.
+	* @return the sum.
+	*/
+	template<bool isOperator>
+	HTNetwork<isOperator> operator+(HTNetwork<isOperator> _lhs, const HTNetwork<isOperator>& _rhs);
+
+
+	/**
+	* @brief Calculates the entrywise difference of the given HTNetworks @a _lhs and @a _rhs.
+	* @details To be well-defined it is required that the dimensions of @a _lhs and @a _rhs coincide.
+	* The rank of the result are in general the entrywise sum of the ranks of @a _lhs and @a _rhs.
+	* @param _lhs the minuend.
+	* @param _rhs the subtrahend.
+	* @return the difference.
+	*/
+	template<bool isOperator>
+	HTNetwork<isOperator> operator-(HTNetwork<isOperator> _lhs, const HTNetwork<isOperator>& _rhs);
+
+
+	/**
+	* @brief Calculates the entrywise multiplication of the given HTNetwork @a _network with a constant @a _factor.
+	* @details Internally this only results in a change in the global factor.
+	* @param _network the HTNetwork,
+	* @param _factor the factor,
+	* @return the resulting scaled HTNetwork.
+	*/
+	template<bool isOperator>
+	HTNetwork<isOperator> operator*(HTNetwork<isOperator> _network, const value_t _factor);
+
+
+	/**
+	* @brief Calculates the entrywise multiplication of the given HTNetwork @a _network with a constant @a _factor.
+	* @details Internally this only results in a change in the global factor.
+	* @param _factor the factor,
+	* @param _network the HTNetwork,
+	* @return the resulting scaled HTNetwork.
+	*/
+	template<bool isOperator>
+	HTNetwork<isOperator> operator*(const value_t _factor, HTNetwork<isOperator> _network);
+
+
+	/**
+	* @brief Calculates the entrywise divison of this HTNetwork by a constant @a _divisor.
+	* @details Internally this only results in a change in the global factor.
+	* @param _divisor the divisor,
+	* @return the resulting scaled HTNetwork.
+	*/
+	template<bool isOperator>
+	HTNetwork<isOperator> operator/(HTNetwork<isOperator> _network, const value_t _divisor);
+
+
 //	/**
 //	* @brief Calculates the componentwise product of two tensors given in the TT format.
 //	* @details In general the resulting rank = rank(A)*rank(B). Retains the core position of @a _A

@@ -583,16 +583,16 @@ namespace xerus {
 //		}
 //	}
 //
-//	template<bool isOperator>
-//	Tensor& TTNetwork<isOperator>::component(const size_t _idx) {
-//		REQUIRE(_idx == 0 || _idx < degree()/N, "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree()/N << " components.");
-//		return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
-//	}
-//
-//
+	template<bool isOperator>
+	Tensor& HTNetwork<isOperator>::component(const size_t _idx) {
+		REQUIRE(_idx >= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in HTNetwork::component, as there are only " << numberOfComponents << " components.");
+		return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
+	}
+
+
 	template<bool isOperator>
 	const Tensor& HTNetwork<isOperator>::get_component(const size_t _idx) const {
-		REQUIRE(_idx <= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in TTNetwork::get_component.");
+		REQUIRE(_idx >= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in HTNetwork::get_component.");
 		return *nodes[degree() == 0 ? 0 : _idx].tensorObject;
 	}
 
@@ -843,7 +843,7 @@ namespace xerus {
 //
 //
 //	template<bool isOperator>
-//	std::vector<size_t> TTNetwork<isOperator>::ranks() const {
+//	std::vector<size_t> HTNetwork<isOperator>::ranks() const {
 //		std::vector<size_t> res;
 //		res.reserve(num_ranks());
 //		for (size_t n = 1; n+2 < nodes.size(); ++n) {
@@ -854,25 +854,25 @@ namespace xerus {
 //
 //
 //	template<bool isOperator>
-//	size_t TTNetwork<isOperator>::rank(const size_t _i) const {
-//		REQUIRE(_i+1 < degree()/N, "Requested illegal rank " << _i);
-//		return nodes[_i+1].neighbors.back().dimension;
+//	size_t HTNetwork<isOperator>::rank(const size_t _i) const {
+//		REQUIRE(_i < numberOfComponents, "Requested illegal rank " << _i);
+//		return nodes[_i].neighbors.back().dimension;
 //	}
-//
-//
+
+
 	template<bool isOperator>
 	void HTNetwork<isOperator>::assume_core_position(const size_t _pos) {
 		REQUIRE(_pos < degree()/N || (degree() == 0 && _pos == 0), "Invalid core position.");
 		corePosition = _pos;
 		canonicalized = true;
 	}
-//
-//
-//	template<bool isOperator>
-//	TensorNetwork* TTNetwork<isOperator>::get_copy() const {
-//		return new TTNetwork(*this);
-//	}
-//
+
+
+	template<bool isOperator>
+	TensorNetwork* HTNetwork<isOperator>::get_copy() const {
+		return new HTNetwork(*this);
+	}
+
 //	template<bool isOperator>
 //	void TTNetwork<isOperator>::contract_unconnected_subnetworks() {
 //		if(degree() == 0) {
@@ -907,35 +907,46 @@ namespace xerus {
 //	}
 //
 //
-//	template<bool isOperator>
-//	value_t TTNetwork<isOperator>::frob_norm() const {
-//		require_correct_format();
-//		if (canonicalized) {
-//			return get_component(corePosition).frob_norm();
+	template<bool isOperator>
+	value_t HTNetwork<isOperator>::frob_norm() const {
+		require_correct_format();
+		if (canonicalized) {
+			return get_component(corePosition).frob_norm();
+		}
+		const Index i;
+		return std::sqrt(value_t((*this)(i&0)*(*this)(i&0)));
+	}
+
+//
+//
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+    // TODO why sparse?
+	template<bool isOperator>
+	HTNetwork<isOperator>& HTNetwork<isOperator>::operator+=(const HTNetwork<isOperator>& _other) {
+		REQUIRE(dimensions == _other.dimensions, "The dimensions in HT sum must coincide. Given " << dimensions << " vs " << _other.dimensions);
+		require_correct_format();
+
+		const size_t numComponents = degree()/N;
+
+		//const bool initialCanonicalization = canonicalized;
+		//const size_t initialCorePosition = corePosition;
+
+		if (numComponents <= 1) {
+			component(0) += _other.get_component(0);
+			return *this;
+		}
+		//move core to root if not there, check for both summands
+		if (!canonicalized || corePosition != 0){
+			move_core(0);
+		}
+//		if (!_other.canonicalized || _other.corePosition != 0){
+//			_other.move_core(0);
 //		}
-//		const Index i;
-//		return std::sqrt(value_t((*this)(i&0)*(*this)(i&0)));
-//	}
-//
-//
-//
-//	/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//
-//    // TODO why sparse?
-//	template<bool isOperator>
-//	TTNetwork<isOperator>& TTNetwork<isOperator>::operator+=(const TTNetwork<isOperator>& _other) {
-//		REQUIRE(dimensions == _other.dimensions, "The dimensions in TT sum must coincide. Given " << dimensions << " vs " << _other.dimensions);
-//		require_correct_format();
-//
-//		const size_t numComponents = degree()/N;
-//
-//		const bool initialCanonicalization = canonicalized;
-//		const size_t initialCorePosition = corePosition;
-//
-//		if (numComponents <= 1) {
-//			component(0) += _other.get_component(0);
-//			return *this;
-//		}
+
+
+
+
 //
 //		XERUS_PA_START;
 //		for(size_t position = 0; position < numComponents; ++position) {
@@ -945,7 +956,7 @@ namespace xerus {
 //
 //			// Structure has to be (for degree 4)
 //			// (L1 R1) * ( L2 0  ) * ( L3 0  ) * ( L4 )
-//			// 			 ( 0  R2 )   ( 0  R3 )   ( R4 )
+//			// 			     ( 0  R2 )   ( 0  R3 )   ( R4 )
 //
 //			// Create a Tensor for the result
 //			std::vector<size_t> nxtDimensions;
@@ -971,39 +982,39 @@ namespace xerus {
 //		if(initialCanonicalization) {
 //			move_core(initialCorePosition);
 //		}
-//
-//		return *this;
-//	}
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator>& TTNetwork<isOperator>::operator-=(const TTNetwork<isOperator>& _other) {
-//		operator*=(-1.0);
-//		operator+=(_other);
-//		operator*=(-1.0);
-//		return *this;
-//	}
-//
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::operator*=(const value_t _factor) {
-//		REQUIRE(!nodes.empty(), "There must not be a TTNetwork without any node");
-//
-//		if(canonicalized) {
-//			component(corePosition) *= _factor;
-//		} else {
-//			component(0) *= _factor;
-//		}
-//	}
-//
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::operator/=(const value_t _divisor) {
-//		operator*=(1/_divisor);
-//	}
-//
-//
-//
+
+		return *this;
+	}
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator>& HTNetwork<isOperator>::operator-=(const HTNetwork<isOperator>& _other) {
+		operator*=(-1.0);
+		operator+=(_other);
+		operator*=(-1.0);
+		return *this;
+	}
+
+
+	template<bool isOperator>
+	void HTNetwork<isOperator>::operator*=(const value_t _factor) {
+		REQUIRE(!nodes.empty(), "There must not be a HTNetwork without any node");
+
+		if(canonicalized) {
+			component(corePosition) *= _factor;
+		} else {
+			component(0) *= _factor;
+		}
+	}
+
+
+	template<bool isOperator>
+	void HTNetwork<isOperator>::operator/=(const value_t _divisor) {
+		operator*=(1/_divisor);
+	}
+
+
+
 //	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Operator specializations - - - - - - - - - - - - - - - - - - - - - - - - - - */
 //
 //
@@ -1283,55 +1294,55 @@ namespace xerus {
 //	// Explicit instantiation of the two template parameters that will be implemented in the xerus library
 	template class HTNetwork<false>;
 	template class HTNetwork<true>;
-//
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator+(TTNetwork<isOperator> _lhs, const TTNetwork<isOperator>& _rhs) {
-//		_lhs += _rhs; // NOTE pass-by-value!
-//		return _lhs;
-//	}
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator-(TTNetwork<isOperator> _lhs, const TTNetwork<isOperator>& _rhs) {
-//		_lhs -= _rhs; // NOTE pass-by-value!
-//		return _lhs;
-//	}
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator*(TTNetwork<isOperator> _network, const value_t _factor) {
-//		_network *= _factor; // NOTE pass-by-value!
-//		return _network;
-//	}
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator*(const value_t _factor, TTNetwork<isOperator> _network) {
-//		_network *= _factor; // NOTE pass-by-value!
-//		return _network;
-//	}
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> operator/(TTNetwork<isOperator> _network, const value_t _divisor) {
-//		_network /= _divisor; // NOTE pass-by-value!
-//		return _network;
-//	}
-//
-//	// Explicit instantiation for both types
-//	template TTNetwork<false> operator+(TTNetwork<false> _lhs, const TTNetwork<false>& _rhs);
-//	template TTNetwork<true> operator+(TTNetwork<true> _lhs, const TTNetwork<true>& _rhs);
-//	template TTNetwork<false> operator-(TTNetwork<false> _lhs, const TTNetwork<false>& _rhs);
-//	template TTNetwork<true> operator-(TTNetwork<true> _lhs, const TTNetwork<true>& _rhs);
-//	template TTNetwork<false> operator*(TTNetwork<false> _network, const value_t _factor);
-//	template TTNetwork<true> operator*(TTNetwork<true> _network, const value_t _factor);
-//	template TTNetwork<false> operator*(const value_t _factor, TTNetwork<false> _network);
-//	template TTNetwork<true> operator*(const value_t _factor, TTNetwork<true> _network);
-//	template TTNetwork<false> operator/(TTNetwork<false> _network, const value_t _divisor);
-//	template TTNetwork<true> operator/(TTNetwork<true> _network, const value_t _divisor);
-//
+
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator> operator+(HTNetwork<isOperator> _lhs, const HTNetwork<isOperator>& _rhs) {
+		_lhs += _rhs; // NOTE pass-by-value!
+		return _lhs;
+	}
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator> operator-(HTNetwork<isOperator> _lhs, const HTNetwork<isOperator>& _rhs) {
+		_lhs -= _rhs; // NOTE pass-by-value!
+		return _lhs;
+	}
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator> operator*(HTNetwork<isOperator> _network, const value_t _factor) {
+		_network *= _factor; // NOTE pass-by-value!
+		return _network;
+	}
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator> operator*(const value_t _factor, HTNetwork<isOperator> _network) {
+		_network *= _factor; // NOTE pass-by-value!
+		return _network;
+	}
+
+
+	template<bool isOperator>
+	HTNetwork<isOperator> operator/(HTNetwork<isOperator> _network, const value_t _divisor) {
+		_network /= _divisor; // NOTE pass-by-value!
+		return _network;
+	}
+
+	// Explicit instantiation for both types
+	template HTNetwork<false> operator+(HTNetwork<false> _lhs, const HTNetwork<false>& _rhs);
+	template HTNetwork<true> operator+(HTNetwork<true> _lhs, const HTNetwork<true>& _rhs);
+	template HTNetwork<false> operator-(HTNetwork<false> _lhs, const HTNetwork<false>& _rhs);
+	template HTNetwork<true> operator-(HTNetwork<true> _lhs, const HTNetwork<true>& _rhs);
+	template HTNetwork<false> operator*(HTNetwork<false> _network, const value_t _factor);
+	template HTNetwork<true> operator*(HTNetwork<true> _network, const value_t _factor);
+	template HTNetwork<false> operator*(const value_t _factor, HTNetwork<false> _network);
+	template HTNetwork<true> operator*(const value_t _factor, HTNetwork<true> _network);
+	template HTNetwork<false> operator/(HTNetwork<false> _network, const value_t _divisor);
+	template HTNetwork<true> operator/(HTNetwork<true> _network, const value_t _divisor);
+
 //
 //
 //
