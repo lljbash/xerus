@@ -212,13 +212,13 @@ namespace xerus {
 		//for the internal components
 		size_t lvl = static_cast<size_t>(std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
 		//add dummy dimensions to remainder
-		Tensor::DimensionTuple wdummydim(static_cast<size_t>(std::pow(2,lvl + 1)));
+		Tensor::DimensionTuple wdummydim(static_cast<size_t>(std::pow(2.,static_cast<double>(lvl + 1))));
 		for (size_t i = 0; i < std::pow(2,lvl + 1); i++){
 			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
 		}
 		remains.reinterpret_dimensions(wdummydim);
 		for(; lvl  > 0; --lvl) {
-			for (size_t pos = 0; pos < std::pow(2,lvl); ++pos){
+			for (size_t pos = 0; pos < std::pow(2,static_cast<double>(lvl)); ++pos){
 				std::vector<size_t> ithmode(remains.degree());
 				std::vector<size_t> ithmodeinv(remains.degree() - 1);
 
