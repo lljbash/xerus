@@ -111,6 +111,7 @@ void expose_tensor() {
                 if (_this.is_dense()) {
                     pyObj = PyArray_SimpleNewFromData(int(_this.degree()), &dimensions[0], NPY_DOUBLE, _this.get_dense_data());
                 } else {
+                    std::cerr << "RuntimeWarning: converting sparse tensor to dense ndarray" << std::endl;
                     int nd = int(_this.degree());
                     npy_intp* dims = &dimensions[0];
                     int typenum = NPY_DOUBLE;
