@@ -268,12 +268,12 @@ namespace xerus {
 //		static HTNetwork XERUS_warn_unused dirac(std::vector<size_t> _dimensions, const size_t _position);
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Standard Operators - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-		///@brief TTNetworks are default assignable.
-//		HTNetwork& operator=(const TTNetwork&  _other) = default;
+		///@brief HTNetworks are default assignable.
+		HTNetwork& operator=(const HTNetwork&  _other) = default;
 		
 		
-		///@brief TTNetworks are default move-assignable.
-//		HTNetwork& operator=(      TTNetwork&& _other) = default;
+		///@brief HTNetworks are default move-assignable.
+		HTNetwork& operator=(HTNetwork&& _other) = default;
 		
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -300,7 +300,7 @@ namespace xerus {
 		 * @param start node
 		 * @param end node
 		 */
-		std::vector<size_t> get_path(size_t start, size_t end) const;
+		std::vector<size_t> get_path(size_t _start, size_t _end) const;
 
 		/**
 		 * @brief function to recursively find the path from the root to a destination
@@ -308,7 +308,36 @@ namespace xerus {
 		 * @param dest destination node
 		 * @param path path from root to dest
 		 */
-		bool get_path_from_root(size_t root, size_t dest, std::vector<size_t>& path ) const;
+		bool get_path_from_root(size_t _root, size_t _dest, std::vector<size_t>& _path ) const;
+
+		/**
+		 * @brief function which returns the parent of a given component
+		 * @details implements the root to leaves numbering of the HTNetwork
+		 * @param comp index of the component
+		 */
+		size_t get_parent_component(size_t _comp) const;
+
+		/**
+		 * @brief function which returns the left child of a given component
+		 * @details implements the root to leaves numbering of the HTNetwork
+		 * @param comp index of the component
+		 */
+		size_t get_left_child_component(size_t _comp) const;
+
+		/**
+		 * @brief function which returns the right child of a given component
+		 * @details implements the root to leaves numbering of the HTNetwork
+		 * @param comp index of the component
+		 */
+		size_t get_right_child_component(size_t _comp) const;
+
+		/**
+		 * @brief function which returns true if the component is the left child of its parent component or false if it is the right child
+		 * @param comp index of the component
+		 */
+		bool is_left_child(size_t _comp) const;
+
+
 
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	public:

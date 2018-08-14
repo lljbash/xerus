@@ -48,7 +48,7 @@ namespace xerus {
 	
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N) , _maxRank)) {}
+		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N) , _maxRank)) {}
 
 	
 	template<bool isOperator>
@@ -61,8 +61,8 @@ namespace xerus {
 		REQUIRE(!misc::contains(dimensions, size_t(0)), "Zero is no valid dimension.");
 		//Number of Leafs
 		const size_t numLeaves = dimensions.size()/N;
-		//Lvl
-		const size_t numFullLeaves = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+		//Lvl, NOTE: adding 0.5 to overcome possible conversion errors
+		const size_t numFullLeaves = static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
 		// Number of internal components
 		const size_t numIntCom = numFullLeaves - 1;
 
@@ -174,7 +174,7 @@ namespace xerus {
 		}
 
 		Tensor singularValues, newNode;
-		//for the leaves TODO add operator functionality
+		//for the leaves
 		for(size_t pos = numberOfComponents - numExternalComponent,i = 0; pos  < numberOfComponents; ++pos, ++i) {
 			std::vector<size_t> ithmode(remains.degree());
 			std::vector<size_t> ithmodeinv(remains.degree() - 1);
@@ -203,22 +203,21 @@ namespace xerus {
 			set_component(pos, std::move(newNode));
 			newNode.reset();
 			xerus::contract(remains, singularValues, false, remains, false, 1);
-			if (isOperator){
-				xerus::reshuffle(remains, remains, ithmodeinv);
-			} else {
-				xerus::reshuffle(remains, remains, ithmode);
-			}
+
+			xerus::reshuffle(remains, remains, isOperator ? ithmodeinv : ithmode);
+
 		}
 		//for the internal components
-		size_t lvl = static_cast<size_t>(std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
+		size_t lvl = static_cast<size_t>(0.5 + std::floor(std::log2(static_cast<double>(numberOfComponents - numExternalComponent))));
+		size_t numCompOnLvl = static_cast<size_t>(0.5+std::pow(2.,static_cast<double>(lvl)));
 		//add dummy dimensions to remainder
-		Tensor::DimensionTuple wdummydim(static_cast<size_t>(std::pow(2.,static_cast<double>(lvl + 1))));
-		for (size_t i = 0; i < static_cast<size_t>(std::pow(2.,static_cast<double>(lvl + 1))); i++){
+		Tensor::DimensionTuple wdummydim(numCompOnLvl * 2);
+		for (size_t i = 0; i < numCompOnLvl * 2; i++){
 			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
 		}
 		remains.reinterpret_dimensions(wdummydim);
 		for(; lvl  > 0; --lvl) {
-			for (size_t pos = 0; pos < static_cast<size_t>(std::pow(2.,static_cast<double>(lvl))); ++pos){
+			for (size_t pos = 0; pos < numCompOnLvl; ++pos){
 				std::vector<size_t> ithmode(remains.degree());
 				std::vector<size_t> ithmodeinv(remains.degree() - 1);
 
@@ -231,14 +230,15 @@ namespace xerus {
 				}
 				xerus::reshuffle(remains, remains, ithmode);
 
-				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[static_cast<size_t>(std::pow(2.,static_cast<double>(lvl))) + pos - 2], _eps); // TODO fix maxRanks
+				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[numCompOnLvl + pos - 2], _eps); // TODO fix maxRanks
 				xerus::reshuffle(newNode, newNode, {1,2,0}); // first parent then children
-				set_component(static_cast<size_t>(std::pow(2.,static_cast<double>(lvl))) + pos - 1, std::move(newNode));
+				set_component(numCompOnLvl + pos - 1, std::move(newNode));
 				newNode.reset();
 				xerus::contract(remains, singularValues, false, remains, false, 1);
 				xerus::reshuffle(remains, remains, ithmodeinv);
 
 			}
+			numCompOnLvl /= 2;
 		}
 		Tensor::DimensionTuple wdummydimroot({remains.dimensions[0], remains.dimensions[1], 1});
 		remains.reinterpret_dimensions(wdummydimroot);
@@ -259,7 +259,7 @@ namespace xerus {
 		REQUIRE(_dimensions.size()%N == 0, "Illegal number of dimensions for htOperator");
 		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
 
-		const size_t numIntComp = static_cast<size_t>(std::pow(2.,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
+		const size_t numIntComp = static_cast<size_t>(0.5+std::pow(2.,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
 		const size_t numOfLeaves = _dimensions.size()/N;
 		const size_t numComponents = numIntComp + numOfLeaves;
 
@@ -462,13 +462,13 @@ namespace xerus {
 	}
 
 	template<bool isOperator>
-	std::vector<size_t> HTNetwork<isOperator>::get_path(size_t start, size_t end) const {
+	std::vector<size_t> HTNetwork<isOperator>::get_path(size_t _start, size_t _end) const {
 		std::vector<size_t> path_start;
 		std::vector<size_t> path_end;
 		std::vector<size_t> result;
 
-		REQUIRE(get_path_from_root(0, start, path_start ), "start point is wrong");
-		REQUIRE(get_path_from_root(0, end, path_end ), "end point is wrong");
+		REQUIRE(get_path_from_root(0, _start, path_start ), "start point is wrong");
+		REQUIRE(get_path_from_root(0, _end, path_end ), "end point is wrong");
 		while(!path_start.empty()){
 			size_t tmp = path_start.back();
 			path_start.pop_back();
@@ -484,14 +484,41 @@ namespace xerus {
 	}
 
 	template<bool isOperator>
-	bool HTNetwork<isOperator>::get_path_from_root(size_t root, size_t dest, std::vector<size_t>& path ) const {
-		if (root > numberOfComponents) { return false;}
-		path.emplace_back(root);
-		if (root == dest) { return true;}
-		if(get_path_from_root(root*2+1,dest,path) || get_path_from_root(root*2+2,dest,path)) {return true;}
-		path.pop_back();
+	bool HTNetwork<isOperator>::get_path_from_root(size_t _root, size_t _dest, std::vector<size_t>& _path ) const {
+		if (_root > numberOfComponents) { return false;}
+		_path.emplace_back(_root);
+		if (_root == _dest) { return true;}
+		if(get_path_from_root(_root*2+1,_dest,_path) || get_path_from_root(_root*2+2,_dest,_path)) {return true;}
+		_path.pop_back();
 		return false;
 
+	}
+
+	template<bool isOperator>
+	size_t HTNetwork<isOperator>::get_parent_component(size_t _comp) const{
+		REQUIRE(_comp != 0, "The root component has no parent!");
+		REQUIRE(_comp <  numberOfComponents && _comp > 0, "The component requested is out of bounce, given " << _comp);
+		return (_comp - 1) / 2;
+	}
+
+	template<bool isOperator>
+	size_t HTNetwork<isOperator>::get_left_child_component(size_t _comp) const{
+		REQUIRE(_comp < numberOfComponents - degree()/N, "This is a leaf! Leaves do not have children.");
+		REQUIRE(_comp <  numberOfComponents && _comp >= 0, "The component requested is out of bounce, given " << _comp);
+		return 2 * _comp + 1;
+	}
+
+	template<bool isOperator>
+		size_t HTNetwork<isOperator>::get_right_child_component(size_t _comp) const{
+			REQUIRE(_comp < numberOfComponents - degree()/N, "This is a leaf! Leaves do not have children.");
+			REQUIRE(_comp <  numberOfComponents && _comp >= 0, "The component requested is out of bounce, given " << _comp);
+			return 2 * _comp + 2;
+	}
+	template<bool isOperator>
+	bool HTNetwork<isOperator>::is_left_child(size_t _comp) const{
+		REQUIRE(_comp != 0, "The root component is not a child of another component!");
+		REQUIRE(_comp <  numberOfComponents && _comp > 0, "The component requested is out of bounce, given " << _comp);
+		return _comp % 2 == 1;
 	}
 
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -586,14 +613,14 @@ namespace xerus {
 	template<bool isOperator>
 	Tensor& HTNetwork<isOperator>::component(const size_t _idx) {
 		REQUIRE(_idx >= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in HTNetwork::component, as there are only " << numberOfComponents << " components.");
-		return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
+		return *nodes[degree() == 0 ? 0 : _idx].tensorObject; //TODO check degree == 0
 	}
 
 
 	template<bool isOperator>
 	const Tensor& HTNetwork<isOperator>::get_component(const size_t _idx) const {
 		REQUIRE(_idx >= 0 || _idx < numberOfComponents, "Illegal index " << _idx <<" in HTNetwork::get_component.");
-		return *nodes[degree() == 0 ? 0 : _idx].tensorObject;
+		return *nodes[degree() == 0 ? 0 : _idx].tensorObject; //TODO check degree == 0
 	}
 
 
@@ -927,62 +954,195 @@ namespace xerus {
 		REQUIRE(dimensions == _other.dimensions, "The dimensions in HT sum must coincide. Given " << dimensions << " vs " << _other.dimensions);
 		require_correct_format();
 
-		const size_t numComponents = degree()/N;
+		const size_t numLeaves = degree()/N;
+		const size_t numInternalComponents = numberOfComponents - numLeaves;
 
-		//const bool initialCanonicalization = canonicalized;
-		//const size_t initialCorePosition = corePosition;
 
-		if (numComponents <= 1) {
+		const bool initialCanonicalization = canonicalized;
+		const size_t initialCorePosition = corePosition;
+
+		if (numberOfComponents <= 1) {
 			component(0) += _other.get_component(0);
 			return *this;
 		}
-		//move core to root if not there, check for both summands
-		if (!canonicalized || corePosition != 0){
-			move_core(0);
-		}
-//		if (!_other.canonicalized || _other.corePosition != 0){
-//			_other.move_core(0);
+		//need to make copy of other because of basis changes
+//		auto _other_copy = _other;
+		//For now need both Tensors in canonicalized form TODO is the necessary?
+//		if ( !_other_copy.canonicalized || _other_copy.corePosition != 0 ){
+//			_other_copy.move_core(0);
 //		}
-
-
-
+//		if ( !canonicalized || corePosition != 0 ){
+//			move_core(0);
+//		}
 
 //
 //		XERUS_PA_START;
-//		for(size_t position = 0; position < numComponents; ++position) {
+		for(size_t position = 0; position < numberOfComponents; ++position) {
+			bool isLeaf = position >= numInternalComponents;
+			bool hasDummyLeftChild = false;
+			bool hasDummyRightChild = false;
+			if(!isLeaf){
+				hasDummyLeftChild = get_left_child_component(position) >= numberOfComponents;
+				hasDummyRightChild = get_right_child_component(position) >= numberOfComponents;
+			}
+			// Get current components
+			const Tensor& myComponent = get_component(position);
+			const Tensor& otherComponent = _other.get_component(position);
+			const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
+
+			LOG(info,"position = " <<position);
+
+			LOG(info,myComponent.dimensions);
+			LOG(info,otherComponent.dimensions);
+
+			// Structure has to be (for degree 4)
+			// (L1 R1) * ( L2 0  ) * ( L3 0  ) * ( L4 )
+			// 			 ( 0  R2 )   ( 0  R3 )   ( R4 )
+
+			// Create a Tensor for the result
+			std::vector<size_t> nxtDimensions;
+			nxtDimensions.emplace_back(position == 0 ? 1 : myComponent.dimensions.front()+otherComponent.dimensions.front());
+
+			nxtDimensions.emplace_back(isLeaf ? myComponent.dimensions[1] : hasDummyLeftChild ? 1 : myComponent.dimensions[1] + otherComponent.dimensions[1]);
+			if (isOperator && isLeaf) { nxtDimensions.emplace_back(myComponent.dimensions[2]); }
+			if (!isLeaf) {nxtDimensions.emplace_back(hasDummyRightChild ? 1 : myComponent.dimensions[2] + otherComponent.dimensions[2]);}
+
+			LOG(info,nxtDimensions);
+
+
+			std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
+
+			newComponent->offset_add(myComponent, (!isOperator && isLeaf) ? std::vector<size_t>({0,0}) : std::vector<size_t>({0,0,0}));
+
+			const size_t parentOffset = position == 0 ? 0 : myComponent.dimensions.front();
+			const size_t child1Offset = isLeaf || hasDummyLeftChild ? 0 : myComponent.dimensions[1];
+			const size_t child2Offset = isLeaf || hasDummyRightChild ? 0 : myComponent.dimensions[2];
+			newComponent->offset_add(otherComponent, !isOperator && isLeaf ?  std::vector<size_t>({parentOffset,child1Offset})  : std::vector<size_t>({parentOffset,child1Offset,child2Offset}) );
+			LOG(info,"parentOffset = " << parentOffset);
+			LOG(info,"child1Offset = " << child1Offset);
+			LOG(info,"child2Offset = " << child2Offset);
+			if(!isOperator && isLeaf){
+				LOG(info,"offset hello");
+			}
+			LOG(info,"myComponent = \n" << myComponent);
+			LOG(info,"otherComponent = \n" << otherComponent);
+			LOG(info,"component = \n" << *newComponent);
+			set_component(position, std::move(*newComponent));
+		}
+
+		//XERUS_PA_END("ADD/SUB", "TTNetwork ADD/SUB", std::string("Dims:")+misc::to_string(dimensions)+" Ranks: "+misc::to_string(ranks()));
+//		//For the Leaves
+//		for(size_t position = numInternalComponents; position < numberOfComponents; ++position) {
 //			// Get current components
 //			const Tensor& myComponent = get_component(position);
-//			const Tensor& otherComponent = _other.get_component(position);
-//
-//			// Structure has to be (for degree 4)
-//			// (L1 R1) * ( L2 0  ) * ( L3 0  ) * ( L4 )
-//			// 			     ( 0  R2 )   ( 0  R3 )   ( R4 )
+//			const Tensor& otherComponent = _other_copy.get_component(position);
+//      //For each component the two given Components are joined, orthogonalized and then the original Components are
+//			//projected on the joined basis, the non orthogonal part is pushed down to the parent component
+//			//Finally the only difference lies in the root, and these two components are added
 //
 //			// Create a Tensor for the result
 //			std::vector<size_t> nxtDimensions;
-//			nxtDimensions.emplace_back(position == 0 ? 1 : myComponent.dimensions.front()+otherComponent.dimensions.front());
+//			nxtDimensions.emplace_back(myComponent.dimensions.front() + otherComponent.dimensions.front());
 //			nxtDimensions.emplace_back(myComponent.dimensions[1]);
 //			if (isOperator) { nxtDimensions.emplace_back(myComponent.dimensions[2]); }
-//			nxtDimensions.emplace_back(position == numComponents-1 ? 1 : myComponent.dimensions.back()+otherComponent.dimensions.back());
 //
 //			const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
 //			std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
 //
-//			newComponent->offset_add(myComponent, isOperator ? std::vector<size_t>({0,0,0,0}) : std::vector<size_t>({0,0,0}));
+//			newComponent->offset_add(myComponent, isOperator ? std::vector<size_t>({0,0,0}) : std::vector<size_t>({0,0}));
+//			LOG(info, "newComponent Dimensions" << newComponent->dimensions);
+//			LOG(info, "myComponent Dimensions" << myComponent.dimensions);
+//			LOG(info, "otherComponent Dimensions" << otherComponent.dimensions);
 //
-//			const size_t leftOffset = position == 0 ? 0 : myComponent.dimensions.front();
-//			const size_t rightOffset = position == numComponents-1 ? 0 : myComponent.dimensions.back();
+//			const size_t offset =  myComponent.dimensions.front();
 //
-//			newComponent->offset_add(otherComponent, isOperator ? std::vector<size_t>({leftOffset,0,0,rightOffset}) : std::vector<size_t>({leftOffset,0,rightOffset}));
-//
+//			newComponent->offset_add(otherComponent, isOperator ? std::vector<size_t>({offset,0,0}) : std::vector<size_t>({offset,0}));
+//			//update parent components
+//			//trickle down the basis change to the parent components
+//			const Tensor& myParentComponent = get_component(get_parent_component(position));
+//			const Tensor& otherParentComponent = _other_copy.get_component(_other_copy.get_parent_component(position));
+//			//k1 index to parent node, k2, left child index, k3 right child index, i1,i2 external indices, m1 joined index
+//			Index k1, k2, k3, i1, i2, m1;
+//			Tensor myNewParentComponent, otherNewParentComponent;
+//			if(!isOperator){
+//				if(is_left_child(position)){
+//					myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1)*myParentComponent(k1,k2,k3)* myComponent(k2,i1);
+//					otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1);
+//				}
+//				else{
+//					myNewParentComponent(k1,k2,m1) = (*newComponent)(m1,i1)*myParentComponent(k1,k2,k3)* myComponent(k3,i1);
+//					otherNewParentComponent(k1,k2,m1) = (*newComponent)(m1,i1)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1);
+//				}
+//			}
+//			else {
+//				if(is_left_child(position)){
+//					myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)*myComponent(k2,i1,i2);
+//					otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1,i2);
+//				}
+//				else{
+//					myNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)* myComponent(k3,i1,i2);
+//					otherNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1,i2);
+//				}
+//			}
 //			set_component(position, std::move(*newComponent));
+//			set_component(get_parent_component(position), std::move(myNewParentComponent));
+//			_other_copy.set_component(_other_copy.get_parent_component(position), std::move(otherNewParentComponent));
 //		}
+//
+//		//for the internal components
+//		size_t lvl = static_cast<size_t>(0.5 + std::floor(std::log2(static_cast<double>(numInternalComponents))));
+//		size_t numCompOnLvl = static_cast<size_t>(0.5+std::pow(2.,static_cast<double>(lvl)));
+//		for(; lvl  > 0; --lvl) {
+//			for (size_t position = 0; position < numCompOnLvl; ++position){
+//				size_t pos = numCompOnLvl + position - 1;
+//				// Get current components
+//				const Tensor& myComponent = get_component(pos);
+//				const Tensor& otherComponent = _other_copy.get_component(pos);
+//
+//				// Create a Tensor for the result
+//					std::vector<size_t> nxtDimensions;
+//					nxtDimensions.emplace_back(myComponent.dimensions.front() + otherComponent.dimensions.front());
+//					nxtDimensions.emplace_back(myComponent.dimensions[1]);
+//					nxtDimensions.emplace_back(myComponent.dimensions[2]);
+//
+//					const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
+//					std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
+//					newComponent->offset_add(myComponent,  std::vector<size_t>({0,0,0}));
+//
+//					const size_t offset =  myComponent.dimensions.front();
+//					newComponent->offset_add(otherComponent, std::vector<size_t>({offset,0,0}));
+//					LOG(info, "pos = " << pos);
+//					LOG(info, "lvl = " << lvl);
+//					LOG(info, "numCompOnLvl = " << numCompOnLvl);
+//					const Tensor& myParentComponent = get_component(get_parent_component(pos));
+//					const Tensor& otherParentComponent = _other_copy.get_component(_other_copy.get_parent_component(pos));
+//
+//					Index k1, k2, k3, i1, i2, m1;
+//					Tensor myNewParentComponent, otherNewParentComponent;
+//					if(is_left_child(pos)){
+//						myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)*myComponent(k2,i1,i2);
+//						otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1,i2);
+//					}
+//					else{
+//						myNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)* myComponent(k3,i1,i2);
+//						otherNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1,i2);
+//					}
+//					set_component(pos, std::move(*newComponent));
+//					set_component(get_parent_component(pos), std::move(myNewParentComponent));
+//					_other_copy.set_component(_other_copy.get_parent_component(pos), std::move(otherNewParentComponent));
+//
+//			}
+//			numCompOnLvl /= 2;
+//		}
+//		const Tensor& myRootComponent = get_component(0);
+//		const Tensor& otherRootComponent = _other_copy.get_component(0);
+//		set_component(0, myRootComponent + otherRootComponent);
 //		XERUS_PA_END("ADD/SUB", "TTNetwork ADD/SUB", std::string("Dims:")+misc::to_string(dimensions)+" Ranks: "+misc::to_string(ranks()));
 //
-//		if(initialCanonicalization) {
-//			move_core(initialCorePosition);
-//		}
 
+		if(initialCanonicalization) {
+			move_core(initialCorePosition);
+		}
 		return *this;
 	}
 
@@ -999,7 +1159,6 @@ namespace xerus {
 	template<bool isOperator>
 	void HTNetwork<isOperator>::operator*=(const value_t _factor) {
 		REQUIRE(!nodes.empty(), "There must not be a HTNetwork without any node");
-
 		if(canonicalized) {
 			component(corePosition) *= _factor;
 		} else {
