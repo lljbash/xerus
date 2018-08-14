@@ -998,10 +998,10 @@ namespace xerus {
 				inPosition += blockSize;
 				outPosition += stepSizes[index];
 				while(i%multStep == 0) {
-					outPosition -= dimensions[index]*stepSizes[index]; // "reset" current index to 0
+					outPosition -= _other.dimensions[index]*stepSizes[index]; // "reset" current index to 0
 					--index;							// Advance to next index
 					outPosition += stepSizes[index];	// increase next index
-					multStep *= dimensions[index];		// next stepSize
+					multStep *= _other.dimensions[index];		// next stepSize
 				}
 				
 				misc::add_scaled(outPosition, _other.factor, inPosition, blockSize);
