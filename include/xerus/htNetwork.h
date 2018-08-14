@@ -137,7 +137,7 @@ namespace xerus {
 		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
 		static HTNetwork XERUS_warn_unused random(std::vector<size_t> _dimensions, const std::vector<size_t> &_ranks, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
 
-			const size_t numIntComp = static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
+			const size_t numIntComp = static_cast<size_t>(0.5 + std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
 			const size_t numOfLeaves = _dimensions.size()/N;
 			const size_t numComponents = numIntComp + numOfLeaves;
 
@@ -420,28 +420,28 @@ namespace xerus {
 		* @param _maxRanks maximal allowed ranks. All current ranks that are larger than the given ones are reduced by truncation.
 		* @param _eps the accuracy to use for truncation in the individual SVDs.
 		*/
-//		void round(const std::vector<size_t>& _maxRanks, const double _eps = EPSILON);
+		void round(const std::vector<size_t>& _maxRanks, const double _eps = EPSILON);
 		
 		
 		/** 
 		* @brief Reduce all ranks to the given number.
 		* @param _maxRank maximal allowed rank. All current ranks that are larger than this are reduced by truncation.
 		*/
-//		void round(const size_t _maxRank);
+		void round(const size_t _maxRank);
 		
 		
 		/** 
 		* @brief Reduce all ranks to the given number.
 		* @param _maxRank maximal allowed rank. All current ranks that are larger than this are reduced by truncation.
 		*/
-//		void round(const int _maxRank);
+		void round(const int _maxRank);
 		
 		
 		/** 
 		* @brief Reduce all ranks up to a given accuracy.
 		* @param _eps the accuracy to use for truncation in the individual SVDs.
 		*/
-//		void round(const value_t _eps);
+		void round(const value_t _eps);
 		
 		
 		/** 
@@ -510,13 +510,14 @@ namespace xerus {
 		* @brief Transpose the TTOperator
 		* @details Swaps all external indices to create the transposed operator.
 		*/
-//		template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>
-//		void transpose() {
-//			const std::vector<size_t> shuffle({0,2,1,3});
-//			for (size_t n = 0; n < degree()/N; ++n) {
-//				xerus::reshuffle(component(n), component(n), shuffle);
-//			}
-//		}
+		template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>
+		void transpose() {
+			const std::vector<size_t> shuffle({0,2,1});
+			//only leaves
+			for (size_t n = numberOfComponents - 1; n >= numberOfComponents - degree()/N; --n) {
+				xerus::reshuffle(component(n), component(n), shuffle);
+			}
+		}
 		
 		
 		virtual TensorNetwork* get_copy() const override;
