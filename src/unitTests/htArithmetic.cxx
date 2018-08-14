@@ -56,18 +56,18 @@ static misc::UnitTest ht_sum("HT", "sum", [](){
 	Tensor A = Tensor::random(dimensions, dist);
 	Tensor B = Tensor::random(dimensions, dist);
 	Tensor C;
-	HTTensor ttA(A);
-	HTTensor ttB(B);
-	HTTensor ttC;
-	HTOperator toA(A);
-	HTOperator toB(B);
-	HTOperator toC;
+	HTTensor htA(A);
+	HTTensor htB(B);
+	HTTensor htC;
+	HTOperator hoA(A);
+	HTOperator hoB(B);
+	HTOperator hoC;
 	
-//	C(i&0) = A(i&0) + B(i&0);
-//	ttC(i&0) = ttA(i&0) + ttB(i&0);
-//	toC(i&0) = toA(i&0) + toB(i&0);
-//	MTEST(frob_norm(Tensor(ttC)(i&0) - C(i&0)) < 3.1*1e-13, frob_norm(Tensor(ttC)(i&0) - C(i&0)));
-//	MTEST(frob_norm(Tensor(toC)(i&0) - C(i&0)) < 3.1*1e-13, frob_norm(Tensor(toC) - C));
+	C(i&0) = A(i&0) + B(i&0);
+	htC(i&0) = htA(i&0) + htB(i&0);
+	hoC(i&0) = hoA(i&0) + hoB(i&0);
+	MTEST(frob_norm(Tensor(htC)(i&0) - C(i&0)) < 5.0*1e-13, frob_norm(Tensor(htC)(i&0) - C(i&0)));
+	MTEST(frob_norm(Tensor(hoC)(i&0) - C(i&0)) < 5.0*1e-13, frob_norm(Tensor(hoC) - C));
 });
 
 //static misc::UnitTest tt_diff("TT", "difference", [](){

@@ -965,18 +965,8 @@ namespace xerus {
 			component(0) += _other.get_component(0);
 			return *this;
 		}
-		//need to make copy of other because of basis changes
-//		auto _other_copy = _other;
-		//For now need both Tensors in canonicalized form TODO is the necessary?
-//		if ( !_other_copy.canonicalized || _other_copy.corePosition != 0 ){
-//			_other_copy.move_core(0);
-//		}
-//		if ( !canonicalized || corePosition != 0 ){
-//			move_core(0);
-//		}
 
-//
-//		XERUS_PA_START;
+		XERUS_PA_START;
 		for(size_t position = 0; position < numberOfComponents; ++position) {
 			bool isLeaf = position >= numInternalComponents;
 			bool hasDummyLeftChild = false;
@@ -990,14 +980,6 @@ namespace xerus {
 			const Tensor& otherComponent = _other.get_component(position);
 			const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
 
-			LOG(info,"position = " <<position);
-
-			LOG(info,myComponent.dimensions);
-			LOG(info,otherComponent.dimensions);
-
-			// Structure has to be (for degree 4)
-			// (L1 R1) * ( L2 0  ) * ( L3 0  ) * ( L4 )
-			// 			 ( 0  R2 )   ( 0  R3 )   ( R4 )
 
 			// Create a Tensor for the result
 			std::vector<size_t> nxtDimensions;
@@ -1007,9 +989,6 @@ namespace xerus {
 			if (isOperator && isLeaf) { nxtDimensions.emplace_back(myComponent.dimensions[2]); }
 			if (!isLeaf) {nxtDimensions.emplace_back(hasDummyRightChild ? 1 : myComponent.dimensions[2] + otherComponent.dimensions[2]);}
 
-			LOG(info,nxtDimensions);
-
-
 			std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
 
 			newComponent->offset_add(myComponent, (!isOperator && isLeaf) ? std::vector<size_t>({0,0}) : std::vector<size_t>({0,0,0}));
@@ -1018,131 +997,17 @@ namespace xerus {
 			const size_t child1Offset = isLeaf || hasDummyLeftChild ? 0 : myComponent.dimensions[1];
 			const size_t child2Offset = isLeaf || hasDummyRightChild ? 0 : myComponent.dimensions[2];
 			newComponent->offset_add(otherComponent, !isOperator && isLeaf ?  std::vector<size_t>({parentOffset,child1Offset})  : std::vector<size_t>({parentOffset,child1Offset,child2Offset}) );
-			LOG(info,"parentOffset = " << parentOffset);
-			LOG(info,"child1Offset = " << child1Offset);
-			LOG(info,"child2Offset = " << child2Offset);
-			if(!isOperator && isLeaf){
-				LOG(info,"offset hello");
-			}
-			LOG(info,"myComponent = \n" << myComponent);
-			LOG(info,"otherComponent = \n" << otherComponent);
-			LOG(info,"component = \n" << *newComponent);
+
+
 			set_component(position, std::move(*newComponent));
 		}
 
-		//XERUS_PA_END("ADD/SUB", "TTNetwork ADD/SUB", std::string("Dims:")+misc::to_string(dimensions)+" Ranks: "+misc::to_string(ranks()));
-//		//For the Leaves
-//		for(size_t position = numInternalComponents; position < numberOfComponents; ++position) {
-//			// Get current components
-//			const Tensor& myComponent = get_component(position);
-//			const Tensor& otherComponent = _other_copy.get_component(position);
-//      //For each component the two given Components are joined, orthogonalized and then the original Components are
-//			//projected on the joined basis, the non orthogonal part is pushed down to the parent component
-//			//Finally the only difference lies in the root, and these two components are added
-//
-//			// Create a Tensor for the result
-//			std::vector<size_t> nxtDimensions;
-//			nxtDimensions.emplace_back(myComponent.dimensions.front() + otherComponent.dimensions.front());
-//			nxtDimensions.emplace_back(myComponent.dimensions[1]);
-//			if (isOperator) { nxtDimensions.emplace_back(myComponent.dimensions[2]); }
-//
-//			const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
-//			std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
-//
-//			newComponent->offset_add(myComponent, isOperator ? std::vector<size_t>({0,0,0}) : std::vector<size_t>({0,0}));
-//			LOG(info, "newComponent Dimensions" << newComponent->dimensions);
-//			LOG(info, "myComponent Dimensions" << myComponent.dimensions);
-//			LOG(info, "otherComponent Dimensions" << otherComponent.dimensions);
-//
-//			const size_t offset =  myComponent.dimensions.front();
-//
-//			newComponent->offset_add(otherComponent, isOperator ? std::vector<size_t>({offset,0,0}) : std::vector<size_t>({offset,0}));
-//			//update parent components
-//			//trickle down the basis change to the parent components
-//			const Tensor& myParentComponent = get_component(get_parent_component(position));
-//			const Tensor& otherParentComponent = _other_copy.get_component(_other_copy.get_parent_component(position));
-//			//k1 index to parent node, k2, left child index, k3 right child index, i1,i2 external indices, m1 joined index
-//			Index k1, k2, k3, i1, i2, m1;
-//			Tensor myNewParentComponent, otherNewParentComponent;
-//			if(!isOperator){
-//				if(is_left_child(position)){
-//					myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1)*myParentComponent(k1,k2,k3)* myComponent(k2,i1);
-//					otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1);
-//				}
-//				else{
-//					myNewParentComponent(k1,k2,m1) = (*newComponent)(m1,i1)*myParentComponent(k1,k2,k3)* myComponent(k3,i1);
-//					otherNewParentComponent(k1,k2,m1) = (*newComponent)(m1,i1)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1);
-//				}
-//			}
-//			else {
-//				if(is_left_child(position)){
-//					myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)*myComponent(k2,i1,i2);
-//					otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1,i2);
-//				}
-//				else{
-//					myNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)* myComponent(k3,i1,i2);
-//					otherNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1,i2);
-//				}
-//			}
-//			set_component(position, std::move(*newComponent));
-//			set_component(get_parent_component(position), std::move(myNewParentComponent));
-//			_other_copy.set_component(_other_copy.get_parent_component(position), std::move(otherNewParentComponent));
-//		}
-//
-//		//for the internal components
-//		size_t lvl = static_cast<size_t>(0.5 + std::floor(std::log2(static_cast<double>(numInternalComponents))));
-//		size_t numCompOnLvl = static_cast<size_t>(0.5+std::pow(2.,static_cast<double>(lvl)));
-//		for(; lvl  > 0; --lvl) {
-//			for (size_t position = 0; position < numCompOnLvl; ++position){
-//				size_t pos = numCompOnLvl + position - 1;
-//				// Get current components
-//				const Tensor& myComponent = get_component(pos);
-//				const Tensor& otherComponent = _other_copy.get_component(pos);
-//
-//				// Create a Tensor for the result
-//					std::vector<size_t> nxtDimensions;
-//					nxtDimensions.emplace_back(myComponent.dimensions.front() + otherComponent.dimensions.front());
-//					nxtDimensions.emplace_back(myComponent.dimensions[1]);
-//					nxtDimensions.emplace_back(myComponent.dimensions[2]);
-//
-//					const Tensor::Representation newRep = myComponent.is_sparse() && otherComponent.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
-//					std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
-//					newComponent->offset_add(myComponent,  std::vector<size_t>({0,0,0}));
-//
-//					const size_t offset =  myComponent.dimensions.front();
-//					newComponent->offset_add(otherComponent, std::vector<size_t>({offset,0,0}));
-//					LOG(info, "pos = " << pos);
-//					LOG(info, "lvl = " << lvl);
-//					LOG(info, "numCompOnLvl = " << numCompOnLvl);
-//					const Tensor& myParentComponent = get_component(get_parent_component(pos));
-//					const Tensor& otherParentComponent = _other_copy.get_component(_other_copy.get_parent_component(pos));
-//
-//					Index k1, k2, k3, i1, i2, m1;
-//					Tensor myNewParentComponent, otherNewParentComponent;
-//					if(is_left_child(pos)){
-//						myNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)*myComponent(k2,i1,i2);
-//						otherNewParentComponent(k1,m1,k3) = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k2,i1,i2);
-//					}
-//					else{
-//						myNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*myParentComponent(k1,k2,k3)* myComponent(k3,i1,i2);
-//						otherNewParentComponent(k1,k2,m1)  = (*newComponent)(m1,i1,i2)*otherParentComponent(k1,k2,k3)*otherComponent(k3,i1,i2);
-//					}
-//					set_component(pos, std::move(*newComponent));
-//					set_component(get_parent_component(pos), std::move(myNewParentComponent));
-//					_other_copy.set_component(_other_copy.get_parent_component(pos), std::move(otherNewParentComponent));
-//
-//			}
-//			numCompOnLvl /= 2;
-//		}
-//		const Tensor& myRootComponent = get_component(0);
-//		const Tensor& otherRootComponent = _other_copy.get_component(0);
-//		set_component(0, myRootComponent + otherRootComponent);
-//		XERUS_PA_END("ADD/SUB", "TTNetwork ADD/SUB", std::string("Dims:")+misc::to_string(dimensions)+" Ranks: "+misc::to_string(ranks()));
-//
+		XERUS_PA_END("ADD/SUB", "HTNetwork ADD/SUB", std::string("Dims:")+misc::to_string(dimensions)+" Ranks: "+misc::to_string(ranks()));
 
 		if(initialCanonicalization) {
 			move_core(initialCorePosition);
 		}
+
 		return *this;
 	}
 
