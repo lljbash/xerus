@@ -156,154 +156,154 @@ static misc::UnitTest ht_real_diff("HT", "real_difference", [](){
 //	TEST(misc::approx_equal(frob_norm(ttO1(i/2, j/2)*ttO2(j/2, k/2)), std::sqrt(misc::pow(10, 5))));
 //});
 //
-//static misc::UnitTest tt_spec_sumdiff("TT", "special_sum_diff", [](){
-//	Tensor A({10,10,10,10}); // NOTE that this is the 0 tensor
-//	Tensor B = Tensor::random({10,10,10,10});
-//	Tensor C;
-//	TTTensor ttA(A);
-//	TTTensor ttB(B);
-//	TTTensor ttC(4);
-//
-//
-//	Index i;
-//
-//	C(i&0) = A(i&0) + B(i&0);
-//	ttC(i&0) = ttA(i&0) + ttB(i&0);
-//	TEST(frob_norm(Tensor(ttC)(i&0) - C(i&0)) < 5*1e-13);
-//	TEST(frob_norm(Tensor(ttC)(i&0) - Tensor(ttB)(i&0)) < 3.1*1e-13);
-//
-//	C(i&0) = B(i&0) + A(i&0);
-//	ttC(i&0) = ttB(i&0) + ttA(i&0);
-//	TEST(frob_norm(Tensor(ttC)(i&0) - C(i&0)) < 5*1e-13);
-//	TEST(frob_norm(Tensor(ttC)(i&0) - Tensor(ttB)(i&0)) < 3.1*1e-13);
-//
-//	C(i&0) = A(i&0) - B(i&0);
-//	ttC(i&0) = ttA(i&0) - ttB(i&0);
-//	MTEST(frob_norm(Tensor(ttC)(i&0) - C(i&0)) < 5*1e-13, frob_norm(Tensor(ttC)(i&0) - C(i&0)));
-//	MTEST(frob_norm(Tensor(ttC)(i&0) + Tensor(ttB)(i&0)) < 3.1*1e-13, frob_norm(Tensor(ttC)(i&0) + Tensor(ttB)(i&0)));
-//
-//	C(i&0) = B(i&0) - A(i&0);
-//	ttC(i&0) = ttB(i&0) - ttA(i&0);
-//	MTEST(frob_norm(Tensor(ttC)(i&0) - C(i&0)) < 5*1e-13, frob_norm(Tensor(ttC)(i&0) - C(i&0)));
-//	MTEST(frob_norm(Tensor(ttC)(i&0) - Tensor(ttB)(i&0)) < 3.1*1e-13, frob_norm(Tensor(ttC)(i&0) - Tensor(ttB)(i&0)));
-//
-//	Tensor X({10});
-//	Tensor Y = Tensor::random({10});
-//	Tensor Z;
-//	TTTensor ttX(X);
-//	TTTensor ttY(Y);
-//	TTTensor ttZ(1);
-//
-//	Z(i&0) = X(i&0) + Y(i&0);
-//	ttZ(i&0) = ttX(i&0) + ttY(i&0);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Z(i&0)) < 3.1*1e-13);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Tensor(ttY)(i&0)) < 3.1*1e-13);
-//
-//	Z(i&0) = Y(i&0) + X(i&0);
-//	ttZ(i&0) = ttY(i&0) + ttX(i&0);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Z(i&0)) < 3.1*1e-13);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Tensor(ttY)(i&0)) < 3.1*1e-13);
-//
-//	Z(i&0) = X(i&0) - Y(i&0);
-//	ttZ(i&0) = ttX(i&0) - ttY(i&0);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Z(i&0)) < 3.1*1e-13);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) + Tensor(ttY)(i&0)) < 3.1*1e-13);
-//
-//	Z(i&0) = Y(i&0) - X(i&0);
-//	ttZ(i&0) = ttY(i&0) - ttX(i&0);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Z(i&0)) < 3.1*1e-13);
-//	TEST(frob_norm(Tensor(ttZ)(i&0) - Tensor(ttY)(i&0)) < 3.1*1e-13);
-//});
-//
-//static misc::UnitTest tt_prod("TT", "product", [](){
-//	Index i,j,k,l;
-//
-//	TTOperator ttA = TTOperator::random({10,10,10,10}, 1);
-//	TTOperator ttB = TTOperator::random({10,10,10,10}, 1);
-//	TTTensor ttD = TTTensor::random({10,10}, 2);
-//	Tensor A(ttA);
-//	Tensor B(ttB);
-//	Tensor D(ttD);
-//
-//	Tensor C;
-//	TTTensor ttCt;
-//	TTOperator ttC;
-//
-//	C(i^2) = A(i^2,j^2) * D(j^2);
-//	ttCt(i^2) = ttA(i^2,j^2) * ttD(j^2);
-//	double fnorm = frob_norm(Tensor(ttCt)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	C(i^2,k^2) = A(i^2,j^2) * B(j^2,k^2);
-//	ttC(i^2,k^2) = ttA(i^2,j^2) * ttB(j^2,k^2);
-//	TEST(ttC.nodes.size() == 4);
-//	fnorm = frob_norm(Tensor(ttC)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	C(i/2,k/2) = A(j/2,i/2) * B(j/2,k/2);
-//	ttC(i^2,k/2) = ttA(j^2,i/2) * ttB(j^2,k/2);
-//	fnorm = frob_norm(Tensor(ttC)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	ttC(i^2,k/2) = ttB(j/2,k/2) * ttA(j^2,i^2);
-//	fnorm = frob_norm(Tensor(ttC)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	C(i^2,k^2) = A(i^2,j^2) * B(k^2,j^2);
-//	ttC(i^2,k^2) = ttA(i^2,j^2) * ttB(k^2,j^2);
-//	fnorm = frob_norm(Tensor(ttC)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	C(i^2,k^2) = A(j^2,i^2) * B(k^2,j^2);
-//	ttC(i^2,k^2) = ttA(j^2,i^2) * ttB(k^2,j^2);
-//	fnorm = frob_norm(Tensor(ttC)(i&0) - C(i&0));
-//	LOG(unit_tests, "frob_norm " << fnorm);
-//	TEST(fnorm < 10*10*10*10*1e-15);
-//
-//	FAILTEST(ttC(i^2,k^2) = ttA(j^2,i) * ttB(k^2,j^2));
-//	FAILTEST(ttC(i^2,k^2) = ttA(j^2,i^2) * ttB(k^2,k^2));
-//});
-//
-//static misc::UnitTest tt_id("TT", "identities", [](){
-//	Tensor I = Tensor({2,2,2,2},[](const std::vector<size_t>& _idx)->value_t{
-//		if ((_idx[0] == _idx[2] && _idx[1] == _idx[3]) || (_idx[0] == 0 && _idx[1]==1 &&_idx[2] ==0 && _idx[3]==0)) {
-//			return 1;
-//		} else {
-//			return 0;
-//		}
-//	}
-//	);
-//	TTOperator ttI(I);
-//	TTOperator ttC(4);
-//	Tensor C;
-//	Index i,j,k;
-//
-//	ttC(i^2,k^2) = ttI(i^2,j^2) * ttI(j^2,k^2);
-//	C(i^2,k^2) = I(i^2,j^2) * I(j^2,k^2);
-//	LOG(unit_test, frob_norm(C(i&0) - Tensor(ttC)(i&0)));
-//	TEST(approx_equal(C, Tensor(ttC), 1e-15));
-//
-//	ttC(k^2,i^2) = ttI(i^2,j^2) * ttI(j^2,k^2);
-//	C(k^2,i^2) = I(i^2,j^2) * I(j^2,k^2);
-//	LOG(unit_test, frob_norm(C(i&0) - Tensor(ttC)(i&0)));
-//	TEST(approx_equal(C, Tensor(ttC), 1e-15));
-//
-//	ttC(i^2,k^2) = ttI(i^2,j^2) * ttI(k^2,j^2);
-//	C(i^2,k^2) = I(i^2,j^2) * I(k^2,j^2);
-//	LOG(unit_test, frob_norm(C(i&0) - Tensor(ttC)(i&0)));
-//	TEST(approx_equal(C, Tensor(ttC), 1e-15));
-//
-//	ttC(k^2,i^2) = ttI(i^2,j^2) * ttI(k^2,j^2);
-//	C(k^2,i^2) = I(i^2,j^2) * I(k^2,j^2);
-//	LOG(unit_test, frob_norm(C(i&0) - Tensor(ttC)(i&0)));
-//	TEST(approx_equal(C, Tensor(ttC), 1e-15));
-//});
-//
+static misc::UnitTest ht_spec_sumdiff("HT", "special_sum_diff", [](){
+	Tensor A({10,10,10,10}); // NOTE that this is the 0 tensor
+	Tensor B = Tensor::random({10,10,10,10});
+	Tensor C;
+	HTTensor htA(A);
+	HTTensor htB(B);
+	HTTensor htC(4);
+
+
+	Index i;
+
+	C(i&0) = A(i&0) + B(i&0);
+	htC(i&0) = htA(i&0) + htB(i&0);
+	TEST(frob_norm(Tensor(htC)(i&0) - C(i&0)) < 5*1e-13);
+	TEST(frob_norm(Tensor(htC)(i&0) - Tensor(htB)(i&0)) < 3.1*1e-13);
+
+	C(i&0) = B(i&0) + A(i&0);
+	htC(i&0) = htB(i&0) + htA(i&0);
+	TEST(frob_norm(Tensor(htC)(i&0) - C(i&0)) < 5*1e-13);
+	TEST(frob_norm(Tensor(htC)(i&0) - Tensor(htB)(i&0)) < 3.1*1e-13);
+
+	C(i&0) = A(i&0) - B(i&0);
+	htC(i&0) = htA(i&0) - htB(i&0);
+	MTEST(frob_norm(Tensor(htC)(i&0) - C(i&0)) < 5*1e-13, frob_norm(Tensor(htC)(i&0) - C(i&0)));
+	MTEST(frob_norm(Tensor(htC)(i&0) + Tensor(htB)(i&0)) < 3.1*1e-13, frob_norm(Tensor(htC)(i&0) + Tensor(htB)(i&0)));
+
+	C(i&0) = B(i&0) - A(i&0);
+	htC(i&0) = htB(i&0) - htA(i&0);
+	MTEST(frob_norm(Tensor(htC)(i&0) - C(i&0)) < 5*1e-13, frob_norm(Tensor(htC)(i&0) - C(i&0)));
+	MTEST(frob_norm(Tensor(htC)(i&0) - Tensor(htB)(i&0)) < 3.1*1e-13, frob_norm(Tensor(htC)(i&0) - Tensor(htB)(i&0)));
+
+	Tensor X({10});
+	Tensor Y = Tensor::random({10});
+  Tensor Z;
+	HTTensor htX(X);
+	HTTensor htY(Y);
+	HTTensor htZ(1);
+
+	Z(i&0) = X(i&0) + Y(i&0);
+	htZ(i&0) = htX(i&0) + htY(i&0);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Z(i&0)) < 3.1*1e-13);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Tensor(htY)(i&0)) < 3.1*1e-13);
+
+	Z(i&0) = Y(i&0) + X(i&0);
+	htZ(i&0) = htY(i&0) + htX(i&0);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Z(i&0)) < 3.1*1e-13);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Tensor(htY)(i&0)) < 3.1*1e-13);
+
+	Z(i&0) = X(i&0) - Y(i&0);
+	htZ(i&0) = htX(i&0) - htY(i&0);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Z(i&0)) < 3.1*1e-13);
+	TEST(frob_norm(Tensor(htZ)(i&0) + Tensor(htY)(i&0)) < 3.1*1e-13);
+
+	Z(i&0) = Y(i&0) - X(i&0);
+	htZ(i&0) = htY(i&0) - htX(i&0);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Z(i&0)) < 3.1*1e-13);
+	TEST(frob_norm(Tensor(htZ)(i&0) - Tensor(htY)(i&0)) < 3.1*1e-13);
+});
+
+static misc::UnitTest ht_prod("HT", "product", [](){
+	Index i,j,k,l;
+
+	HTOperator htA = HTOperator::random({10,10,10,10}, 1);
+	HTOperator htB = HTOperator::random({10,10,10,10}, 1);
+	HTTensor htD = HTTensor::random({10,10}, 2);
+	Tensor A(htA);
+	Tensor B(htB);
+	Tensor D(htD);
+
+	Tensor C;
+	HTTensor htCt;
+	HTOperator htC;
+
+	C(i^2) = A(i^2,j^2) * D(j^2);
+	htCt(i^2) = htA(i^2,j^2) * htD(j^2);
+	double fnorm = frob_norm(Tensor(htCt)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	C(i^2,k^2) = A(i^2,j^2) * B(j^2,k^2);
+	htC(i^2,k^2) = htA(i^2,j^2) * htB(j^2,k^2);
+	TEST(htC.nodes.size() == 8);
+	fnorm = frob_norm(Tensor(htC)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	C(i/2,k/2) = A(j/2,i/2) * B(j/2,k/2);
+	htC(i^2,k/2) = htA(j^2,i/2) * htB(j^2,k/2);
+	fnorm = frob_norm(Tensor(htC)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	htC(i^2,k/2) = htB(j/2,k/2) * htA(j^2,i^2);
+	fnorm = frob_norm(Tensor(htC)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	C(i^2,k^2) = A(i^2,j^2) * B(k^2,j^2);
+	htC(i^2,k^2) = htA(i^2,j^2) * htB(k^2,j^2);
+	fnorm = frob_norm(Tensor(htC)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	C(i^2,k^2) = A(j^2,i^2) * B(k^2,j^2);
+	htC(i^2,k^2) = htA(j^2,i^2) * htB(k^2,j^2);
+	fnorm = frob_norm(Tensor(htC)(i&0) - C(i&0));
+	LOG(unit_tests, "frob_norm " << fnorm);
+	TEST(fnorm < 10*10*10*10*1e-15);
+
+	FAILTEST(htC(i^2,k^2) = htA(j^2,i) * htB(k^2,j^2));
+	FAILTEST(htC(i^2,k^2) = htA(j^2,i^2) * htB(k^2,k^2));
+});
+
+static misc::UnitTest ht_id("HT", "identities", [](){
+	Tensor I = Tensor({2,2,2,2},[](const std::vector<size_t>& _idx)->value_t{
+		if ((_idx[0] == _idx[2] && _idx[1] == _idx[3]) || (_idx[0] == 0 && _idx[1]==1 &&_idx[2] ==0 && _idx[3]==0)) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	);
+	HTOperator htI(I);
+	HTOperator htC(4);
+	Tensor C;
+	Index i,j,k;
+
+	htC(i^2,k^2) = htI(i^2,j^2) * htI(j^2,k^2);
+	C(i^2,k^2) = I(i^2,j^2) * I(j^2,k^2);
+	LOG(unit_test, frob_norm(C(i&0) - Tensor(htC)(i&0)));
+	TEST(approx_equal(C, Tensor(htC), 1e-15));
+
+	htC(k^2,i^2) = htI(i^2,j^2) * htI(j^2,k^2);
+	C(k^2,i^2) = I(i^2,j^2) * I(j^2,k^2);
+	LOG(unit_test, frob_norm(C(i&0) - Tensor(htC)(i&0)));
+	TEST(approx_equal(C, Tensor(htC), 1e-15));
+
+	htC(i^2,k^2) = htI(i^2,j^2) * htI(k^2,j^2);
+	C(i^2,k^2) = I(i^2,j^2) * I(k^2,j^2);
+	LOG(unit_test, frob_norm(C(i&0) - Tensor(htC)(i&0)));
+	TEST(approx_equal(C, Tensor(htC), 1e-15));
+
+	htC(k^2,i^2) = htI(i^2,j^2) * htI(k^2,j^2);
+	C(k^2,i^2) = I(i^2,j^2) * I(k^2,j^2);
+	LOG(unit_test, frob_norm(C(i&0) - Tensor(htC)(i&0)));
+	TEST(approx_equal(C, Tensor(htC), 1e-15));
+});
+
 static misc::UnitTest ht_trans("HT", "transpose", [](){
 	Tensor A = Tensor::random({10,10,10,10});
 	Tensor B;

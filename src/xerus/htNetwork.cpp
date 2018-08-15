@@ -48,7 +48,7 @@ namespace xerus {
 	
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N) , _maxRank)) {}
+		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (_tensor.degree() == 1 ? 1 : (static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N)) , _maxRank)) {}
 
 	
 	template<bool isOperator>
@@ -62,7 +62,7 @@ namespace xerus {
 		//Number of Leafs
 		const size_t numLeaves = dimensions.size()/N;
 		//Lvl, NOTE: adding 0.5 to overcome possible conversion errors
-		const size_t numFullLeaves = static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+		const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
 		// Number of internal components
 		const size_t numIntCom = numFullLeaves - 1;
 
@@ -156,10 +156,11 @@ namespace xerus {
 			*nodes[0].tensorObject = _tensor;
 			return;
 		}
-
 		dimensions = _tensor.dimensions;
-
 		Tensor remains;
+
+
+
 		if(isOperator) {
 			//For operators the index pairs (i,i+1) for i%2=0 become the ith in the first and second half of the indexes
 			//i.e. for 0,1,2,3,4,5,6,7 goes to 0,2,4,6,1,3,5,7
@@ -194,6 +195,7 @@ namespace xerus {
 			}
 
 			xerus::reshuffle(remains, remains, ithmode);
+
 			calculate_svd(newNode, singularValues, remains, remains, N, _maxRanks[pos - 1], _eps);
 			if (isOperator){
 				xerus::reshuffle(newNode, newNode, {1,2,0});
