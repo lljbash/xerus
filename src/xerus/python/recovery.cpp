@@ -174,6 +174,11 @@ void expose_recoveryAlgorithms() {
             }, (arg("measurements"), arg("polynombasis"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
        );
 
+    def("uq_ra_adf_iv", +[](TTTensor& _x, const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const double _targetEps, const size_t _maxItr){
+            return uq::uq_ra_adf_iv(_x, _measurements, _basisType, _targetEps, _maxItr);
+            }, (arg("initial guess"), arg("measurements"), arg("polynombasis"), arg("targeteps"), arg("maxitr"))
+       );
+
     def("uq_tt_evaluate", +[](const TTTensor& _x, const std::vector<double>& _parameters, const uq::PolynomBasis _basisType) {
             return uq::evaluate(_x, _parameters, _basisType);
             }, (arg("x"), arg("parameters"), arg("basisType"))
