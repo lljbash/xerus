@@ -5,6 +5,8 @@
 # Set the CXX variable to the one you want to use.
 CXX = g++
 # CXX = clang++
+PYTHON2_CONFIG = python2-config
+PYTHON3_CONFIG = python3-config
 
 #=================================================================================================
 # C++ Version
@@ -12,13 +14,6 @@ CXX = g++
 # Xerus requires at least C++11 language support, however some features need support of C++14 or
 # even C++17 in order to activated.
 COMPATIBILITY = -std=c++11
-
-#=================================================================================================
-# Library Options
-#=================================================================================================
-# Xerus offers python bindings through boost python, which can be build in a seperate library object
-# xerus.so
-# BUILD_PYTHON_BINDINGS = TRUE
 
 
 #=================================================================================================
@@ -107,9 +102,10 @@ LOGGING += -D XERUS_LOG_INFO                     # Information that is not linke
 #=================================================================================================
 # Set the directories to install libxerus.
 
-#INSTALL_LIB_PATH = /usr/local/lib64/       # Path where to install the libxerus.so shared library.
-#INSTALL_HEADER_PATH = /usr/local/include/  # Path where to install the xerus header files.
-#INSTALL_PYTHON_PATH = /usr/local/lib64/python2.7/site-packages/    # Path for the installation of the python bindings.
+# INSTALL_LIB_PATH = /usr/local/lib/         # Path where to install the libxerus.so shared library.
+# INSTALL_HEADER_PATH = /usr/local/include/  # Path where to install the xerus header files.
+# INSTALL_PYTHON2_PATH = /usr/local/lib/python2.7/site-packages/    # Path for the installation of the python2 bindings.
+# INSTALL_PYTHON3_PATH = /usr/local/lib/python3.5/site-packages/    # Path for the installation of the python3 bindings.
 
 
 #=================================================================================================
@@ -136,7 +132,8 @@ LAPACK_LIBRARIES = -llapacke -llapack                       # Standard Lapack + 
 SUITESPARSE = -lcholmod -lspqr
 
 # Uncomment or add the appropriate boost python library
-BOOST_PYTHON = -lboost_python
+BOOST_PYTHON2 = -lboost_python-py27
+BOOST_PYTHON3 = -lboost_python-py35
 
 # Custom include paths
 # OTHER += -I /path/to/include
