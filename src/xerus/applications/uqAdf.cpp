@@ -36,7 +36,6 @@
 #endif
 
 namespace xerus { namespace uq { namespace impl_uqRaAdf {
-
     const size_t tracking = 10;
 
     template<size_t P>
