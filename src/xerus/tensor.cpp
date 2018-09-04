@@ -1708,6 +1708,41 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
+	double get_smallest_eigenvalue(Tensor& _X, const Tensor& _A) {
+			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
+			REQUIRE(&_X != &_A, "Not supportet yet");
+			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
+
+			const size_t degN = _A.degree() / 2;
+
+			// Calculate multDimensions
+			const size_t m = misc::product(_A.dimensions, 0, degN);
+			const size_t n = misc::product(_A.dimensions, degN, 2*degN);
+
+			REQUIRE(m == n, "Inconsistent dimensions.");
+
+			// Make sure X has right dimensions
+			if(	_X.degree() != degN
+				|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
+			{
+				Tensor::DimensionTuple newDimX;
+				newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
+				_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
+			}
+
+
+
+
+//			// Note that A is dense here
+//			blasWrapper::solve_ev(
+//				_X.override_dense_data(),
+//				_A.get_unsanitized_dense_data(), m, n,
+//				_B.get_unsanitized_dense_data(), p);
+//
+//			// Propagate the constant factor
+//			_X.factor = _B.factor / _A.factor;
+			return 0.0;
+		}
 	
 	
 	Tensor entrywise_product(const Tensor &_A, const Tensor &_B) {
