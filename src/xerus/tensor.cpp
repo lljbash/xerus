@@ -1718,7 +1718,6 @@ namespace xerus {
 			// Calculate multDimensions
 			const size_t m = misc::product(_A.dimensions, 0, degN);
 			const size_t n = misc::product(_A.dimensions, degN, 2*degN);
-
 			REQUIRE(m == n, "Inconsistent dimensions.");
 
 			// Make sure X has right dimensions
@@ -1730,18 +1729,33 @@ namespace xerus {
 				_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
 			}
 
+			std::unique_ptr<double[]> re(new double[n]);      // real eigenvalues
+			std::unique_ptr<double[]> im(new double[n]);      // imaginary eigenvalues
+			std::unique_ptr<double[]> rev(new double[n * n]); // right eigenvectors
 
+			// Note that A is dense here
+			blasWrapper::solve_ev(
+				rev.get(), // right eigenvectors
+				re.get(),  // real eigenvalues
+				im.get(),  // imaginary eigenvalues
+				_A.get_unsanitized_dense_data(),  n);
 
+			//get eigenvalue with minimal real part
+			double ev = re[0];
+			size_t idx = 0;
+			for (size_t i = 1; i < n; ++i) {
+				if (re[i] < ev){
+					ev = re[i];
+					idx = i;
+				}
+			}
 
-//			// Note that A is dense here
-//			blasWrapper::solve_ev(
-//				_X.override_dense_data(),
-//				_A.get_unsanitized_dense_data(), m, n,
-//				_B.get_unsanitized_dense_data(), p);
-//
-//			// Propagate the constant factor
-//			_X.factor = _B.factor / _A.factor;
-			return 0.0;
+			//get eigenvector oof smallest eigenvalue
+			auto tmpX = _X.override_dense_data();
+			for (size_t i = 0; i <= n; ++i)
+				tmpX[i] = rev[idx + i * n];
+
+			return ev;
 		}
 	
 	

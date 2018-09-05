@@ -655,7 +655,7 @@ namespace xerus {
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
 
 			const std::unique_ptr<double[]> tmpA(new double[_n*_n]);
-			misc::copy(tmpA.get(), _A, _n*_n);
+			misc::copy(tmpA.get(), _A, _n * _n);
 
 			LOG(debug, "solving with...");
 
@@ -665,11 +665,10 @@ namespace xerus {
 
 			std::unique_ptr<double[]> leftev(new double[1]);
 
-
 			IF_CHECK( int lapackAnswer = ) LAPACKE_dgeev(
 				LAPACK_ROW_MAJOR,
-				'N', //No left eigenvalues are computed
-				'V', //Right eigenvalues are computed
+				'N', 										// No left eigenvalues are computed
+				'V', 										// Right eigenvalues are computed
 				static_cast<int>(_n),		// Dimensions of A (nxn)
 				tmpA.get(),							// input: A, output: L and U
 				static_cast<int>(_n),		// LDA
@@ -681,7 +680,6 @@ namespace xerus {
 				static_cast<int>(_n) 		// LDVR TODO check size of _x
 			);
 			CHECK(lapackAnswer == 0, error, "Unable to solve Ax = lambda*x (DGEEV solver). Lapacke says: " << lapackAnswer);
-
 			XERUS_PA_END("Dense LAPACK", "Solve (DGEEV)", misc::to_string(_n)+"x"+misc::to_string(_n)+"x"+misc::to_string(_nrhs));
 
 			return;
