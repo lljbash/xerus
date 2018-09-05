@@ -32,7 +32,7 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     A1[{1,0,1}] = 1;
     A1[{2,1,0}] = 1;
     A1[{3,1,1}] = 1;
-    
+
     Tensor b1({4});
     b1[0] = 73;
     b1[1] = -73;
@@ -69,6 +69,20 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     TEST((b2[1] - x2[{0,1}]) < 1e-14);
     TEST((x2[{1,0}]) < 1e-14);
     TEST((x2[{1,1}]) < 1e-14);
+});
+
+static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalue of Matrix", [](){
+    Index i,j,k,l,m,n,o,p;
+
+    Tensor A1 = Tensor::random({4,3,4,3});
+    Tensor x1({4,3});
+    double lambda1 = get_smallest_eigenvalue(x1,A1);
+    TEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)) < 1e-13);
+
+    Tensor A2 = Tensor::random({4,3,4,5,4,3,4,5});
+		Tensor x2({4,3,4,5});
+		double lambda2 = get_smallest_eigenvalue(x2,A2);
+		TEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 5e-2);
 });
 
 
