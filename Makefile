@@ -231,6 +231,10 @@ test:  $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
+test_python: # build/libxerus.so build/python3/xerus.so
+	@export PYTHONPATH=build/python3:${PYTHONPATH}; export LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH}; pytest src/pyTests
+
+
 fullTest: $(TUTORIALS) $(TEST_NAME)
 	$(foreach x,$(TUTORIALS),./$(x)$(\n))
 	./$(TEST_NAME) all
