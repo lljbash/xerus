@@ -844,51 +844,50 @@ namespace xerus {
 	}
 //
 //
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::soft_threshold(const std::vector<double> &_taus, const bool  /*_preventZero*/) {
-//		const size_t numComponents = degree()/N;
-//		REQUIRE(_taus.size()+1 == numComponents || (_taus.empty() && numComponents == 0), "There must be exactly degree/N-1 taus. Here " << _taus.size() << " instead of " << numComponents-1 << " are given.");
-//		require_correct_format();
-//
-//		const bool initialCanonicalization = canonicalized;
-//		const size_t initialCorePosition = corePosition;
-//
-//		canonicalize_right();
-//
-//		for(size_t i = 0; i+1 < numComponents; ++i) {
-//			round_edge(numComponents-i, numComponents-i-1, std::numeric_limits<size_t>::max(), 0.0, _taus[i]);
-//		}
-//
-//		assume_core_position(0);
-//
-//		if(initialCanonicalization) {
-//			move_core(initialCorePosition);
-//		}
-//	}
-//
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::soft_threshold(const double _tau, const bool _preventZero) {
-//		soft_threshold(std::vector<double>(num_ranks(), _tau), _preventZero);
-//	}
-//
-//
-//	template<bool isOperator>
-//	std::vector<size_t> HTNetwork<isOperator>::ranks() const {
-//		std::vector<size_t> res;
-//		res.reserve(num_ranks());
-//		for (size_t n = 1; n+2 < nodes.size(); ++n) {
-//			res.push_back(nodes[n].neighbors.back().dimension);
-//		}
-//		return res;
-//	}
+	template<bool isOperator>
+	void HTNetwork<isOperator>::soft_threshold(const std::vector<double> &_taus, const bool  /*_preventZero*/) {
+		REQUIRE(_taus.size()+1 == numberOfComponents || (_taus.empty() && numberOfComponents == 0), "There must be exactly " << numberOfComponents << " taus. Here " << _taus.size() << " instead of " << numberOfComponents-1 << " are given.");
+		require_correct_format();
+
+		const bool initialCanonicalization = canonicalized;
+		const size_t initialCorePosition = corePosition;
+
+		canonicalize_root();
+
+		for(size_t i = 0; i+1 < numberOfComponents; ++i) {
+			round_edge(numberOfComponents-i, numberOfComponents-i-1, std::numeric_limits<size_t>::max(), 0.0, _taus[i]);
+		}
+
+		assume_core_position(0);
+
+		if(initialCanonicalization) {
+			move_core(initialCorePosition);
+		}
+	}
+
+
+	template<bool isOperator>
+	void HTNetwork<isOperator>::soft_threshold(const double _tau, const bool _preventZero) {
+		soft_threshold(std::vector<double>(num_ranks(), _tau), _preventZero);
+	}
 //
 //
-//	template<bool isOperator>
-//	size_t HTNetwork<isOperator>::rank(const size_t _i) const {
-//		REQUIRE(_i < numberOfComponents, "Requested illegal rank " << _i);
-//		return nodes[_i].neighbors.back().dimension;
-//	}
+	template<bool isOperator>
+	std::vector<size_t> HTNetwork<isOperator>::ranks() const {
+		std::vector<size_t> res;
+		res.reserve(num_ranks());
+		for (size_t n = 1; n+2 < nodes.size(); ++n) {
+			res.push_back(nodes[n].neighbors.back().dimension);
+		}
+		return res;
+	}
+
+
+	template<bool isOperator>
+	size_t HTNetwork<isOperator>::rank(const size_t _i) const {
+		REQUIRE(_i < numberOfComponents, "Requested illegal rank " << _i);
+		return nodes[_i].neighbors.back().dimension;
+	}
 
 
 	template<bool isOperator>

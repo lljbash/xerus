@@ -407,7 +407,7 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Splits the TTNetwork into two parts by removing the node.
+		* @brief Splits the HTNetwork into two parts by removing the node.
 		* @param _position index of the component to be removed, thereby also defining the position 
 		*  of the split.
 		* @return a std::pair containing the two remaining parts as TensorNetworks.
@@ -448,21 +448,21 @@ namespace xerus {
 		* @brief Applies the soft threshholding operation to all ranks.
 		* @param _tau the soft threshholding parameter to be applied. I.e. all singular values are reduced to max(0, Lambda_ui - _tau).
 		*/
-//		void soft_threshold(const double _tau, const bool _preventZero = false);
+		void soft_threshold(const double _tau, const bool _preventZero = false);
 		
 		
 		/** 
 		* @brief Applies soft threshholding operations to all ranks.
 		* @param _taus the soft threshholding parameters to be applied. I.e. all singular values of the j-th matrification are reduced to max(0, Lambda_ui - _tau[j]).
 		*/
-//		void soft_threshold(const std::vector<double>& _taus, const bool _preventZero = false);
+		void soft_threshold(const std::vector<double>& _taus, const bool _preventZero = false);
 		
 		
 		/** 
 		* @brief Gets the ranks of the HTNetwork.
 		* @return A vector containing the current ranks.
 		*/
-//		std::vector<size_t> ranks() const;
+		std::vector<size_t> ranks() const;
 		
 		
 		/** 
@@ -470,7 +470,7 @@ namespace xerus {
 		* @param _i Position of the edge in question.
 		* @return The current rank of edge _i.
 		*/
-//		size_t rank(const size_t _i) const;
+		size_t rank(const size_t _i) const;
 		
 		
 		/** 
