@@ -47,6 +47,10 @@ void expose_ttnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTTensor::random(_dim, _rank);
 			}).staticmethod("random")
+		.def("constant",
+			+[](value_t _constant, std::vector<size_t> _dim, std::vector<size_t> _rank) {
+				return xerus::TTTensor::constant(_constant, _dim, _rank);
+			}).staticmethod("constant")
 		.def("ones", &TTTensor::ones).staticmethod("ones")
 		.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
@@ -62,12 +66,11 @@ void expose_ttnetwork() {
 				return boost::python::make_tuple(result.first, result.second);
 			}, arg("position"))
 
-// 		.def("round", static_cast<void (TTTensor::*)(const std::vector<size_t>&, double)>(&TTTensor::round),
-// 			(arg("ranks"), arg("epsilon")=EPSILON)
-// 		)
+ 		.def("round", static_cast<void (TTTensor::*)(const std::vector<size_t>&, double)>(&TTTensor::round),
+ 			(arg("ranks"), arg("epsilon")=EPSILON)
+ 		)
 		.def("round", static_cast<void (TTTensor::*)(double)>(&TTTensor::round))
-// 		.def("round", static_cast<void (TTTensor::*)(size_t)>(&TTTensor::round))
-
+ 		.def("round", static_cast<void (TTTensor::*)(size_t)>(&TTTensor::round))
 		.def("soft_threshold", static_cast<void (TTTensor::*)(const double, const bool)>(&TTTensor::soft_threshold),
 			(arg("tau"), arg("preventZero")=false)
 		)
@@ -112,6 +115,10 @@ void expose_ttnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTOperator::random(_dim, _rank);
 			}).staticmethod("random")
+		.def("constant",
+			+[](value_t _constant, std::vector<size_t> _dim, std::vector<size_t> _rank) {
+				return xerus::TTOperator::constant(_constant, _dim, _rank);
+			}).staticmethod("constant")
 		.def("ones", &TTOperator::ones).staticmethod("ones")
 		.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
@@ -132,7 +139,6 @@ void expose_ttnetwork() {
 		)
 		.def("round", static_cast<void (TTOperator::*)(double)>(&TTOperator::round))
 		.def("round", static_cast<void (TTOperator::*)(size_t)>(&TTOperator::round))
-
 		.def("soft_threshold", static_cast<void (TTOperator::*)(const double, const bool)>(&TTOperator::soft_threshold),
 			(arg("tau"), arg("preventZero")=false)
 		)
