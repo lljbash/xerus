@@ -1752,7 +1752,7 @@ namespace xerus {
 
 			//get eigenvector oof smallest eigenvalue
 			auto tmpX = _X.override_dense_data();
-			for (size_t i = 0; i <= n; ++i)
+			for (size_t i = 0; i < n; ++i)
 				tmpX[i] = rev[idx + i * n];
 
 			return ev;
