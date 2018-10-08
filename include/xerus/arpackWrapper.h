@@ -35,6 +35,9 @@ namespace xerus {
 	* a seriously low level implementation of a critical part of an algorithm is required.
 	*/
 	namespace arpackWrapper {
-		
-		
+		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
+		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps);
+
+
+	}
 }
