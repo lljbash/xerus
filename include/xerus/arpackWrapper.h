@@ -21,8 +21,27 @@
 * @file
 * @brief Header file for the arpack wrapper functions.
 */
+#ifdef ARPACK_LIBRARIES
 
 #pragma once
+
+#include <complex.h>
+// fix for non standard-conform complex implementation
+#undef I
+
+#ifdef __has_include
+	#if __has_include("arpack.hpp")
+		#include "arpack.hpp"
+	#elif __has_include("arpack/arpack.hpp")
+		#include "arpack/arpack.hpp"
+	#else
+		#pragma error no arpack found
+	#endif
+#else
+	#include "arpack/arpack.hpp"
+#endif
+
+
 
 #include "misc/standard.h"
 #include <memory>
@@ -36,8 +55,19 @@ namespace xerus {
 	*/
 	namespace arpackWrapper {
 		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
-		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps);
+		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
+		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
+		void solve_ev_smallest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+		///@brief: Solves Ax = lambda*x for x, for the biggest _k eigenvalues
+		void solve_ev_biggest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+
+
 
 
 	}
 }
+#endif
+
+
+
+

@@ -22,6 +22,7 @@
 * @brief Implementation of the blas and lapack wrapper functions.
 */
 
+#ifdef ARPACK_LIBRARIES
 
 #include <complex.h>
 // fix for non standard-conform complex implementation
@@ -61,22 +62,18 @@
 namespace xerus {
 	namespace arpackWrapper {
 		
-
-		
-		
-
-		
-		/// Solves Ax = x*lambda for x and lambda
-		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps) {
+		/// Solves Ax = x*lambda for x and lambda for the _k smallest eigenvalues
+		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info) {
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for ARPACK");
-
+			REQUIRE(_info >= 0, "Info == 0, random; Info > 0, take residual; info is " << _info);
+			REQUIRE(_k < _n, "For some reason the number of Eigenvalues must be smaller than the dimension. see https://github.com/opencollab/arpack-ng/blob/master/SRC/dsaupd.f and error code -3" );
+			//REQUIRE(is_symmetric(_A, _n), "A must be symmetric");
 
 			// iteration variables dsaupd
 			int ido = 0;
 			auto bmat_option = arpack::bmat::identity;
-			auto ritz_option = arpack::which::smallest_algebraic;
 			int nev = static_cast<int>(_k);
-			int ncv = nev * 3; // TODO check for best value here
+			int ncv = nev * 3 >= static_cast<int>(_n) ? static_cast<int>(_n) : nev * 3; // TODO check for best value here
 			std::unique_ptr<double[]> v(new double[_n * ncv]);
 			std::unique_ptr<int[]> iparam(new int[11]);
 			std::unique_ptr<int[]> ipntr(new int[11]);
@@ -84,13 +81,13 @@ namespace xerus {
 
 			int lworkl = ncv*(ncv + 8);
 			std::unique_ptr<double[]> workl(new double[lworkl]);
-			int info = 0;
 
 			// ev extraction variables dseupd
 			bool rvec = true;
 			auto howmny_option = arpack::howmny::ritz_vectors;
 			std::unique_ptr<int[]> select(new int[ncv]);
 			double sigma = 0.0;
+			int info1 = _info;
 
 			// intialization of iparam, parameters for arpack
 			iparam[0] = 1;
@@ -98,12 +95,12 @@ namespace xerus {
 			iparam[6] = 1;
 
 			for (size_t i = 0; i < _maxiter; ++i){
-				XERUS_LOG(info, "Iter = " << i);
+				//LOG(info, "iter = " << i);
 				arpack::saupd( 							//NOTE for more details see https://github.com/opencollab/arpack-ng/blob/master/SRC/dsaupd.f
 					ido,											// Reverse Communication flag
 					bmat_option,							// Standard or Generalized EV problem
 					static_cast<int>(_n), 		// Dimension of the EV problem
-					ritz_option,							/* Specify which of the Ritz values of OP to compute.
+					_ritz_option,							/* Specify which of the Ritz values of OP to compute.
 																			'LA' - compute the NEV largest (algebraic) eigenvalues.
 																			'SA' - compute the NEV smallest (algebraic) eigenvalues.
 																			'LM' - compute the NEV largest (in magnitude) eigenvalues.
@@ -122,32 +119,20 @@ namespace xerus {
 					workd.get(),										// Distributed array to be used in the basic Arnoldi iteration for reverse communication.
 					workl.get(),										// rivate (replicated) array on each PE or array allocated on the front end.
 					lworkl,          					// LWORKL must be at least NCV**2 + 8*NCV .
-					info											/* If INFO .EQ. 0, a randomly initial residual vector is used.
+					info1											/* If INFO .EQ. 0, a randomly initial residual vector is used.
 																			 If INFO .NE. 0, RESID contains the initial residual vector,
 																			 possibly from a previous run.
 																			 Error flag on output. */
 				);
-				XERUS_LOG(info, "saupd done, ido = " << ido);
 
 				if (ido == -1 or ido == 1){
-					XERUS_LOG(info, "ipntr = " << ipntr[0]);
-					XERUS_LOG(info, "ipntr = " << ipntr[1]);
-					XERUS_LOG(info, "A = " << _A[0] << " " << _A[1] << " " << _A[2] << " " << _A[3] << " " << _A[4] << " " << _A[5] << " " << _A[6] << " " << _A[7] << " " << _A[8] << " " << _A[9] << " " << _A[10] << " " << _A[11] << " " << _A[12] << " " << _A[13] << " " << _A[14] << " " << _A[15] << " ");
-					auto x = workd.get() + ipntr[0] - 1;
-					auto y = workd.get() + ipntr[1] - 1;
-					XERUS_LOG(info, "x = " << x[0] << " " << x[1] << " " << x[2] << " " << x[3] );
-					XERUS_LOG(info, "y = " << y[0] << " " << y[1] << " " << y[2] << " " << y[3] );
-
-					blasWrapper::matrix_vector_product(workd.get() + ipntr[0] - 1,_n,1.0, _A, _n, false, workd.get() + ipntr[1] - 1);
-					XERUS_LOG(info, "y = " << y[0] << " " << y[1] << " " << y[2] << " " << y[3] );
-
+					blasWrapper::matrix_vector_product(workd.get() + ipntr[1] - 1,_n,1.0, _A, _n, false, workd.get() + ipntr[0] - 1);
 				}
 				else {
 					break;
 				}
 			}
-			XERUS_LOG(info, "saupd done");
-
+			REQUIRE(info1 >= 0, "ARPACK exited with error, see https://github.com/opencollab/arpack-ng/blob/master/SRC/dsaupd.f, error code is " << info1);
 			arpack::seupd( 							// NOTE for more details see https://github.com/opencollab/arpack-ng/blob/master/SRC/dseupd.f
 				rvec,											// Specifies whether Ritz vectors corresponding to the Ritz value approximations to the eigenproblem A*z = lambda*B*z are computed.
 				howmny_option,						/* Specifies how many Ritz vectors are wanted and the form of Z
@@ -165,7 +150,7 @@ namespace xerus {
 				// Same as above
 				bmat_option,
 				static_cast<int>(_n),
-				ritz_option,
+				_ritz_option,
 				nev,
 				static_cast<double>(_eps),
 				_resid,
@@ -177,19 +162,25 @@ namespace xerus {
 				workd.get(),
 				workl.get(),
 				lworkl,
-				info
+				info1
 			);
-			XERUS_LOG(info, "seupd done");
 
-			XERUS_LOG(info, "ev = " << _ev[0]);
-			XERUS_LOG(info, "iparam = " << iparam[0]);
-			XERUS_LOG(info, "ipntr = " << ipntr[0]);
 			return;
 		}
 	
 
 		
+		void solve_ev_smallest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
+			solve_ev (_x, _A, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::smallest_algebraic, _info);
+		}
+
+		void solve_ev_biggest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
+			solve_ev (_x, _A, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::largest_algebraic, _info);
+		}
+
+
 	} // namespace arpackWrapper
 
 } // namespace xerus
+#endif
 

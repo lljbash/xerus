@@ -118,9 +118,6 @@ namespace xerus {
 			
 			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
-			XERUS_LOG(info, "y = " << _y[0] << " " << _y[1] << " " << _y[2] << " " << _y[3] );
-			XERUS_LOG(info, "x = " << _x[0] << " " << _x[1] << " " << _x[2] << " " << _x[3] );
-			XERUS_LOG(info, "A = " << _A[0] << " " << _A[1] << " " << _A[2] << " " << _A[3] << " " << _A[4] << " " << _A[5] << " " << _A[6] << " " << _A[7] << " " << _A[8] << " " << _A[9] << " " << _A[10] << " " << _A[11] << " " << _A[12] << " " << _A[13] << " " << _A[14] << " " << _A[15] << " ");
 
 			XERUS_PA_START;
 			if(!_transposed) {
@@ -128,8 +125,6 @@ namespace xerus {
 			} else {
 				cblas_dgemv(CblasRowMajor, CblasTrans, static_cast<int>(_n), static_cast<int>(_m), _alpha, _A, static_cast<int>(_m) , _y, 1, 0.0, _x, 1);
 			}
-			XERUS_LOG(info, "y = " << _y[0] << " " << _y[1] << " " << _y[2] << " " << _y[3] );
-
 			XERUS_PA_END("Dense BLAS", "Matrix Vector Product", misc::to_string(_m)+"x"+misc::to_string(_n)+" * "+misc::to_string(_n));
 		}
 		
