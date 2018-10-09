@@ -85,7 +85,7 @@ static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalu
 		TEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 5e-12);
 });
 
-//#ifdef ARPACK_LIBRARIES
+#ifdef ARPACK_LIBRARIES
 static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest eigenvalue of Matrix (iterative)", [](){
     Index i,j,k,l,m,n,o,p;
 
@@ -116,7 +116,7 @@ static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest
     double lambda3 = ev3[0];
     MTEST(frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)) < 1e-8, frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)));
 });
-//#endif
+#endif
 
 static misc::UnitTest solve_vs_lsqr("Tensor", "solve vs least squares", [](){
 	const size_t N = 500;
