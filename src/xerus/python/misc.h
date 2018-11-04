@@ -59,6 +59,7 @@ void expose_factorizations();
 void expose_indexedTensors();
 void expose_tensorNetwork();
 void expose_ttnetwork();
+void expose_htnetwork();
 
 void expose_leastSquaresAlgorithms();
 void expose_recoveryAlgorithms();
