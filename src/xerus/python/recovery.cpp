@@ -97,7 +97,14 @@ void expose_recoveryAlgorithms() {
         .def("set_measuredValue", +[](RankOneMeasurementSet &_this, size_t _i, value_t _val){
             _this.measuredValues[_i] = _val;
         })
-        .def("add", &RankOneMeasurementSet::add)
+        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue); */
+        .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue) {
+                _self.add(_position, _measuredValue);
+            })
+        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight); */
+        .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight) {
+                _self.add(_position, _measuredValue, _weight);
+            })
         .def("size", &RankOneMeasurementSet::size)
         .def("degree", &RankOneMeasurementSet::degree)
         .def("frob_norm", &RankOneMeasurementSet::frob_norm)
