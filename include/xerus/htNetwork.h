@@ -507,7 +507,7 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Transpose the TTOperator
+		* @brief Transpose the HTOperator
 		* @details Swaps all external indices to create the transposed operator.
 		*/
 		template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>

@@ -876,7 +876,9 @@ namespace xerus {
 	std::vector<size_t> HTNetwork<isOperator>::ranks() const {
 		std::vector<size_t> res;
 		res.reserve(num_ranks());
-		for (size_t n = 1; n+2 < nodes.size(); ++n) {
+		const size_t numIntComp = static_cast<size_t>(0.5 + std::pow(2,std::ceil(std::log2(static_cast<double>(degree()/N ))))) - 1;
+		for (size_t n = 0; n < numIntComp; ++n) {
+			res.push_back(nodes[n].neighbors.end()[-2].dimension);
 			res.push_back(nodes[n].neighbors.back().dimension);
 		}
 		return res;

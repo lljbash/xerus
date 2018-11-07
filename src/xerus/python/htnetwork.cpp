@@ -48,7 +48,7 @@ void expose_htnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTTensor::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("ones", &TTTensor::ones).staticmethod("ones")
+		.def("ones", &HTTensor::ones).staticmethod("ones")
 		.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
 		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const size_t)>(&TTTensor::dirac)).staticmethod("dirac")
@@ -113,7 +113,7 @@ void expose_htnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTOperator::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("ones", &TTOperator::ones).staticmethod("ones")
+		.def("ones", &HTOperator::ones).staticmethod("ones")
 		.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
 		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const size_t)>(&TTOperator::dirac)).staticmethod("dirac")
@@ -128,11 +128,11 @@ void expose_htnetwork() {
 //				return boost::python::make_tuple(result.first, result.second);
 //			}, arg("position"))
 //
-		.def("round", static_cast<void (TTOperator::*)(const std::vector<size_t>&, double)>(&TTOperator::round),
+		.def("round", static_cast<void (HTOperator::*)(const std::vector<size_t>&, double)>(&HTOperator::round),
 			(arg("ranks"), arg("epsilon")=EPSILON)
 		)
-		.def("round", static_cast<void (TTOperator::*)(double)>(&TTOperator::round))
-		.def("round", static_cast<void (TTOperator::*)(size_t)>(&TTOperator::round))
+		.def("round", static_cast<void (HTOperator::*)(double)>(&HTOperator::round))
+		.def("round", static_cast<void (HTOperator::*)(size_t)>(&HTOperator::round))
 
 		.def("soft_threshold", static_cast<void (HTOperator::*)(const double, const bool)>(&HTOperator::soft_threshold),
 			(arg("tau"), arg("preventZero")=false)
@@ -158,7 +158,7 @@ void expose_htnetwork() {
 //
 //		// for  TTOperator only:
 //		.def("identity", &TTOperator::identity<>).staticmethod("identity")
-		.def("transpose", &TTOperator::transpose<>)
+		.def("transpose", &HTOperator::transpose<>)
 	;
 //	def("entrywise_product", static_cast<TTOperator (*)(const TTOperator&, const TTOperator&)>(&entrywise_product));
 //	def("find_largest_entry", static_cast<size_t (*)(const TTOperator&, value_t, value_t)>(&find_largest_entry));
