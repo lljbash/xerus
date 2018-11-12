@@ -44,133 +44,179 @@ namespace xerus {
 		}
 		
 		
-//		template<bool isOperator>
-//		TTStack<isOperator>::operator HTNetwork<isOperator>() {
-//			require_valid_network();
-//
-//			if(degree() == 0) {
-//				std::set<size_t> toContract;
-//				for(size_t i = 0; i < nodes.size(); ++i) {
-//					toContract.insert(i);
-//					contract(toContract);
-//					return HTNetwork<isOperator>(*nodes[0].tensorObject);
-//				}
-//			}
-//
-//			const size_t numComponents = degree()/N;
-//			const size_t numNodes = degree()/N+2;
-//			const size_t stackSize = nodes.size()/numNodes;
-//
-//			INTERNAL_CHECK(nodes.size()%numNodes == 0, "IE");
-//
-//			// Contract the stack to a TTNetwork node structure.
-//			std::set<size_t> toContract;
-//			for (size_t currentNode = 0; currentNode < numNodes; ++currentNode) {
-//				toContract.clear();
-//				for (size_t i = 0; i < stackSize; i++) {
-//					toContract.insert(currentNode+i*numNodes);
-//				}
-//				contract(toContract);
-//			}
-//
-//			// Reshuffle the nodes to be in the correct order after contraction the nodes will have one of the ids: node, node+numNodes, node+2*numNodes,... (as those were part of the contraction) so modulus gives the correct wanted id.
-//			reshuffle_nodes([numNodes](const size_t _i){return _i%(numNodes);});
-//
-//			INTERNAL_CHECK(nodes.size() == numNodes, "Internal Error.");
-//
-//			// Reset to new external links
-//			for(size_t i = 0; i < numComponents; ++i) {
-//				externalLinks[i].other = i+1;
-//				externalLinks[i].indexPosition = 1;
-//			}
-//			if(isOperator) {
-//				for(size_t i = 0; i < numComponents; ++i) {
-//					externalLinks[numComponents+i].other = i+1;
-//					externalLinks[numComponents+i].indexPosition = 2;
-//				}
-//			}
-//
-//			// Fix the first virtual node
-//			nodes[0].tensorObject->reinterpret_dimensions({1});
-//			nodes[0].neighbors.resize(1);
-//			nodes[0].neighbors.front().other = 1;
-//			nodes[0].neighbors.front().indexPosition = 0;
-//
-//			// Fix all real components
-//			std::vector<size_t> shuffle(N+2*stackSize);
-//			for (size_t i = 1; i+1 < numNodes; ++i) {
-//				size_t leftCount = 0;
-//				size_t leftDim = 1, rightDim = 1;
-//				size_t fullDim = 1;
-//				for(size_t k = 0; k < N+2*stackSize; ++k) {
-//					INTERNAL_CHECK(!nodes[i].erased, "IE");
-//					const TensorNetwork::Link& link = nodes[i].neighbors[k];
-//					fullDim *= link.dimension;
-//					if(link.external) {
-//						if(link.indexPosition < numComponents) {
-//							shuffle[k] = stackSize;
-//						} else {
-//							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numComponents << " vs " << degree());
-//							shuffle[k] = stackSize+1;
-//						}
-//					} else {
-//						if(link.other == i-1) {
-//							shuffle[k] = leftCount++;
-//							leftDim *= link.dimension;
-//						} else {
-//							// We want the order of the next node (so the next one can keep its order)
-//							size_t otherPos = 0;
-//							for(const TensorNetwork::Link& otherLink : nodes[i+1].neighbors) {
-//								if(otherLink.other == i) {
-//									if(otherLink.indexPosition == k) {
-//										break;
-//									} else {
-//										otherPos++;
-//									}
-//								}
-//							}
-//							shuffle[k] = stackSize+N+otherPos;
-//							rightDim *= link.dimension;
-//						}
-//					}
-//				}
-//				INTERNAL_CHECK(fullDim == nodes[i].tensorObject->size, "Uhh");
-//				INTERNAL_CHECK(leftCount == stackSize, "IE");
-//
-//				xerus::reshuffle(*nodes[i].tensorObject, *nodes[i].tensorObject, shuffle);
-//				if(isOperator) {
-//					nodes[i].tensorObject->reinterpret_dimensions({leftDim, dimensions[i-1], dimensions[i-1+numComponents], rightDim});
-//				} else {
-//					nodes[i].tensorObject->reinterpret_dimensions({leftDim, dimensions[i-1], rightDim});
-//				}
-//
-//				nodes[i].neighbors.clear();
-//				nodes[i].neighbors.emplace_back(i-1, i==1 ? 0 : N+1, leftDim, false);
-//				nodes[i].neighbors.emplace_back(0, i-1 , dimensions[i-1], true);
-//				if(isOperator) { nodes[i].neighbors.emplace_back(0, numComponents+i-1, dimensions[numComponents+i-1], true); }
-//				nodes[i].neighbors.emplace_back(i+1, 0, rightDim, false);
-//			}
-//
-//			// Fix the second virtual node
-//			nodes[numNodes-1].tensorObject->reinterpret_dimensions({1});
-//			nodes[numNodes-1].neighbors.resize(1);
-//			nodes[numNodes-1].neighbors.front().other = numNodes-2;
-//			nodes[numNodes-1].neighbors.front().indexPosition = N+1;
-//
-//			// Create actual TTNetwork
-//			TTNetwork<isOperator> result;
-//			static_cast<TensorNetwork&>(result) = static_cast<TensorNetwork&>(*this);
-//			if(cannonicalization_required) {
-//				result.canonicalized = false;
-//				result.move_core(futureCorePosition);
-//			} else {
-//				result.canonicalized = true;
-//				result.corePosition = futureCorePosition;
-//			}
-//			result.require_correct_format();
-//
-//			return result;
-//		}
+		template<bool isOperator>
+		HTStack<isOperator>::operator HTNetwork<isOperator>() {
+		require_valid_network();
+
+		if(degree() == 0) {
+			std::set<size_t> toContract;
+			for(size_t i = 0; i < nodes.size(); ++i) {
+				toContract.insert(i);
+				contract(toContract);
+				return HTNetwork<isOperator>(*nodes[0].tensorObject);
+			}
+		}
+		const size_t numOfLeaves = degree()/N;
+		const size_t numOfFullLeaves = numOfLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
+		const size_t numIntComp = numOfFullLeaves - 1;
+		const size_t numComponents = numIntComp + numOfLeaves;
+		const size_t numNodes = numOfFullLeaves + numIntComp + 1;
+		const size_t stackSize = nodes.size()/numNodes;
+
+		INTERNAL_CHECK(nodes.size()%numNodes == 0, "IE");
+
+		// Contract the stack to a HTNetwork node structure.
+		std::set<size_t> toContract;
+		for (size_t currentNode = 0; currentNode < numNodes; ++currentNode) {
+			toContract.clear();
+			for (size_t i = 0; i < stackSize; i++) {
+				toContract.insert(currentNode+i*numNodes);
+			}
+			contract(toContract);
+		}
+		// Reshuffle the nodes to be in the correct order after contraction the nodes will have one of the ids: node, node+numNodes, node+2*numNodes,... (as those were part of the contraction) so modulus gives the correct wanted id.
+		reshuffle_nodes([numNodes](const size_t _i){return _i%(numNodes);});
+
+		INTERNAL_CHECK(nodes.size() == numNodes, "Internal Error.");
+
+		// Reset to new external links
+		for(size_t i = 0; i < numOfLeaves; ++i) {
+			externalLinks[i].other = i+numIntComp;
+			externalLinks[i].indexPosition = 1;
+		}
+		if(isOperator) {
+			for(size_t i = 0; i < numOfLeaves; ++i) {
+				externalLinks[numOfLeaves+i].other = i+numIntComp;
+				externalLinks[numOfLeaves+i].indexPosition = 2;
+			}
+		}
+
+
+		// Fix the virtual node
+		nodes[numNodes-1].tensorObject->reinterpret_dimensions({1});
+		nodes[numNodes-1].neighbors.resize(1);
+		nodes[numNodes-1].neighbors.front().other = 0;
+		nodes[numNodes-1].neighbors.front().indexPosition = 0;
+
+		// Fix all internal components
+		std::vector<size_t> shuffle_int(3*stackSize);
+		for (size_t i = 0; i < numIntComp; ++i) {
+			size_t parentCount = 0;
+			size_t parentDim = 1, leftChildDim = 1, rightChildDim = 1;
+			size_t fullDim = 1;
+			for(size_t k = 0; k < 3*stackSize; ++k) {
+				INTERNAL_CHECK(!nodes[i].erased, "IE");
+				const TensorNetwork::Link& link = nodes[i].neighbors[k];
+				fullDim *= link.dimension;
+				//link is pointing to parent
+				if((i > 0 && link.other == (i-1)/2) || (i == 0 && link.other == numNodes - 1)) {
+					shuffle_int[k] = parentCount++;
+					parentDim *= link.dimension;
+				}
+				// link is pointing to left child
+				else if (link.other == 2 * i + 1){
+					// We want the order of the next node (so the next one can keep its order)
+					size_t otherPos = 0;
+					for(const TensorNetwork::Link& otherLink : nodes[2 * i + 1].neighbors) {
+						if(otherLink.other == i) {
+							if(otherLink.indexPosition == k) {
+								break;
+							} else {
+								otherPos++;
+							}
+						}
+					}
+					shuffle_int[k] = stackSize+otherPos;
+					leftChildDim *= link.dimension;
+				}
+				// link is pointing to right child
+				else if (link.other == 2 * i + 2){
+					size_t otherPos = 0;
+					for(const TensorNetwork::Link& otherLink : nodes[2 * i + 2].neighbors) {
+						if(otherLink.other == i) {
+							if(otherLink.indexPosition == k) {
+								break;
+							} else {
+								otherPos++;
+							}
+						}
+					}
+					shuffle_int[k] = 2*stackSize+otherPos;
+					rightChildDim *= link.dimension;
+				}
+				else
+					INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the TTN");
+			}
+			INTERNAL_CHECK(fullDim == nodes[i].tensorObject->size, "Uhh");
+			INTERNAL_CHECK(parentCount == stackSize, "IE");
+			xerus::reshuffle(*nodes[i].tensorObject, *nodes[i].tensorObject, shuffle_int);
+			nodes[i].tensorObject->reinterpret_dimensions({parentDim, leftChildDim, rightChildDim});
+			nodes[i].neighbors.clear();
+			nodes[i].neighbors.emplace_back(i == 0 ? numNodes - 1 : (i-1) / 2, i==0 ? 0 : (i%2 == 1 ? 1:2), parentDim, false);
+			nodes[i].neighbors.emplace_back(2*i+1, 0, leftChildDim, false);
+			nodes[i].neighbors.emplace_back(2*i+2, 0, rightChildDim, false);
+		}
+		// Fix all leaves
+		std::vector<size_t> shuffle_leaves(N + stackSize);
+		for (size_t i = numIntComp; i < numNodes - 1; ++i) {
+			size_t parentCount = 0, parentDim = 1, fullDim = 1;
+			//Dummy components
+			if(i >= numComponents){
+				nodes[i].tensorObject->reinterpret_dimensions({1});
+				nodes[i].neighbors.resize(1);
+				nodes[i].neighbors.front().other = (i-1)/2;
+				nodes[i].neighbors.front().indexPosition = (i-1)%2 + 1;
+			} else {
+			for(size_t k = 0; k < N + stackSize; ++k) {
+				INTERNAL_CHECK(!nodes[i].erased, "IE");
+				const TensorNetwork::Link& link = nodes[i].neighbors[k];
+				fullDim *= link.dimension;
+				if(link.external) {
+					if(link.indexPosition < numOfLeaves) {
+						shuffle_leaves[k] = stackSize;
+					} else {
+						INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numOfLeaves << " vs " << degree());
+						shuffle_leaves[k] = stackSize+1;
+					}
+				} else {
+						//link is pointing to parent
+						if(( link.other == (i-1)/2)) {
+							shuffle_leaves[k] = parentCount++;
+							parentDim *= link.dimension;
+						}
+						else
+							INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the TTN");
+					}
+				}
+				INTERNAL_CHECK(fullDim == nodes[i].tensorObject->size, "Uhh");
+				INTERNAL_CHECK(parentCount == stackSize, "IE");
+				xerus::reshuffle(*nodes[i].tensorObject, *nodes[i].tensorObject, shuffle_leaves);
+				if(isOperator) {
+					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[i - numIntComp], dimensions[i - numIntComp+numOfLeaves]});
+				} else {
+					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[i - numIntComp]});
+				}
+
+				nodes[i].neighbors.clear();
+				nodes[i].neighbors.emplace_back( (i-1) / 2, i%2 == 1 ? 1:2, parentDim, false);
+				nodes[i].neighbors.emplace_back(-1, i - numIntComp , dimensions[i - numIntComp], true);
+				if(isOperator) { nodes[i].neighbors.emplace_back(-1, numOfLeaves+i - numIntComp, dimensions[numOfLeaves+i - numIntComp], true); }
+			}
+		}
+		// Create actual HTNetwork
+		HTNetwork<isOperator> result;
+		static_cast<TensorNetwork&>(result) = static_cast<TensorNetwork&>(*this);
+		if(cannonicalization_required) {
+			result.canonicalized = false;
+			result.move_core(futureCorePosition);
+		} else {
+			result.canonicalized = true;
+			result.corePosition = futureCorePosition;
+		}
+		result.require_correct_format();
+
+		return result;
+	}
 		
 		template<bool isOperator>
 		void HTStack<isOperator>::operator*=(const value_t _factor) {

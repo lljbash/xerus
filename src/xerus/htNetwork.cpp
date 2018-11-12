@@ -1147,100 +1147,100 @@ namespace xerus {
 		return false;
 	}
 
-//
-//	template<bool isOperator>
-//	void transpose_if_operator(TTNetwork<isOperator>& _ttNetwork);
-//
-//	template<>
-//	void transpose_if_operator<false>(TTNetwork<false>&  /*_ttNetwork*/) {}
-//
-//	template<>
-//	void transpose_if_operator<true>(TTNetwork<true>& _ttNetwork) {
-//		_ttNetwork.transpose();
-//	}
-//
-//	template<bool isOperator>
-//	bool TTNetwork<isOperator>::specialized_sum_f(std::unique_ptr<internal::IndexedTensorMoveable<TensorNetwork>>& _out, internal::IndexedTensorReadOnly<TensorNetwork>&& _me, internal::IndexedTensorReadOnly<TensorNetwork>&& _other) {
-//		_me.assign_indices();
-//		_other.assign_indices();
-//
-//		// If the other is not a TT tensor (or stack) fall back to default summation (i.e. return false)
-//		const TTNetwork* otherTT = dynamic_cast<const TTNetwork*>( _other.tensorObjectReadOnly);
-//		const internal::TTStack<isOperator>* otherTTStack = dynamic_cast<const internal::TTStack<isOperator>*>( _other.tensorObjectReadOnly);
-//		if (!otherTT && !otherTTStack) { return false; }
-//
-//		bool transposeRHS;
-//		if(_me.indices == _other.indices) { // Everything is easy.
-//			REQUIRE(_me.tensorObjectReadOnly->dimensions == _other.tensorObjectReadOnly->dimensions, "TT sum requires both operants to share the same dimensions.");
-//			transposeRHS = false;
-//		} else if (isOperator) { // Check for transposition
-//			// Find index mid-points to compare the halves separately
-//			auto myMidIndexItr = _me.indices.begin();
-//			size_t spanSum = 0;
-//			while (spanSum < _me.degree() / 2) {
-//				spanSum += myMidIndexItr->span;
-//				++myMidIndexItr;
-//			}
-//
-//			auto otherMidIndexItr = _other.indices.begin();
-//			spanSum = 0;
-//			while (spanSum < _other.degree() / 2) {
-//				spanSum += otherMidIndexItr->span;
-//				++otherMidIndexItr;
-//			}
-//
-//			if(std::equal(_me.indices.begin(), myMidIndexItr, otherMidIndexItr) && std::equal(myMidIndexItr, _me.indices.end(), _other.indices.begin())) {
-//				transposeRHS = true;
-//			} else {
-//				return false;
-//			}
-//		} else {
-//			return false; // Not Operator and index order differs.
-//		}
-//
-//		// Check whether we are a TTStack
-//		std::unique_ptr<TTNetwork<isOperator>> meStorage;
-//		const TTNetwork* usedMe;
-//
-//		internal::IndexedTensorMoveable<TensorNetwork>* const moveMe = dynamic_cast<internal::IndexedTensorMoveable<TensorNetwork>*>(&_me);
-//		internal::TTStack<isOperator>* stackMe;
-//		if(moveMe && (stackMe = dynamic_cast<internal::TTStack<isOperator>*>(moveMe->tensorObject))) {
-//			meStorage.reset(new TTNetwork());
-//			usedMe = meStorage.get();
-//			*meStorage = TTNetwork(*stackMe);
-//			INTERNAL_CHECK(usedMe->dimensions == stackMe->dimensions, "Ie " << stackMe->dimensions << " vs "  << usedMe->dimensions);
-//		} else { // I am normal
-//			INTERNAL_CHECK(dynamic_cast<const TTNetwork<isOperator>*>(_me.tensorObjectReadOnly),"Non-moveable TTStack (or other error) detected.");
-//			usedMe = static_cast<const TTNetwork<isOperator>*>(_me.tensorObjectReadOnly);
-//		}
-//		const TTNetwork& ttMe = *usedMe;
-//
-//
-//		// Check whether the other is a TTStack
-//		TTNetwork ttOther;
-//
-//		internal::IndexedTensorMoveable<TensorNetwork>* const moveOther = dynamic_cast<internal::IndexedTensorMoveable<TensorNetwork>*>(&_other);
-//		internal::TTStack<isOperator>* stackOther;
-//		if(moveOther && (stackOther = dynamic_cast<internal::TTStack<isOperator>*>(moveOther->tensorObject))) {
-//			ttOther = TTNetwork(*stackOther);
-//			INTERNAL_CHECK(ttOther.dimensions == stackOther->dimensions, "Ie");
-//		} else { // Other is normal
-//			INTERNAL_CHECK(dynamic_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable TTStack (or other error) detected.");
-//			ttOther = *static_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly);
-//
-//		}
-//
-//		if(transposeRHS) {
-//			transpose_if_operator(ttOther);
-//		}
-//
-//		_out.reset(new internal::IndexedTensorMoveable<TensorNetwork>( new TTNetwork(ttMe), _me.indices));
-//
-//		*static_cast<TTNetwork*>(_out->tensorObject) += ttOther;
-//		return true;
-//	}
-//
-//
+
+	template<bool isOperator>
+	void transpose_if_operator(HTNetwork<isOperator>& _htNetwork);
+
+	template<>
+	void transpose_if_operator<false>(HTNetwork<false>&  /*_ttNetwork*/) {}
+
+	template<>
+	void transpose_if_operator<true>(HTNetwork<true>& _htNetwork) {
+		_htNetwork.transpose();
+	}
+
+	template<bool isOperator>
+	bool HTNetwork<isOperator>::specialized_sum_f(std::unique_ptr<internal::IndexedTensorMoveable<TensorNetwork>>& _out, internal::IndexedTensorReadOnly<TensorNetwork>&& _me, internal::IndexedTensorReadOnly<TensorNetwork>&& _other) {
+		_me.assign_indices();
+		_other.assign_indices();
+
+		// If the other is not a HT tensor (or stack) fall back to default summation (i.e. return false)
+		const HTNetwork* otherHT = dynamic_cast<const HTNetwork*>( _other.tensorObjectReadOnly);
+		const internal::HTStack<isOperator>* otherHTStack = dynamic_cast<const internal::HTStack<isOperator>*>( _other.tensorObjectReadOnly);
+		if (!otherHT && !otherHTStack) { return false; }
+
+		bool transposeRHS;
+		if(_me.indices == _other.indices) { // Everything is easy.
+			REQUIRE(_me.tensorObjectReadOnly->dimensions == _other.tensorObjectReadOnly->dimensions, "HT sum requires both operants to share the same dimensions.");
+			transposeRHS = false;
+		} else if (isOperator) { // Check for transposition
+			// Find index mid-points to compare the halves separately
+			auto myMidIndexItr = _me.indices.begin();
+			size_t spanSum = 0;
+			while (spanSum < _me.degree() / 2) {
+				spanSum += myMidIndexItr->span;
+				++myMidIndexItr;
+			}
+
+			auto otherMidIndexItr = _other.indices.begin();
+			spanSum = 0;
+			while (spanSum < _other.degree() / 2) {
+				spanSum += otherMidIndexItr->span;
+				++otherMidIndexItr;
+			}
+
+			if(std::equal(_me.indices.begin(), myMidIndexItr, otherMidIndexItr) && std::equal(myMidIndexItr, _me.indices.end(), _other.indices.begin())) {
+				transposeRHS = true;
+			} else {
+				return false;
+			}
+		} else {
+			return false; // Not Operator and index order differs.
+		}
+
+		// Check whether we are a HTStack
+		std::unique_ptr<HTNetwork<isOperator>> meStorage;
+		const HTNetwork* usedMe;
+
+		internal::IndexedTensorMoveable<TensorNetwork>* const moveMe = dynamic_cast<internal::IndexedTensorMoveable<TensorNetwork>*>(&_me);
+		internal::HTStack<isOperator>* stackMe;
+		if(moveMe && (stackMe = dynamic_cast<internal::HTStack<isOperator>*>(moveMe->tensorObject))) {
+			meStorage.reset(new HTNetwork());
+			usedMe = meStorage.get();
+			*meStorage = HTNetwork(*stackMe);
+			INTERNAL_CHECK(usedMe->dimensions == stackMe->dimensions, "Ie " << stackMe->dimensions << " vs "  << usedMe->dimensions);
+		} else { // I am normal
+			INTERNAL_CHECK(dynamic_cast<const HTNetwork<isOperator>*>(_me.tensorObjectReadOnly),"Non-moveable HTStack (or other error) detected.");
+			usedMe = static_cast<const HTNetwork<isOperator>*>(_me.tensorObjectReadOnly);
+		}
+		const HTNetwork& htMe = *usedMe;
+
+
+		// Check whether the other is a HTStack
+		HTNetwork htOther;
+
+		internal::IndexedTensorMoveable<TensorNetwork>* const moveOther = dynamic_cast<internal::IndexedTensorMoveable<TensorNetwork>*>(&_other);
+		internal::HTStack<isOperator>* stackOther;
+		if(moveOther && (stackOther = dynamic_cast<internal::HTStack<isOperator>*>(moveOther->tensorObject))) {
+			htOther = HTNetwork(*stackOther);
+			INTERNAL_CHECK(htOther.dimensions == stackOther->dimensions, "Ie");
+		} else { // Other is normal
+			INTERNAL_CHECK(dynamic_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable HTStack (or other error) detected.");
+			htOther = *static_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly);
+
+		}
+
+		if(transposeRHS) {
+			transpose_if_operator(htOther);
+		}
+
+		_out.reset(new internal::IndexedTensorMoveable<TensorNetwork>( new HTNetwork(htMe), _me.indices));
+
+		*static_cast<HTNetwork*>(_out->tensorObject) += htOther;
+		return true;
+	}
+
+
 	template<bool isOperator>
 	void HTNetwork<isOperator>::specialized_evaluation(internal::IndexedTensorWritable<TensorNetwork>&& _me, internal::IndexedTensorReadOnly<TensorNetwork>&& _other) {
 		INTERNAL_CHECK(_me.tensorObject == this, "Internal Error.");
@@ -1248,9 +1248,9 @@ namespace xerus {
 		_me.assign_indices(_other.degree());
 		_other.assign_indices();
 
-		const size_t numIntComp = static_cast<size_t>(0.5+std::pow(2.,std::ceil(std::log2(static_cast<double>(_other.degree()/N ))))) - 1;
+		//const size_t numIntComp = static_cast<size_t>(0.5+std::pow(2.,std::ceil(std::log2(static_cast<double>(_other.degree()/N ))))) - 1;
 		const size_t numOfLeaves = _other.degree()/N;
-		const size_t numComponents = numIntComp + numOfLeaves;
+		//const size_t numComponents = numIntComp + numOfLeaves;
 
 		HTNetwork& meHTN = static_cast<HTNetwork&>(*_me.tensorObject);
 
@@ -1285,28 +1285,26 @@ namespace xerus {
 
 				auto midIndexItr = _me.indices.begin();
 				size_t spanSum = 0;
-				while (spanSum < numComponents) {
+				while (spanSum < numOfLeaves) {
 					INTERNAL_CHECK(midIndexItr != _me.indices.end(), "Internal Error.");
 					spanSum += midIndexItr->span;
 					++midIndexItr;
 				}
-				if (spanSum == numComponents) {
+				if (spanSum == numOfLeaves) {
 					// Transposition possible on my end
 					auto otherMidIndexItr = _other.indices.begin();
 					spanSum = 0;
-					while (spanSum < numComponents) {
+					while (spanSum < numOfLeaves) {
 						INTERNAL_CHECK(otherMidIndexItr != _other.indices.end(), "Internal Error.");
 						spanSum += otherMidIndexItr->span;
 						++otherMidIndexItr;
 					}
-					if (spanSum == numComponents) {
+					if (spanSum == numOfLeaves) {
 						// Other tensor also transposable
 						transposed = (std::equal(_me.indices.begin(), midIndexItr, otherMidIndexItr))
 						&& (std::equal(midIndexItr, _me.indices.end(), _other.indices.begin()));
 					}
 				}
-				XERUS_LOG(info,transposed);
-//
 				if (transposed) {
 					if (otherHTN) {
 						meHTN = *otherHTN;
@@ -1323,8 +1321,6 @@ namespace xerus {
 				}
 			}
 		}
-:q
-
 		// Use Tensor fallback
 		if (_other.tensorObjectReadOnly->nodes.size() > 1) {
 			LOG_ONCE(warning, "Assigning a general tensor network to HTOperator not yet implemented. casting to fullTensor first");
@@ -1333,7 +1329,7 @@ namespace xerus {
 		Tensor otherReordered;
 		otherReordered(_me.indices) = otherFull(_other.indices);
 
-		// Cast to TTNetwork
+		// Cast to HTNetwork
 		*_me.tensorObject = HTNetwork(std::move(otherReordered));
 	}
 

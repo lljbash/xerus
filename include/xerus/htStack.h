@@ -56,7 +56,7 @@ namespace xerus {
 			
 			HTStack& operator= (      HTStack&& _other) = delete;
 			
-//			explicit operator HTNetwork<isOperator>();
+			explicit operator HTNetwork<isOperator>();
 			
 			virtual void operator*=(const value_t _factor) override;
 			
