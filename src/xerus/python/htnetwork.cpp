@@ -19,7 +19,7 @@
 
 /**
  * @file
- * @brief Definition of the TT-Network python bindings.
+ * @brief Definition of the hT-Network python bindings.
  */
 
 
@@ -48,14 +48,14 @@ void expose_htnetwork() {
 				return xerus::HTTensor::random(_dim, _rank);
 			}).staticmethod("random")
 		.def("ones", &HTTensor::ones).staticmethod("ones")
-		.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
-		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
-		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const size_t)>(&TTTensor::dirac)).staticmethod("dirac")
+		//.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
+		//.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
+		//.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const size_t)>(&TTTensor::dirac)).staticmethod("dirac")
 
-		.def("use_dense_representations", &TTTensor::use_dense_representations)
-		.def("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
+		//.def("use_dense_representations", &TTTensor::use_dense_representations)
+		//.def("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
 //// 		.def("degrees_of_freedom", static_cast<size_t (TTTensor::*)()>(&TTTensor::degrees_of_freedom))
-		.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom)).staticmethod("degrees_of_freedom")
+		//.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom)).staticmethod("degrees_of_freedom")
 //		.def("chop",
 //			+[](HTTensor &_this, size_t _pos) {
 //				const auto result = _this.chop(_pos);
@@ -112,14 +112,14 @@ void expose_htnetwork() {
 				return xerus::HTOperator::random(_dim, _rank);
 			}).staticmethod("random")
 		.def("ones", &HTOperator::ones).staticmethod("ones")
-		.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
-		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
-		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const size_t)>(&TTOperator::dirac)).staticmethod("dirac")
+		//.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
+		//.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
+		//.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const size_t)>(&TTOperator::dirac)).staticmethod("dirac")
 
-		.def("use_dense_representations", &TTOperator::use_dense_representations)
-		.def("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
+		//.def("use_dense_representations", &TTOperator::use_dense_representations)
+		//.def("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
 // 		.def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom))
-		.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom)).staticmethod("degrees_of_freedom")
+		//.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom)).staticmethod("degrees_of_freedom")
 //		.def("chop",
 //			+[](HTOperator &_this, size_t _pos) {
 //				const auto result = _this.chop(_pos);
