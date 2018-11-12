@@ -40,7 +40,6 @@ void expose_htnetwork() {
 		.def("set_component", &HTTensor::set_component)
 		.def_readonly("canonicalized", &HTTensor::canonicalized)
 		.def_readonly("corePosition", &HTTensor::corePosition)
-		.def_readonly("numberOfComponents", &HTTensor::numberOfComponents)
 		.def("ranks", &HTTensor::ranks)
 		.def("rank", &HTTensor::rank)
 // 		.def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited
@@ -105,7 +104,6 @@ void expose_htnetwork() {
 		.def("set_component", &HTOperator::set_component)
 		.def_readonly("canonicalized", &HTOperator::canonicalized)
 		.def_readonly("corePosition", &HTOperator::corePosition)
-		.def_readonly("numberOfComponents", &HTOperator::numberOfComponents)
 		.def("ranks", &HTOperator::ranks)
 		.def("rank", &HTOperator::rank)
 // 		.def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
