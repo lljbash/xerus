@@ -565,7 +565,7 @@ namespace xerus {
 				
 				std::unique_ptr<int[]> pivot(new int[_n]);
 				
-				misc::copy(_x, _b, _n);
+				misc::copy(_x, _b, _n*_nrhs);
 				
 				IF_CHECK( int lapackAnswer = ) LAPACKE_dgesv(
 					LAPACK_ROW_MAJOR,
@@ -605,7 +605,7 @@ namespace xerus {
 					LOG(debug, "cholesky");
 					XERUS_PA_START;
 					
-					misc::copy(_x, _b, _n);
+					misc::copy(_x, _b, _n*_nrhs);
 					
 					lapackAnswer = LAPACKE_dpotrs(
 						LAPACK_ROW_MAJOR,
@@ -632,7 +632,7 @@ namespace xerus {
 			// non-definite diagonal or choleksy failed -> fallback to LDL^T decomposition
 			XERUS_PA_START;
 			
-			misc::copy(_x, _b, _n);
+			misc::copy(_x, _b, _n*_nrhs);
 			std::unique_ptr<int[]> pivot(new int[_n]);
 			
 			LAPACKE_dsysv(
