@@ -1035,6 +1035,8 @@ namespace xerus {
 	 * @param _eps tolerance for iterative algorithm
 	 */
 	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps);
+	void get_smallest_eigenvalue_iterative_dmrg_special(Tensor& _X, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, int _info, const size_t _miter, const double _eps);
+
 #endif
 
 	/**
