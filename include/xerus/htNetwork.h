@@ -133,8 +133,9 @@ namespace xerus {
 		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
 		static HTNetwork XERUS_warn_unused random(std::vector<size_t> _dimensions, const std::vector<size_t> &_ranks, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
 
-			const size_t numIntComp = static_cast<size_t>(0.5 + std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
 			const size_t numOfLeaves = _dimensions.size()/N;
+			const size_t numIntComp = numOfLeaves - 1;
+
 			const size_t numComponents = numIntComp + numOfLeaves;
 
 			XERUS_REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions/Leaves for HTOperator.");
@@ -184,7 +185,7 @@ namespace xerus {
 		 */
 		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
 		static HTNetwork XERUS_warn_unused random(const std::vector<size_t>& _dimensions, const size_t _rank, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
-			return HTNetwork::random(_dimensions, std::vector<size_t>((static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 2 + _dimensions.size()/N), _rank), _dist, _rnd);
+			return HTNetwork::random(_dimensions, std::vector<size_t>(2 * _dimensions.size()/N - 2, _rank), _dist, _rnd);
 		}
 
 		
