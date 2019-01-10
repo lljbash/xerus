@@ -58,9 +58,9 @@ namespace xerus {
 		}
 		const size_t numOfLeaves = degree()/N;
 		const size_t numOfFullLeaves = numOfLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
-		const size_t numIntComp = numOfFullLeaves - 1;
-		const size_t numComponents = numIntComp + numOfLeaves;
-		const size_t numNodes = numOfFullLeaves + numIntComp + 1;
+		const size_t numIntComp = numOfLeaves - 1;
+		//const size_t numComponents = numIntComp + numOfLeaves;
+		const size_t numNodes = numOfLeaves + numIntComp + 1;
 		const size_t stackSize = nodes.size()/numNodes;
 
 		INTERNAL_CHECK(nodes.size()%numNodes == 0, "IE");
@@ -78,16 +78,25 @@ namespace xerus {
 		reshuffle_nodes([numNodes](const size_t _i){return _i%(numNodes);});
 
 		INTERNAL_CHECK(nodes.size() == numNodes, "Internal Error.");
+		std::vector<size_t> leaf_order;
+		for (size_t i = numOfFullLeaves - 1; i < numIntComp + numOfLeaves; ++i)
+			leaf_order.emplace_back(i-numIntComp);
+		for (size_t i = numOfLeaves - 1; i < numOfFullLeaves - 1 ; ++i)
+			leaf_order.emplace_back(i-numIntComp);
 
 		// Reset to new external links
-		for(size_t i = 0; i < numOfLeaves; ++i) {
-			externalLinks[i].other = i+numIntComp;
-			externalLinks[i].indexPosition = 1;
+		size_t ii = 0;
+		for(size_t i: leaf_order) {
+			externalLinks[ii].other = i+numIntComp;
+			externalLinks[ii].indexPosition = 1;
+			++ii;
 		}
 		if(isOperator) {
-			for(size_t i = 0; i < numOfLeaves; ++i) {
-				externalLinks[numOfLeaves+i].other = i+numIntComp;
-				externalLinks[numOfLeaves+i].indexPosition = 2;
+			ii = 0;
+			for(size_t i: leaf_order) {
+				externalLinks[numOfLeaves+ii].other = i+numIntComp;
+				externalLinks[numOfLeaves+ii].indexPosition = 2;
+				++ii;
 			}
 		}
 
@@ -160,13 +169,8 @@ namespace xerus {
 		std::vector<size_t> shuffle_leaves(N + stackSize);
 		for (size_t i = numIntComp; i < numNodes - 1; ++i) {
 			size_t parentCount = 0, parentDim = 1, fullDim = 1;
-			//Dummy components
-			if(i >= numComponents){
-				nodes[i].tensorObject->reinterpret_dimensions({1});
-				nodes[i].neighbors.resize(1);
-				nodes[i].neighbors.front().other = (i-1)/2;
-				nodes[i].neighbors.front().indexPosition = (i-1)%2 + 1;
-			} else {
+			std::vector<size_t>::iterator itr = std::find(leaf_order.begin(), leaf_order.end(), i - numIntComp);
+			size_t leaf_order_pos = static_cast<size_t>(std::distance(leaf_order.begin(), itr));
 			for(size_t k = 0; k < N + stackSize; ++k) {
 				INTERNAL_CHECK(!nodes[i].erased, "IE");
 				const TensorNetwork::Link& link = nodes[i].neighbors[k];
@@ -185,23 +189,23 @@ namespace xerus {
 							parentDim *= link.dimension;
 						}
 						else
-							INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the TTN");
+							INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the HTN");
 					}
 				}
 				INTERNAL_CHECK(fullDim == nodes[i].tensorObject->size, "Uhh");
 				INTERNAL_CHECK(parentCount == stackSize, "IE");
 				xerus::reshuffle(*nodes[i].tensorObject, *nodes[i].tensorObject, shuffle_leaves);
 				if(isOperator) {
-					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[i - numIntComp], dimensions[i - numIntComp+numOfLeaves]});
+					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[leaf_order_pos], dimensions[leaf_order_pos+numOfLeaves]});
 				} else {
-					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[i - numIntComp]});
+					nodes[i].tensorObject->reinterpret_dimensions({parentDim, dimensions[leaf_order_pos]});
 				}
 
 				nodes[i].neighbors.clear();
 				nodes[i].neighbors.emplace_back( (i-1) / 2, i%2 == 1 ? 1:2, parentDim, false);
-				nodes[i].neighbors.emplace_back(-1, i - numIntComp , dimensions[i - numIntComp], true);
-				if(isOperator) { nodes[i].neighbors.emplace_back(-1, numOfLeaves+i - numIntComp, dimensions[numOfLeaves+i - numIntComp], true); }
-			}
+				nodes[i].neighbors.emplace_back(-1, leaf_order_pos , dimensions[leaf_order_pos], true);
+				if(isOperator) { nodes[i].neighbors.emplace_back(-1, numOfLeaves+leaf_order_pos, dimensions[numOfLeaves+leaf_order_pos], true); }
+
 		}
 		// Create actual HTNetwork
 		HTNetwork<isOperator> result;
@@ -254,9 +258,9 @@ namespace xerus {
 			}
 			const size_t numOfLeaves = _me.tensorObject->degree()/N;
 			const size_t numOfFullLeaves = numOfLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
-			const size_t numIntComp = numOfFullLeaves - 1;
-			const size_t numComponents = numIntComp + numOfLeaves;
-			const size_t numNodes = numOfFullLeaves + numIntComp + 1;
+			const size_t numIntComp = numOfLeaves - 1;
+			//const size_t numComponents = numIntComp + numOfLeaves;
+			const size_t numNodes = numOfLeaves + numIntComp + 1;
 			const size_t stackSize = _me.tensorObject->nodes.size()/numNodes;
 
 			INTERNAL_CHECK(_me.tensorObject->nodes.size()%numNodes == 0, "IE");
@@ -272,21 +276,30 @@ namespace xerus {
 			}
 			// Reshuffle the nodes to be in the correct order after contraction the nodes will have one of the ids: node, node+numNodes, node+2*numNodes,... (as those were part of the contraction) so modulus gives the correct wanted id.
 			_me.tensorObject->reshuffle_nodes([numNodes](const size_t _i){return _i%(numNodes);});
+			std::vector<size_t> leaf_order;
+			for (size_t i = numOfFullLeaves - 1; i < numIntComp + numOfLeaves; ++i)
+				leaf_order.emplace_back(i-numIntComp);
+			for (size_t i = numOfLeaves - 1; i < numOfFullLeaves - 1 ; ++i)
+				leaf_order.emplace_back(i-numIntComp);
 
 			INTERNAL_CHECK(_me.tensorObject->nodes.size() == numNodes, "Internal Error.");
-
 			// Reset to new external links
-			for(size_t i = 0; i < numOfLeaves; ++i) {
-				_me.tensorObject->externalLinks[i].other = i+numIntComp;
-				_me.tensorObject->externalLinks[i].indexPosition = 1;
+
+
+			size_t ii = 0;
+			for(size_t i : leaf_order) {
+				_me.tensorObject->externalLinks[ii].other = i+numIntComp;
+				_me.tensorObject->externalLinks[ii].indexPosition = 1;
+				ii++;
 			}
 			if(isOperator) {
-				for(size_t i = 0; i < numOfLeaves; ++i) {
-					_me.tensorObject->externalLinks[numOfLeaves+i].other = i+numIntComp;
-					_me.tensorObject->externalLinks[numOfLeaves+i].indexPosition = 2;
+				ii = 0;
+				for(size_t i : leaf_order) {
+					_me.tensorObject->externalLinks[numOfLeaves+ii].other = i+numIntComp;
+					_me.tensorObject->externalLinks[numOfLeaves+ii].indexPosition = 2;
+					ii++;
 				}
 			}
-
 
 			// Fix the virtual node
 			_me.tensorObject->nodes[numNodes-1].tensorObject->reinterpret_dimensions({1});
@@ -356,13 +369,8 @@ namespace xerus {
 			std::vector<size_t> shuffle_leaves(N + stackSize);
 			for (size_t i = numIntComp; i < numNodes - 1; ++i) {
 				size_t parentCount = 0, parentDim = 1, fullDim = 1;
-				//Dummy components
-				if(i >= numComponents){
-					_me.tensorObject->nodes[i].tensorObject->reinterpret_dimensions({1});
-					_me.tensorObject->nodes[i].neighbors.resize(1);
-					_me.tensorObject->nodes[i].neighbors.front().other = (i-1)/2;
-					_me.tensorObject->nodes[i].neighbors.front().indexPosition = (i-1)%2 + 1;
-				} else {
+				std::vector<size_t>::iterator itr = std::find(leaf_order.begin(), leaf_order.end(), i - numIntComp);
+				size_t leaf_order_pos = static_cast<size_t>(std::distance(leaf_order.begin(), itr));
 				for(size_t k = 0; k < N + stackSize; ++k) {
 					INTERNAL_CHECK(!_me.tensorObject->nodes[i].erased, "IE");
 					const TensorNetwork::Link& link = _me.tensorObject->nodes[i].neighbors[k];
@@ -381,26 +389,25 @@ namespace xerus {
 								parentDim *= link.dimension;
 							}
 							else
-								INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the TTN");
+								INTERNAL_CHECK(false, "Internal Error, something wrong with the links of the HTN");
 						}
 					}
 					INTERNAL_CHECK(fullDim == _me.tensorObject->nodes[i].tensorObject->size, "Uhh");
 					INTERNAL_CHECK(parentCount == stackSize, "IE");
 					xerus::reshuffle(*_me.tensorObject->nodes[i].tensorObject, *_me.tensorObject->nodes[i].tensorObject, shuffle_leaves);
 					if(isOperator) {
-						_me.tensorObject->nodes[i].tensorObject->reinterpret_dimensions({parentDim, _me.tensorObject->dimensions[i - numIntComp], _me.tensorObject->dimensions[i - numIntComp+numOfLeaves]});
+						_me.tensorObject->nodes[i].tensorObject->reinterpret_dimensions({parentDim, _me.tensorObject->dimensions[leaf_order_pos], _me.tensorObject->dimensions[leaf_order_pos+numOfLeaves]});
 					} else {
-						_me.tensorObject->nodes[i].tensorObject->reinterpret_dimensions({parentDim, _me.tensorObject->dimensions[i - numIntComp]});
+						_me.tensorObject->nodes[i].tensorObject->reinterpret_dimensions({parentDim, _me.tensorObject->dimensions[leaf_order_pos]});
 					}
 
 					_me.tensorObject->nodes[i].neighbors.clear();
 					_me.tensorObject->nodes[i].neighbors.emplace_back( (i-1) / 2, i%2 == 1 ? 1:2, parentDim, false);
-					_me.tensorObject->nodes[i].neighbors.emplace_back(-1, i - numIntComp , _me.tensorObject->dimensions[i - numIntComp], true);
-					if(isOperator) { _me.tensorObject->nodes[i].neighbors.emplace_back(-1, numOfLeaves+i - numIntComp, _me.tensorObject->dimensions[numOfLeaves+i - numIntComp], true); }
-				}
+					_me.tensorObject->nodes[i].neighbors.emplace_back(-1, leaf_order_pos , _me.tensorObject->dimensions[leaf_order_pos], true);
+					if(isOperator) { _me.tensorObject->nodes[i].neighbors.emplace_back(-1, numOfLeaves+leaf_order_pos, _me.tensorObject->dimensions[leaf_order_pos+numOfLeaves], true); }
+
 			}
 			_me.tensorObject->require_valid_network();
-
 		}
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Operator specializations - - - - - - - - - - - - - - - - - - - - - - - - - - */
