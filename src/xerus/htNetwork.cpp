@@ -48,7 +48,7 @@ namespace xerus {
 	
 	template<bool isOperator>
 	HTNetwork<isOperator>::HTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : (_tensor.degree() == 1 ? 1 : (static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(_tensor.degree()/N ))))) - 2 + _tensor.degree()/N)) , _maxRank)) {}
+		HTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() <= 1 ? 0 : 2 * _tensor.degree()/N - 2,_maxRank)) {}
 
 	
 	template<bool isOperator>
@@ -64,8 +64,7 @@ namespace xerus {
 		//Lvl, NOTE: adding 0.5 to overcome possible conversion errors
 		const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
 		// Number of internal components
-		const size_t numIntCom = numFullLeaves - 1;
-
+		const size_t numIntCom = numLeaves - 1;
 		// set number of components
 		// = numLeaves + numIntCom; //TODO rethink this
 
@@ -73,15 +72,23 @@ namespace xerus {
 			nodes.emplace_back(std::make_unique<Tensor>());
 			return;
 		}
-
+		std::vector<size_t> leaf_order;
+		for (size_t i = numFullLeaves - 1; i < numIntCom + numLeaves; ++i)
+			leaf_order.emplace_back(i-numIntCom);
+		for (size_t i = numLeaves - 1; i < numFullLeaves - 1 ; ++i)
+			leaf_order.emplace_back(i-numIntCom);
 		// ExternalLinks
-		externalLinks.reserve(numLeaves * N); //TODO: reserve more for operators??
-		for (size_t i = 0; i < numLeaves; ++i) {
-			externalLinks.emplace_back(i + numIntCom, 1, dimensions[i], false);
+		externalLinks.reserve(numLeaves * N);
+		size_t ii = 0;
+		for (size_t i : leaf_order) {
+			externalLinks.emplace_back(i + numIntCom, 1, dimensions[ii], false);
+			ii++;
 		}
 		if (isOperator) {
-			for (size_t i = 0; i < numLeaves; ++i) {
-				externalLinks.emplace_back(i + numIntCom, 2, dimensions[numLeaves+ i], false);
+			ii = 0;
+			for (size_t i : leaf_order) {
+				externalLinks.emplace_back(i + numIntCom, 2, dimensions[numLeaves+ ii], false);
+				ii++;
 			}
 		}
 		//Add dummy at root of tree
@@ -95,7 +102,7 @@ namespace xerus {
 		for ( size_t i = 0; i < numIntCom; ++i){
 			neighbors.clear();
 			//parent
-			neighbors.emplace_back(i==0 ? 2*numFullLeaves - 1: (i+1) / 2 - 1, i==0 ? 0 : (i+1)%2 + 1, 1, false);
+			neighbors.emplace_back(i==0 ? 2*numLeaves - 1: (i+1) / 2 - 1, i==0 ? 0 : (i+1)%2 + 1, 1, false);
 			//child 1
 			neighbors.emplace_back(2*i + 1, 0, 1, false);
 			//child 2
@@ -108,31 +115,31 @@ namespace xerus {
 		//Loop for the leafs
 		for (size_t i = 0; i < numLeaves; ++i) {
 			neighbors.clear();
-
-
+			std::vector<size_t>::iterator itr = std::find(leaf_order.begin(), leaf_order.end(), i);
+			size_t leaf_order_pos = static_cast<size_t>(std::distance(leaf_order.begin(), itr));
 			//The leafs are the last nodes, numIntCom .. numIntCom + numFullLeaves
 			//A parent node is calculated by ((numIntCom + i)+1) / 2 -1 , where i is the linear position in the node vector
 			//The parent nodes first index is its parent node 0 then first child 1 then the second child 2
 			//This means from a leafs perspective it is mod 2, which translate wrt i to i%2 + 1
-			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, i%2 + 1, 1, false);
+			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, (i+numIntCom-1)%2 + 1, 1, false);
 
 			// First come the external dimension then comes the internal dimension for the leaf
 			// -1 one is a placeholder for external nodes
-			neighbors.emplace_back(-1, i, dimensions[i], true);
-			if(isOperator) { neighbors.emplace_back(-1, numLeaves + i, dimensions[numLeaves + i], true); }
+			neighbors.emplace_back(-1, leaf_order_pos, dimensions[leaf_order_pos], true);
+			if(isOperator) { neighbors.emplace_back(-1, numLeaves + leaf_order_pos, dimensions[numLeaves + leaf_order_pos], true); }
 
 			if(!isOperator) {
-				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[i]}, 0)), std::move(neighbors) );
+				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[leaf_order_pos]}, 0)), std::move(neighbors) );
 			} else {
-				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[i], dimensions[numLeaves + i]}, 0)), std::move(neighbors) );
+				nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1, dimensions[leaf_order_pos], dimensions[numLeaves + leaf_order_pos]}, 0)), std::move(neighbors) );
 			}
 		}
 		//Dummy Leaves
-		for (size_t i = numLeaves; i < numFullLeaves; ++i){
-			neighbors.clear();
-			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, i%2 + 1, 1, false);
-			nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1}, 0)), std::move(neighbors) );
-		}
+//		for (size_t i = numLeaves; i < numFullLeaves; ++i){
+//			neighbors.clear();
+//			neighbors.emplace_back(((numIntCom + i) + 1) / 2 - 1, i%2 + 1, 1, false);
+//			nodes.emplace_back( std::make_unique<Tensor>(Tensor::dirac({1}, 0)), std::move(neighbors) );
+//		}
 
 		neighbors.clear();
 		neighbors.emplace_back(0, 0, 1, false);
@@ -150,8 +157,11 @@ namespace xerus {
 		REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Maximal ranks must be strictly positive. Here: " << _maxRanks);
 
+
 		const size_t numExternalComponent = degree()/N;
 		size_t numComp = get_number_of_components();
+		size_t lvl = static_cast<size_t>(0.5 + std::floor(std::log2(static_cast<double>(numComp - numExternalComponent))));
+		size_t numCompOnLvl = static_cast<size_t>(0.5+std::pow(2.,static_cast<double>(lvl)));
 		if (_tensor.degree() == 0) {
 			*nodes[0].tensorObject = _tensor;
 			return;
@@ -176,21 +186,28 @@ namespace xerus {
 
 		Tensor singularValues, newNode;
 		//for the leaves
-		for(size_t pos = numComp - numExternalComponent,i = 0; pos  < numComp; ++pos, ++i) {
+		std::vector<size_t> leaf_order;
+		for (size_t i = 2*numCompOnLvl - 1; i < numComp; ++i)
+			leaf_order.emplace_back(i);
+		for (size_t i = numExternalComponent - 1; i < 2*numCompOnLvl - 1 ; ++i)
+			leaf_order.emplace_back(i);
+
+		size_t ii = 0;
+		for(size_t pos: leaf_order) {
 			std::vector<size_t> ithmode(remains.degree());
 			std::vector<size_t> ithmodeinv(remains.degree() - 1);
 
 			if(isOperator) {
 				size_t lengthrem = remains.degree();
 				for(size_t j = 0; j < lengthrem ; ++j) {
-					ithmode[j] = j == i ? 0 : (j== i + 1 ? 1 : j < i ? j + 2 : j );
+					ithmode[j] = j == ii ? 0 : (j== ii + 1 ? 1 : j < ii ? j + 2 : j );
 				}
 				for(size_t j = 0; j < lengthrem - 1; ++j) {
-					ithmodeinv[j] = j == 0 ? i : (j <= i ? j - 1 : j);
+					ithmodeinv[j] = j == 0 ? ii : (j <= ii ? j - 1 : j);
 				}
 			} else {
 				for(size_t j = 0; j < numExternalComponent; ++j) {
-					ithmode[j] = j == 0 ? i : (j == i ? 0 : j);
+					ithmode[j] = j == 0 ? ii : (j == ii ? 0 : j);
 				}
 			}
 
@@ -207,22 +224,20 @@ namespace xerus {
 			xerus::contract(remains, singularValues, false, remains, false, 1);
 
 			xerus::reshuffle(remains, remains, isOperator ? ithmodeinv : ithmode);
-
+			ii++;
 		}
 		//for the internal components
-		size_t lvl = static_cast<size_t>(0.5 + std::floor(std::log2(static_cast<double>(numComp - numExternalComponent))));
-		size_t numCompOnLvl = static_cast<size_t>(0.5+std::pow(2.,static_cast<double>(lvl)));
+		size_t startposition = 2*numCompOnLvl - numExternalComponent;
 		//add dummy dimensions to remainder
-		Tensor::DimensionTuple wdummydim(numCompOnLvl * 2);
-		for (size_t i = 0; i < numCompOnLvl * 2; i++){
-			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
-		}
-		remains.reinterpret_dimensions(wdummydim);
+//		Tensor::DimensionTuple wdummydim(numCompOnLvl * 2);
+//		for (size_t i = 0; i < numCompOnLvl * 2; i++){
+//			wdummydim[i] = i < numExternalComponent ? remains.dimensions[i] : 1;
+//		}
+//		remains.reinterpret_dimensions(wdummydim);
 		for(; lvl  > 0; --lvl) {
-			for (size_t pos = 0; pos < numCompOnLvl; ++pos){
+			for (size_t pos = 0; pos < numCompOnLvl - startposition; ++pos){
 				std::vector<size_t> ithmode(remains.degree());
 				std::vector<size_t> ithmodeinv(remains.degree() - 1);
-
 				size_t lengthrem = remains.degree();
 				for(size_t j = 0; j < lengthrem ; ++j) {
 					ithmode[j] = j == pos ? 0 : (j== pos + 1 ? 1 : j < pos ? j + 2 : j );
@@ -241,6 +256,7 @@ namespace xerus {
 
 			}
 			numCompOnLvl /= 2;
+			startposition = 0;
 		}
 		Tensor::DimensionTuple wdummydimroot({remains.dimensions[0], remains.dimensions[1], 1});
 		remains.reinterpret_dimensions(wdummydimroot);
@@ -261,8 +277,8 @@ namespace xerus {
 		REQUIRE(_dimensions.size()%N == 0, "Illegal number of dimensions for htOperator");
 		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
 
-		const size_t numIntComp = static_cast<size_t>(0.5+std::pow(2.,std::ceil(std::log2(static_cast<double>(_dimensions.size()/N ))))) - 1;
 		const size_t numOfLeaves = _dimensions.size()/N;
+		const size_t numIntComp = numOfLeaves - 1;
 		const size_t numComponents = numIntComp + numOfLeaves;
 
 		if(_dimensions.empty()) {
@@ -526,8 +542,8 @@ namespace xerus {
 	template<bool isOperator>
 	size_t HTNetwork<isOperator>::get_number_of_components() const{
 		const size_t numLeaves = dimensions.size()/N;
-		const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
-		const size_t numIntCom = numFullLeaves - 1;
+		//const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+		const size_t numIntCom = numLeaves - 1;
 		return numLeaves == 0 ? 1 : numLeaves + numIntCom;
 	}
 
@@ -644,7 +660,7 @@ namespace xerus {
 			const bool isleave = _idx >= get_number_of_components() - degree()/N;
 			REQUIRE(_idx < get_number_of_components(), "Illegal index " << _idx <<" in TTNetwork::set_component");
 			REQUIRE(_idx >= 0, "Illegal index " << _idx <<" in TTNetwork::set_component");
-			REQUIRE(isleave ? _T.degree() == N+1 : _T.degree() == 3, "Component " << _idx << " has degree: " << _T.degree());
+			REQUIRE(isleave ? _T.degree() == N+1 : _T.degree() == 3, "Component " << _idx << " has degree: " << _T.degree() << " leave? " << isleave);
 
 			size_t order = _T.degree();
 			//size_t numberOfDummyComponents = static_cast<size_t>(numberOfComponents) - 2 * degree()/N + 1; //TODO check this
@@ -811,8 +827,8 @@ namespace xerus {
 	template<bool isOperator>
 	void HTNetwork<isOperator>::round(const std::vector<size_t>& _maxRanks, const double _eps) {
 		require_correct_format();
-		const size_t numIntComp = static_cast<size_t>(0.5 + std::pow(2,std::ceil(std::log2(static_cast<double>(degree()/N ))))) - 1;
 		const size_t numOfLeaves = degree()/N;
+		const size_t numIntComp = numOfLeaves - 1;
 		const size_t numComponents = numIntComp + numOfLeaves;		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
 		REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0) ,"There must be exactly degree/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
 
@@ -887,7 +903,7 @@ namespace xerus {
 	std::vector<size_t> HTNetwork<isOperator>::ranks() const {
 		std::vector<size_t> res;
 		res.reserve(num_ranks());
-		const size_t numIntComp = static_cast<size_t>(0.5 + std::pow(2,std::ceil(std::log2(static_cast<double>(degree()/N ))))) - 1;
+		const size_t numIntComp = degree()/N - 1;
 		for (size_t n = 0; n < numIntComp; ++n) {
 			res.push_back(nodes[n].neighbors.end()[-2].dimension);
 			res.push_back(nodes[n].neighbors.back().dimension);
@@ -984,12 +1000,12 @@ namespace xerus {
 		XERUS_PA_START;
 		for(size_t position = 0; position < numComp; ++position) {
 			bool isLeaf = position >= numInternalComponents;
-			bool hasDummyLeftChild = false;
-			bool hasDummyRightChild = false;
-			if(!isLeaf){
-				hasDummyLeftChild = get_left_child_component(position) >= numComp;
-				hasDummyRightChild = get_right_child_component(position) >= numComp;
-			}
+//			bool hasDummyLeftChild = false;
+//			bool hasDummyRightChild = false;
+//			if(!isLeaf){
+//				hasDummyLeftChild = get_left_child_component(position) >= numComp;
+//				hasDummyRightChild = get_right_child_component(position) >= numComp;
+//			}
 			// Get current components
 			const Tensor& myComponent = get_component(position);
 			const Tensor& otherComponent = _other.get_component(position);
@@ -1000,17 +1016,17 @@ namespace xerus {
 			std::vector<size_t> nxtDimensions;
 			nxtDimensions.emplace_back(position == 0 ? 1 : myComponent.dimensions.front()+otherComponent.dimensions.front());
 
-			nxtDimensions.emplace_back(isLeaf ? myComponent.dimensions[1] : hasDummyLeftChild ? 1 : myComponent.dimensions[1] + otherComponent.dimensions[1]);
+			nxtDimensions.emplace_back(isLeaf ? myComponent.dimensions[1] : myComponent.dimensions[1] + otherComponent.dimensions[1]);
 			if (isOperator && isLeaf) { nxtDimensions.emplace_back(myComponent.dimensions[2]); }
-			if (!isLeaf) {nxtDimensions.emplace_back(hasDummyRightChild ? 1 : myComponent.dimensions[2] + otherComponent.dimensions[2]);}
+			if (!isLeaf) {nxtDimensions.emplace_back(myComponent.dimensions[2] + otherComponent.dimensions[2]);}
 
 			std::unique_ptr<Tensor> newComponent(new Tensor(std::move(nxtDimensions), newRep));
 
 			newComponent->offset_add(myComponent, (!isOperator && isLeaf) ? std::vector<size_t>({0,0}) : std::vector<size_t>({0,0,0}));
 
 			const size_t parentOffset = position == 0 ? 0 : myComponent.dimensions.front();
-			const size_t child1Offset = isLeaf || hasDummyLeftChild ? 0 : myComponent.dimensions[1];
-			const size_t child2Offset = isLeaf || hasDummyRightChild ? 0 : myComponent.dimensions[2];
+			const size_t child1Offset = isLeaf  ? 0 : myComponent.dimensions[1];
+			const size_t child2Offset = isLeaf  ? 0 : myComponent.dimensions[2];
 			newComponent->offset_add(otherComponent, !isOperator && isLeaf ?  std::vector<size_t>({parentOffset,child1Offset})  : std::vector<size_t>({parentOffset,child1Offset,child2Offset}) );
 
 
