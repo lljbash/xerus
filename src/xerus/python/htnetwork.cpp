@@ -19,7 +19,7 @@
 
 /**
  * @file
- * @brief Definition of the TT-Network python bindings.
+ * @brief Definition of the hT-Network python bindings.
  */
 
 
@@ -40,7 +40,6 @@ void expose_htnetwork() {
 		.def("set_component", &HTTensor::set_component)
 		.def_readonly("canonicalized", &HTTensor::canonicalized)
 		.def_readonly("corePosition", &HTTensor::corePosition)
-		.def_readonly("numberOfComponents", &HTTensor::numberOfComponents)
 		.def("ranks", &HTTensor::ranks)
 		.def("rank", &HTTensor::rank)
 // 		.def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited
@@ -48,15 +47,15 @@ void expose_htnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTTensor::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("ones", &TTTensor::ones).staticmethod("ones")
-		.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
-		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
-		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const size_t)>(&TTTensor::dirac)).staticmethod("dirac")
+		.def("ones", &HTTensor::ones).staticmethod("ones")
+		//.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
+		//.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
+		//.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const size_t)>(&TTTensor::dirac)).staticmethod("dirac")
 
-		.def("use_dense_representations", &TTTensor::use_dense_representations)
-		.def("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
+		//.def("use_dense_representations", &TTTensor::use_dense_representations)
+		//.def("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
 //// 		.def("degrees_of_freedom", static_cast<size_t (TTTensor::*)()>(&TTTensor::degrees_of_freedom))
-		.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom)).staticmethod("degrees_of_freedom")
+		//.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom)).staticmethod("degrees_of_freedom")
 //		.def("chop",
 //			+[](HTTensor &_this, size_t _pos) {
 //				const auto result = _this.chop(_pos);
@@ -105,7 +104,6 @@ void expose_htnetwork() {
 		.def("set_component", &HTOperator::set_component)
 		.def_readonly("canonicalized", &HTOperator::canonicalized)
 		.def_readonly("corePosition", &HTOperator::corePosition)
-		.def_readonly("numberOfComponents", &HTOperator::numberOfComponents)
 		.def("ranks", &HTOperator::ranks)
 		.def("rank", &HTOperator::rank)
 // 		.def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
@@ -113,26 +111,26 @@ void expose_htnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTOperator::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("ones", &TTOperator::ones).staticmethod("ones")
-		.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
-		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
-		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const size_t)>(&TTOperator::dirac)).staticmethod("dirac")
+		.def("ones", &HTOperator::ones).staticmethod("ones")
+		//.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
+		//.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))
+		//.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const size_t)>(&TTOperator::dirac)).staticmethod("dirac")
 
-		.def("use_dense_representations", &TTOperator::use_dense_representations)
-		.def("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
+		//.def("use_dense_representations", &TTOperator::use_dense_representations)
+		//.def("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
 // 		.def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom))
-		.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom)).staticmethod("degrees_of_freedom")
+		//.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom)).staticmethod("degrees_of_freedom")
 //		.def("chop",
 //			+[](HTOperator &_this, size_t _pos) {
 //				const auto result = _this.chop(_pos);
 //				return boost::python::make_tuple(result.first, result.second);
 //			}, arg("position"))
 //
-		.def("round", static_cast<void (TTOperator::*)(const std::vector<size_t>&, double)>(&TTOperator::round),
+		.def("round", static_cast<void (HTOperator::*)(const std::vector<size_t>&, double)>(&HTOperator::round),
 			(arg("ranks"), arg("epsilon")=EPSILON)
 		)
-		.def("round", static_cast<void (TTOperator::*)(double)>(&TTOperator::round))
-		.def("round", static_cast<void (TTOperator::*)(size_t)>(&TTOperator::round))
+		.def("round", static_cast<void (HTOperator::*)(double)>(&HTOperator::round))
+		.def("round", static_cast<void (HTOperator::*)(size_t)>(&HTOperator::round))
 
 		.def("soft_threshold", static_cast<void (HTOperator::*)(const double, const bool)>(&HTOperator::soft_threshold),
 			(arg("tau"), arg("preventZero")=false)
@@ -158,7 +156,7 @@ void expose_htnetwork() {
 //
 //		// for  TTOperator only:
 //		.def("identity", &TTOperator::identity<>).staticmethod("identity")
-		.def("transpose", &TTOperator::transpose<>)
+		.def("transpose", &HTOperator::transpose<>)
 	;
 //	def("entrywise_product", static_cast<TTOperator (*)(const TTOperator&, const TTOperator&)>(&entrywise_product));
 //	def("find_largest_entry", static_cast<size_t (*)(const TTOperator&, value_t, value_t)>(&find_largest_entry));
