@@ -37,5 +37,7 @@ namespace xerus { namespace uq {
 
     TTTensor uq_ra_adf(const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps = 1e-8, const size_t _maxItr = 0);
 
+    TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps = 1e-8, const size_t _maxItr = 0);
+
     TTTensor uq_ra_adf_iv(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps = 1e-8, const size_t _maxItr = 0);
 }}
