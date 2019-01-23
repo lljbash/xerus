@@ -219,7 +219,9 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
             if(_corePosition > 0) {
                 const Tensor shuffledX = reshuffle(x.get_core(_setId), {1, 0, 2});
 
-                #pragma omp parallel for firstprivate(dyadComp, tmp)
+                //TODO: schedule, threadprivate(dyadComp, tmp)
+                #pragma omp declare reduction(+: Tensor: omp_out += omp_in) initializer(omp_priv = Tensor(omp_orig.dimensions))
+                #pragma omp parallel for reduction(+: delta) firstprivate(_corePosition, _setId, dyadComp, tmp, shuffledX) default(none)
                 for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
                     const size_t j = sets[_setId][jIdx];
 
@@ -250,22 +252,22 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                     // Combine with ought part
                     contract(dyadComp, isPart - leftOughtStack[_corePosition-1][j], dyadicPart, 0);
 
-                    #pragma omp critical
-                    { delta += dyadComp; }
+                    delta += dyadComp;
                 }
             } else { // _corePosition == 0
                 Tensor shuffledX = x.get_core(_setId);
                 shuffledX.reinterpret_dimensions({shuffledX.dimensions[1], shuffledX.dimensions[2]});
 
-                #pragma omp parallel for  firstprivate(dyadComp, tmp)
+                //TODO: schedule, threadprivate(dyadComp, tmp)
+                #pragma omp declare reduction(+: Tensor: omp_out += omp_in) initializer(omp_priv = Tensor(omp_orig.dimensions))
+                #pragma omp parallel for reduction(+: delta) firstprivate(_corePosition, _setId, dyadComp, tmp, shuffledX) default(none)
                 for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
                     const size_t j = sets[_setId][jIdx];
                     contract(dyadComp, shuffledX, rightStack[_corePosition+1][j], 1);
                     contract(dyadComp, dyadComp - solutions[j], rightStack[_corePosition+1][j], 0);
                     dyadComp.reinterpret_dimensions({1, dyadComp.dimensions[0], dyadComp.dimensions[1]});
 
-                    #pragma omp critical
-                    { delta += dyadComp; }
+                    delta += dyadComp;
                 }
             }
 
