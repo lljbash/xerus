@@ -30,6 +30,8 @@ class TestExtendedTT(unittest.TestCase):
         from numpy.polynomial.hermite_e import hermeval
         basis = xe.PolynomBasis.Hermite
 
+        # TODO: check with numpy hermite...
+
         tt = xe.TTTensor(self.dimension)
         arrs = []
         for i in range(len(self.dimension)):
