@@ -172,6 +172,8 @@ void expose_recoveryAlgorithms() {
     VECTOR_TO_PY(std::vector<double>, "DoubleVectorVector");
     py_pair<std::vector<std::vector<double>>, std::vector<Tensor>>();
 
+
+    VECTOR_TO_PY(std::vector<Tensor>, "TensorVectorVector");
     //def("uq_adf", +[](const UQMeasurementSet& _measurments, const TTTensor& _guess) {
     //  return uq_adf(_measurments, _guess);
     //}, ( arg("measurments"), arg("guess")) );
