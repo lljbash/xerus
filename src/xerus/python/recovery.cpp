@@ -188,6 +188,11 @@ void expose_recoveryAlgorithms() {
             }, (arg("positions"), arg("solutions"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
        );
 
+    def("uq_ra_adf", +[](const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
+            return uq::uq_ra_adf(_positions, _solutions, _weights, _dimensions, _targetEps, _maxItr);
+            }, (arg("positions"), arg("solutions"), arg("weights"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
+       );
+
     def("uq_ra_adf_iv", +[](TTTensor& _x, const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const double _targetEps, const size_t _maxItr){
             return uq::uq_ra_adf_iv(_x, _measurements, _basisType, _targetEps, _maxItr);
             }, (arg("initial guess"), arg("measurements"), arg("polynombasis"), arg("targeteps"), arg("maxitr"))
