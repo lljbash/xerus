@@ -245,8 +245,7 @@ fullTest: $(TUTORIALS) $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
-.FORCE:
-doc: .FORCE doc/parseDoxytags doc/findDoxytag
+doc:
 	make -C doc doc
 
 
