@@ -8,8 +8,8 @@ CXX = g++
 # CXX = clang++
 PYTHON2_CONFIG = python2-config
 PYTHON3_CONFIG = python3-config
-PYTHON2_TEST = pytest2
-PYTHON3_TEST = pytest3
+PYTEST2 = pytest2
+PYTEST3 = pytest3
 
 #=================================================================================================
 # C++ Version
