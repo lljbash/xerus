@@ -3,10 +3,13 @@
 #=================================================================================================
 # Xerus can be compiled either with G++ or the Clang++ frontend of the LLVM.
 # Set the CXX variable to the one you want to use.
+# If you want to use OpenMP, make sure that your compiler supports OpenMP 4.0.
 CXX = g++
 # CXX = clang++
 PYTHON2_CONFIG = python2-config
 PYTHON3_CONFIG = python3-config
+PYTHON2_TEST = pytest2
+PYTHON3_TEST = pytest3
 
 #=================================================================================================
 # C++ Version

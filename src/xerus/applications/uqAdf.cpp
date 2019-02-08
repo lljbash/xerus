@@ -55,6 +55,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
         const std::vector<std::vector<Tensor>> positions;
         const std::vector<Tensor>& solutions;
+        const std::vector<double> weights;
 
         TTTensor& outX;
 
@@ -87,6 +88,26 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                 positions[corePosition].reserve(_randomVariables.size());
                 for(size_t j = 0; j < _randomVariables.size(); ++j) {
                     positions[corePosition].push_back(polynomial_basis_evaluation(_randomVariables[j][corePosition-1], _basisType, _x.dimensions[corePosition]));
+                }
+            }
+
+            return positions;
+        }
+
+
+        static std::vector<std::vector<Tensor>> transpose_positions(const TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions) {
+            REQUIRE(_positions.size() == _solutions.size(), "Incompatible positions and solutions vector");
+            for(size_t sample=0; sample < _positions.size(); ++sample) {
+                REQUIRE(_positions[sample].size() == _x.degree()-1, "Invalid measurement");
+            }
+
+            std::vector<std::vector<Tensor>> positions(_x.degree());
+            for(size_t corePosition=1; corePosition < _x.degree(); ++corePosition) {
+                positions[corePosition].reserve(_positions.size());
+                for(size_t sample=0; sample < _positions.size(); ++sample) {
+                    REQUIRE(_positions[sample][corePosition-1].dimensions.size() == 1, "Invalid measurement component");
+                    REQUIRE(_positions[sample][corePosition-1].size == _x.dimensions[corePosition], "Invalid measurement component");
+                    positions[corePosition].push_back(_positions[sample][corePosition-1]);
                 }
             }
 
@@ -142,6 +163,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
             maxIterations(_maxItr),
             positions(create_positions(_x, _basisType, _measurments.parameterVectors)),
             solutions(_measurments.solutions),
+            weights(std::vector<double>(N, 1.0)),
             outX(_x),
             x(_x, 0, P),
             rightStack(d, std::vector<Tensor>(N)),
@@ -151,6 +173,49 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
             prevRanks(tracking+1, _x.ranks())
             {
                 LOG(uqADF, "Set size: " << _measurments.size());
+
+                shuffle_sets();
+        }
+
+
+        InternalSolver(TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const size_t _maxItr, const double _targetEps, const double _initalRankEps) :
+            N(_solutions.size()),
+            d(_x.degree()),
+            targetResidual(_targetEps),
+            maxIterations(_maxItr),
+            positions(transpose_positions(_x, _positions, _solutions)),
+            solutions(_solutions),
+            weights(std::vector<double>(N, 1.0)),
+            outX(_x),
+            x(_x, 0, P),
+            rightStack(d, std::vector<Tensor>(N)),
+            leftIsStack(d, std::vector<Tensor>(N)),
+            leftOughtStack(d, std::vector<Tensor>(N)),
+            rankEps(_initalRankEps),
+            prevRanks(tracking+1, _x.ranks())
+            {
+                LOG(uqADF, "Set size: " << N);
+
+                shuffle_sets();
+        }
+
+        InternalSolver(TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const size_t _maxItr, const double _targetEps, const double _initalRankEps) :
+            N(_solutions.size()),
+            d(_x.degree()),
+            targetResidual(_targetEps),
+            maxIterations(_maxItr),
+            positions(transpose_positions(_x, _positions, _solutions)),
+            solutions(_solutions),
+            weights(_weights),
+            outX(_x),
+            x(_x, 0, P),
+            rightStack(d, std::vector<Tensor>(N)),
+            leftIsStack(d, std::vector<Tensor>(N)),
+            leftOughtStack(d, std::vector<Tensor>(N)),
+            rankEps(_initalRankEps),
+            prevRanks(tracking+1, _x.ranks())
+            {
+                LOG(uqADF, "Set size: " << N);
 
                 shuffle_sets();
         }
@@ -219,7 +284,9 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
             if(_corePosition > 0) {
                 const Tensor shuffledX = reshuffle(x.get_core(_setId), {1, 0, 2});
 
-                #pragma omp parallel for firstprivate(dyadComp, tmp)
+                //TODO: schedule, threadprivate(dyadComp, tmp)
+                #pragma omp declare reduction(+: Tensor: omp_out += omp_in) initializer(omp_priv = Tensor(omp_orig.dimensions))
+                #pragma omp parallel for reduction(+: delta) firstprivate(_corePosition, _setId, dyadComp, tmp, shuffledX) default(none)
                 for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
                     const size_t j = sets[_setId][jIdx];
 
@@ -250,22 +317,22 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                     // Combine with ought part
                     contract(dyadComp, isPart - leftOughtStack[_corePosition-1][j], dyadicPart, 0);
 
-                    #pragma omp critical
-                    { delta += dyadComp; }
+                    delta += weights[j] * dyadComp;
                 }
             } else { // _corePosition == 0
                 Tensor shuffledX = x.get_core(_setId);
                 shuffledX.reinterpret_dimensions({shuffledX.dimensions[1], shuffledX.dimensions[2]});
 
-                #pragma omp parallel for  firstprivate(dyadComp, tmp)
+                //TODO: schedule, threadprivate(dyadComp, tmp)
+                #pragma omp declare reduction(+: Tensor: omp_out += omp_in) initializer(omp_priv = Tensor(omp_orig.dimensions))
+                #pragma omp parallel for reduction(+: delta) firstprivate(_corePosition, _setId, dyadComp, tmp, shuffledX) default(none)
                 for(size_t jIdx = 0; jIdx < sets[_setId].size(); ++jIdx) {
                     const size_t j = sets[_setId][jIdx];
                     contract(dyadComp, shuffledX, rightStack[_corePosition+1][j], 1);
                     contract(dyadComp, dyadComp - solutions[j], rightStack[_corePosition+1][j], 0);
                     dyadComp.reinterpret_dimensions({1, dyadComp.dimensions[0], dyadComp.dimensions[1]});
 
-                    #pragma omp critical
-                    { delta += dyadComp; }
+                    delta += weights[j] * dyadComp;
                 }
             }
 
@@ -283,7 +350,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                     const size_t j = sets[_setId][jIdx];
                     contract(tmp, _delta, rightStack[1][j], 1);
                     const double normPart = misc::sqr(frob_norm(tmp));
-                    norm += normPart;
+                    norm += weights[j] * normPart;
                 }
             } else { // _corePosition > 0
                 Tensor shuffledDelta = reshuffle(_delta, {1, 0, 2});
@@ -313,7 +380,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                     }
 
                     REQUIRE(tmp.size == 1, "IE");
-                    norm += tmp[0];
+                    norm += weights[j] * tmp[0];
                 }
             }
 
@@ -514,6 +581,52 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         x.assume_core_position(0);
 
         impl_uqRaAdf::InternalSolver<2> solver(x, _measurments, _basisType, _maxItr, _targetEps, 1e-1);
+        solver.solve();
+        return x;
+    }
+
+    TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
+        REQUIRE(_positions.size() == _solutions.size(), "Invalid measurments");
+        REQUIRE(_dimensions.front() == _solutions.front().size, "Inconsitent spacial dimension");
+
+        LOG(UQ, "Calculating Average as start.");
+
+        TTTensor x(_dimensions);
+
+        Tensor mean = sample_mean(_solutions);
+
+        // Set mean
+        mean.reinterpret_dimensions({1, x.dimensions[0], 1});
+        x.set_component(0, mean);
+        for(size_t k = 1; k < x.degree(); ++k) {
+            x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
+        }
+        x.assume_core_position(0);
+
+        impl_uqRaAdf::InternalSolver<2> solver(x, _positions, _solutions, _maxItr, _targetEps, 1e-1);
+        solver.solve();
+        return x;
+    }
+
+    TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
+        REQUIRE(_positions.size() == _solutions.size(), "Invalid measurments");
+        REQUIRE(_dimensions.front() == _solutions.front().size, "Inconsitent spacial dimension");
+
+        LOG(UQ, "Calculating Average as start.");
+
+        TTTensor x(_dimensions);
+
+        Tensor mean = sample_mean(_solutions);
+
+        // Set mean
+        mean.reinterpret_dimensions({1, x.dimensions[0], 1});
+        x.set_component(0, mean);
+        for(size_t k = 1; k < x.degree(); ++k) {
+            x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
+        }
+        x.assume_core_position(0);
+
+        impl_uqRaAdf::InternalSolver<2> solver(x, _positions, _solutions, _weights, _maxItr, _targetEps, 1e-1);
         solver.solve();
         return x;
     }

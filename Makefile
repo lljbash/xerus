@@ -7,7 +7,8 @@ help:
 	@printf "Possible make targets are:\n \
 	\t\tshared \t\t -- Build xerus as a shared library.\n \
 	\t\tstatic \t\t -- Build xerus as a static library.\n \
-	\t\tpython \t\t -- Build the xerus python wrappers.\n \
+	\t\tpython2 \t\t -- Build the xerus python2 wrappers.\n \
+	\t\tpython3 \t\t -- Build the xerus python3 wrappers.\n \
 	\t\tdoc \t\t -- Build the html documentation for the xerus library.\n \
 	\t\tinstall \t -- Install the shared library and header files (may require root).\n \
 	\t\ttest \t\t -- Build and run the xerus unit tests.\n \
@@ -153,7 +154,8 @@ build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
 
-python: build/python2/xerus.so build/python3/xerus.so
+python2: build/python2/xerus.so
+python3: build/python3/xerus.so
 
 build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 	mkdir -p $(dir $@)
@@ -231,8 +233,11 @@ test:  $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
-test_python: # build/libxerus.so build/python3/xerus.so
-	@export PYTHONPATH=build/python3:${PYTHONPATH}; export LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH}; pytest src/pyTests
+test_python2: # build/libxerus.so build/python2/xerus.so
+	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
+
+test_python3: # build/libxerus.so build/python3/xerus.so
+	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 
 fullTest: $(TUTORIALS) $(TEST_NAME)
@@ -240,8 +245,7 @@ fullTest: $(TUTORIALS) $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
-.FORCE:
-doc: .FORCE doc/parseDoxytags doc/findDoxytag
+doc:
 	make -C doc doc
 
 

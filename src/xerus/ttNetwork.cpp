@@ -616,7 +616,7 @@ namespace xerus {
             }
         }
 
-        while (exceeds_maximal_ranks()) {
+        while (exceeds_maximal_ranks() && !_keepRank) {
             // Move left from given CorePosition
             for (size_t n = _position; n > 0; --n) {
                 transfer_core(n+1, n, !_keepRank);
@@ -1147,7 +1147,6 @@ namespace xerus {
                 }
             }
         }
-
         // Use Tensor fallback
         if (_other.tensorObjectReadOnly->nodes.size() > 1) {
             LOG_ONCE(warning, "Assigning a general tensor network to TTOperator not yet implemented. casting to fullTensor first");

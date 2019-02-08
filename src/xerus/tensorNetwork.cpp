@@ -286,7 +286,7 @@ namespace xerus {
             		bool new_external = std::find(oldNodes.begin(), oldNodes.end(), l.other) != oldNodes.end();
                 if (!l.external && !new_external) { l.other = idMap[l.other]; }
                 if (!l.external && new_external) {
-                	l.other = -1;
+                	l.other = 0;
                 	l.indexPosition = external_index_pos;
                 	external_index_pos++;
                 	l.external = true;

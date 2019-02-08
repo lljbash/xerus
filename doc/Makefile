@@ -1,3 +1,5 @@
+.PHONY: help doc clean serve
+
 # ------------------------------------------------------------------------------------------------------
 #				Default rule should be the help message
 # ------------------------------------------------------------------------------------------------------
@@ -8,8 +10,7 @@ help:
 	\t\tserve \t\t -- Build the html documentation for the xerus library and offer it via 'jekyll serve'.\n \
 	\t\tclean \t\t -- Remove all documentation files.\n"
 
-.FORCE:
-doc: .FORCE parseDoxytags findDoxytag
+doc: parseDoxytags findDoxytag
 	-mkdir html
 	doxygen doxygen/Doxyfile
 	./parseDoxytags
@@ -20,7 +21,7 @@ clean:
 	-rm -f parseDoxytags findDoxytag
 	-rm -f xerus.tags xerus.tagfile
 
-serve: .FORCE parseDoxytags findDoxytag
+serve: parseDoxytags findDoxytag
 	-mkdir html
 	doxygen doxygen/Doxyfile
 	./parseDoxytags
@@ -31,7 +32,7 @@ include ../makeIncludes/general.mk
 include ../makeIncludes/warnings.mk
 include ../makeIncludes/optimization.mk
 
-FLAGS = $(strip $(WARNINGS) $(OPTIMIZE) $(OTHER))
+FLAGS = $(strip $(WARNINGS) $(OPTIMIZE) $(OTHER)) -std=c++11
 
 parseDoxytags: ../src/docHelper/parseDoxytags.cpp
 	$(CXX) $(FLAGS) ../src/docHelper/parseDoxytags.cpp -o parseDoxytags
