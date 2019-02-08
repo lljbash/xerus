@@ -134,6 +134,10 @@ LAPACK_LIBRARIES = -llapacke -llapack                       # Standard Lapack + 
 # Uncomment or add the appropriate CXSparse library
 SUITESPARSE = -lcholmod -lspqr
 
+# (optional) Uncomment if not needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
+# ARPACK_LIBRARIES = -larpack
+# OTHER += -DARPACK_LIBRARIES
+
 # Uncomment or add the appropriate boost python library
 BOOST_PYTHON2 = -lboost_python-py27
 BOOST_PYTHON3 = -lboost_python-py35

@@ -36,6 +36,9 @@
 
     // All the xerus headers
 	#include "xerus/blasLapackWrapper.h"
+#ifdef ARPACK_LIBRARIES
+	#include "xerus/arpackWrapper.h"
+#endif
     #include "xerus/index.h"
     #include "xerus/indexedTensorReadOnly.h"
     #include "xerus/indexedTensorWritable.h"
