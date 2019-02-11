@@ -66,12 +66,12 @@ namespace xerus { namespace uq {
 	Tensor normalization_matrix(const PolynomBasis _basisType, const size_t _basisSize) {
 		Tensor normMat({_basisSize, _basisSize});
 		if(_basisType == PolynomBasis::Hermite) {
-			for(size_t i = 0; i < _basisSize; ++i) {
+			for(uint i = 0; i < _basisSize; ++i) {
 				normMat[{i, i}] = boost::math::factorial<double>(i);
 			}
 		} else {
 			for(size_t i = 0; i < _basisSize; ++i) {
-				normMat[{i, i}] = 1.0/(2*i+1);
+				normMat[{i, i}] = 1.0/(2*double(i)+1);
 			}
 		}
 		return normMat;
@@ -91,7 +91,6 @@ namespace xerus { namespace uq {
 		Tensor m1 = Tensor(m1TT);
 		
 		// M2
-		const size_t d = _x.degree();
 		const Index l1, l2, c1, c2, r1, r2;
 		Tensor m2 = Tensor::identity({1,1});
 		for(size_t k = _x.degree()-1; k > 0; --k) {
