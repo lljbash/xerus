@@ -48,7 +48,7 @@ namespace xerus { namespace uq {
 	Tensor hermite_evaluation(const double _v, const size_t _basisSize) {
 		Tensor p({_basisSize});
 		for (unsigned i = 0; i < _basisSize; ++i) {
-			p[i] = std::sqrt(1/(/*std::sqrt(2*M_PI)**/boost::math::factorial<double>(i)))*boost::math::hermite(i, _v/std::sqrt(2))/std::pow(2.0, i/2.0);
+			p[i] = boost::math::hermite(i, _v/std::sqrt(2))/std::pow(2.0, i/2.0);
 		}
 		return p; 
 	}
@@ -63,6 +63,22 @@ namespace xerus { namespace uq {
 	}
 	
 	
+	Tensor normalization_matrix(const PolynomBasis _basisType, const size_t _basisSize) {
+		Tensor normMat({_basisSize, _basisSize});
+		if(_basisType == PolynomBasis::Hermite) {
+			for(size_t i = 0; i < _basisSize; ++i) {
+				normMat[{i, i}] = boost::math::factorial<double>(i);
+			}
+		} else {
+			for(size_t i = 0; i < _basisSize; ++i) {
+				normMat[{i, i}] = 1.0/(2*i+1);
+			}
+		}
+		return normMat;
+	}
+	
+	
+	
 	std::tuple<Tensor, Tensor, Tensor> det_moments(const TTTensor& _x, const PolynomBasis _basisType) {
 		REQUIRE(_x.corePosition == 0, "Invalid core position.");
 		
@@ -72,18 +88,17 @@ namespace xerus { namespace uq {
 		while(m1TT.degree() > 1) {
 			m1TT.fix_mode(1, 0);
 		}
-		double m1Factor = 1.0;
-		if(_basisType == PolynomBasis::Hermite) {
-// 			m1Factor = 1/(std::sqrt(2*M_PI));
-// 			m1Factor = 1.0/10.0;
-		}
-		Tensor m1 = m1Factor*Tensor(m1TT);
+		Tensor m1 = Tensor(m1TT);
 		
 		// M2
-		Tensor spacialCmp = _x.get_component(0);
-		spacialCmp.reinterpret_dimensions({spacialCmp.dimensions[1], spacialCmp.dimensions[2]});
-		const auto sqrExpectation = contract(entrywise_product(spacialCmp, spacialCmp), xerus::Tensor::ones({spacialCmp.dimensions[1]}), 1);
-		Tensor m2 = sqrExpectation;
+		const size_t d = _x.degree();
+		const Index l1, l2, c1, c2, r1, r2;
+		Tensor m2 = Tensor::identity({1,1});
+		for(size_t k = _x.degree()-1; k > 0; --k) {
+			m2(l1, l2) = _x.get_component(k)(l1, c1, r1)*normalization_matrix(_basisType, _x.get_component(k).dimensions[1])(c1, c2)*m2(r1, r2)*_x.get_component(k)(l2, c2, r2);
+		}
+		m2(c1, c2) = _x.get_component(0)(l1, c1, r1)*m2(r1, r2)*_x.get_component(0)(l1, c2, r2);
+		m2(l1) = Tensor::kronecker({_x.dimensions[0],_x.dimensions[0],_x.dimensions[0]})(l1, c1, c2)*m2(c1, c2);
 
 		// M3
 		Tensor m3(m2.dimensions);
