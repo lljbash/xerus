@@ -7,7 +7,8 @@ help:
 	@printf "Possible make targets are:\n \
 	\t\tshared \t\t -- Build xerus as a shared library.\n \
 	\t\tstatic \t\t -- Build xerus as a static library.\n \
-	\t\tpython \t\t -- Build the xerus python wrappers.\n \
+	\t\tpython2 \t\t -- Build the xerus python2 wrappers.\n \
+	\t\tpython3 \t\t -- Build the xerus python3 wrappers.\n \
 	\t\tdoc \t\t -- Build the html documentation for the xerus library.\n \
 	\t\tinstall \t -- Install the shared library and header files (may require root).\n \
 	\t\ttest \t\t -- Build and run the xerus unit tests.\n \
@@ -142,11 +143,7 @@ warn:
 # Fake rule to create arbitary headers, to prevent errors if files are moved/renamed
 %.h:
 
-ifdef BUILD_PYTHON_BINDINGS
-shared: build/libxerus_misc.so build/libxerus.so build/xerus.so
-else
 shared: build/libxerus_misc.so build/libxerus.so
-endif
 
 build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
 	mkdir -p $(dir $@)
@@ -154,14 +151,20 @@ build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
 
 build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
+	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
 
-python: build/xerus.so
+python2: build/python2/xerus.so
+python3: build/python3/xerus.so
 
-build/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so `python2-config --cflags --ldflags` $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON) -o build/xerus.so
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so `$(PYTHON2_CONFIG) --cflags --ldflags` $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
+
+build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+	mkdir -p $(dir $@)
+	@# -fpermissive is needed because of a bug in the definition of BOOST_PYTHON_MODULE_INIT in <boost/python/module_init.h>
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so `$(PYTHON3_CONFIG) --cflags --ldflags` $(PYTHON_FLAGS) -fpermissive -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON3) -o $@
 
 
 static: build/libxerus_misc.a build/libxerus.a
@@ -183,13 +186,12 @@ else
 endif
 
 
-ifdef DESTDIR
-	INSTALL_LIB_PATH = $(DESTDIR)/lib/
-	INSTALL_HEADER_PATH = $(DESTDIR)/include/
-	INSTALL_PYTHON_PATH = $(DESTDIR)/lib/python/site-packages/
+ifdef INSTALL_PYTHON2_PATH
+install: build/python2/xerus.so
 endif
-
-
+ifdef INSTALL_PYTHON3_PATH
+install: build/python3/xerus.so
+endif
 ifdef INSTALL_LIB_PATH
 ifdef INSTALL_HEADER_PATH
 install: shared
@@ -200,8 +202,13 @@ install: shared
 	cp -r include/xerus $(INSTALL_HEADER_PATH)
 	cp build/libxerus_misc.so $(INSTALL_LIB_PATH)
 	cp build/libxerus.so $(INSTALL_LIB_PATH)
-ifdef BUILD_PYTHON_BINDINGS
-	cp build/xerus.so $(INSTALL_PYTHON_PATH)
+ifdef INSTALL_PYTHON2_PATH
+	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON2_PATH)).\n"
+	cp build/python2/xerus.so $(INSTALL_PYTHON2_PATH)
+endif
+ifdef INSTALL_PYTHON3_PATH
+	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON3_PATH)).\n"
+	cp build/python3/xerus.so $(INSTALL_PYTHON3_PATH)
 endif
 else
 install:
@@ -214,7 +221,7 @@ endif
 
 
 $(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
-	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -o $(TEST_NAME)
+	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
 build/print_boost_version: src/print_boost_version.cpp
 	@$(CXX) -o $@ $<
@@ -226,13 +233,19 @@ test:  $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
+test_python2: # build/libxerus.so build/python2/xerus.so
+	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
+
+test_python3: # build/libxerus.so build/python3/xerus.so
+	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
+
+
 fullTest: $(TUTORIALS) $(TEST_NAME)
 	$(foreach x,$(TUTORIALS),./$(x)$(\n))
 	./$(TEST_NAME) all
 
 
-.FORCE:
-doc: .FORCE doc/parseDoxytags doc/findDoxytag
+doc:
 	make -C doc doc
 
 
@@ -245,7 +258,7 @@ clean:
 
 
 benchmark: $(MINIMAL_DEPS) $(LOCAL_HEADERS) benchmark.cxx $(LIB_NAME_STATIC)
-	$(CXX) $(FLAGS) benchmark.cxx $(LIB_NAME_STATIC) $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -lboost_filesystem -lboost_system -o Benchmark
+	$(CXX) $(FLAGS) benchmark.cxx $(LIB_NAME_STATIC) $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -lboost_filesystem -lboost_system -o Benchmark
 
 # Build rule for normal misc objects
 build/.miscObjects/%.o: %.cpp $(MINIMAL_DEPS)
@@ -286,7 +299,7 @@ endif
 # Build and execution rules for tutorials
 build/.tutorialObjects/%: %.cpp $(MINIMAL_DEPS) build/libxerus.a build/libxerus_misc.a
 	mkdir -p $(dir $@)
-	$(CXX) -I include $< build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) $(FLAGS) -MMD -o $@
+	$(CXX) -I include $< build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) $(FLAGS) -MMD -o $@
 
 
 # Build rule for the preCompileHeader

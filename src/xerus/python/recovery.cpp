@@ -97,7 +97,14 @@ void expose_recoveryAlgorithms() {
         .def("set_measuredValue", +[](RankOneMeasurementSet &_this, size_t _i, value_t _val){
             _this.measuredValues[_i] = _val;
         })
-        .def("add", &RankOneMeasurementSet::add)
+        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue); */
+        .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue) {
+                _self.add(_position, _measuredValue);
+            })
+        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight); */
+        .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight) {
+                _self.add(_position, _measuredValue, _weight);
+            })
         .def("size", &RankOneMeasurementSet::size)
         .def("degree", &RankOneMeasurementSet::degree)
         .def("frob_norm", &RankOneMeasurementSet::frob_norm)
@@ -165,6 +172,8 @@ void expose_recoveryAlgorithms() {
     VECTOR_TO_PY(std::vector<double>, "DoubleVectorVector");
     py_pair<std::vector<std::vector<double>>, std::vector<Tensor>>();
 
+
+    VECTOR_TO_PY(std::vector<Tensor>, "TensorVectorVector");
     //def("uq_adf", +[](const UQMeasurementSet& _measurments, const TTTensor& _guess) {
     //  return uq_adf(_measurments, _guess);
     //}, ( arg("measurments"), arg("guess")) );
@@ -172,6 +181,16 @@ void expose_recoveryAlgorithms() {
     def("uq_ra_adf", +[](const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
             return uq::uq_ra_adf(_measurements, _basisType, _dimensions, _targetEps, _maxItr);
             }, (arg("measurements"), arg("polynombasis"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
+       );
+
+    def("uq_ra_adf", +[](const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
+            return uq::uq_ra_adf(_positions, _solutions, _dimensions, _targetEps, _maxItr);
+            }, (arg("positions"), arg("solutions"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
+       );
+
+    def("uq_ra_adf", +[](const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
+            return uq::uq_ra_adf(_positions, _solutions, _weights, _dimensions, _targetEps, _maxItr);
+            }, (arg("positions"), arg("solutions"), arg("weights"), arg("dimensions"), arg("targeteps"), arg("maxitr"))
        );
 
     def("uq_ra_adf_iv", +[](TTTensor& _x, const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const double _targetEps, const size_t _maxItr){

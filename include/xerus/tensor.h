@@ -1014,7 +1014,31 @@ namespace xerus {
 	 * @param _extraDegree number of modes that @a _x and @a _B sharefor which the solution should be computed independently.
 	 */
 	void solve(Tensor &_X, const Tensor &_A, const Tensor &_B, size_t _extraDegree = 0);
-	
+
+	/**
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the LAPACK routine DGEEV. It calculates the eigenvalue with smallest real part.
+	 * @param _X Output Tensor for the result
+	 * @param _A input Operator A symmetric with respect to matrification
+	 * @return the smallest eigenvalue
+	 */
+	double get_smallest_eigenvalue(Tensor &_X, const Tensor &_A);
+
+
+#ifdef ARPACK_LIBRARIES
+	/**
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algerbaic values.
+	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
+	 * @param _A input Operator A symmetric with respect to matrification
+	 * @param _ev array holding smallest eigenvalue (ev[0]) after calculation
+	 * @param _info if 0 algorithm is randomly initialized, if > 0 it takes _X as starting point
+	 * @param _miter maximal number of iterations of algorithm
+	 * @param _eps tolerance for iterative algorithm
+	 */
+	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps);
+	void get_smallest_eigenvalue_iterative_dmrg_special(Tensor& _X, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, int _info, const size_t _miter, const double _eps);
+
+#endif
+
 	/**
 	 * @brief calculates the entrywise product of two Tensors
 	 */

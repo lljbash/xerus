@@ -36,6 +36,9 @@
 
     // All the xerus headers
 	#include "xerus/blasLapackWrapper.h"
+#ifdef ARPACK_LIBRARIES
+	#include "xerus/arpackWrapper.h"
+#endif
     #include "xerus/index.h"
     #include "xerus/indexedTensorReadOnly.h"
     #include "xerus/indexedTensorWritable.h"
@@ -50,6 +53,7 @@
     #include "xerus/tensorNetwork.h"
     #include "xerus/contractionHeuristic.h"
     #include "xerus/ttNetwork.h"
+    #include "xerus/htNetwork.h"
     #include "xerus/ttStack.h"
 	#include "xerus/performanceData.h"
 	#include "xerus/measurments.h"

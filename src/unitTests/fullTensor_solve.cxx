@@ -32,7 +32,7 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     A1[{1,0,1}] = 1;
     A1[{2,1,0}] = 1;
     A1[{3,1,1}] = 1;
-    
+
     Tensor b1({4});
     b1[0] = 73;
     b1[1] = -73;
@@ -71,6 +71,52 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     TEST((x2[{1,1}]) < 1e-14);
 });
 
+static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalue of Matrix (direct)", [](){
+    Index i,j,k,l,m,n,o,p;
+
+    Tensor A1 = Tensor::random({4,3,4,3});
+    Tensor x1({4,3});
+    double lambda1 = get_smallest_eigenvalue(x1,A1);
+    TEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)) < 1e-13);
+
+    Tensor A2 = Tensor::random({4,3,4,5,4,3,4,5});
+		Tensor x2({4,3,4,5});
+		double lambda2 = get_smallest_eigenvalue(x2,A2);
+		TEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 5e-12);
+});
+
+#ifdef ARPACK_LIBRARIES
+static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest eigenvalue of Matrix (iterative)", [](){
+    Index i,j,k,l,m,n,o,p;
+
+    Tensor A1 = Tensor::random({4,3,4,3}) + (-1)*Tensor::identity({4,3,4,3});
+  	A1(i/2,j/2) = A1(i/2, k/2) * A1(j/2, k/2);
+    Tensor x1({4,3});
+  	std::unique_ptr<double[]> ev1(new double[1]);      // real eigenvalues
+  	std::unique_ptr<double[]> ev2(new double[1]);      // real eigenvalues
+  	std::unique_ptr<double[]> ev3(new double[1]);      // real eigenvalues
+
+  	get_smallest_eigenvalue_iterative(x1,A1,ev1.get(), 0, 10000, 1e-8);
+    double lambda1 = ev1[0];
+    MTEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1* x1(i,j)) < 1e-8, frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)));
+
+    Tensor A2 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A2(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
+
+		Tensor x2({2,2,2,2});
+		get_smallest_eigenvalue_iterative(x2,A2,ev2.get(), 0, 10000, 1e-8);
+    double lambda2 = ev2[0];
+    MTEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 1e-8, frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)));
+
+    Tensor A3 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A3(i/2,j/2) = A3(i/2, k/2) * A3(j/2, k/2);
+
+    Tensor x3 = Tensor::random({2,2,2,2});
+		get_smallest_eigenvalue_iterative(x3,A3,ev3.get(), 1, 10000, 1e-8);
+    double lambda3 = ev3[0];
+    MTEST(frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)) < 1e-8, frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)));
+});
+#endif
 
 static misc::UnitTest solve_vs_lsqr("Tensor", "solve vs least squares", [](){
 	const size_t N = 500;
@@ -253,4 +299,43 @@ static misc::UnitTest tensor_solve_matrix("Tensor", "solve_matrix", [](){
 		residual(i^degM, k^degP) = A(i^degM, j^degN)*X(j^degN, k^degP) - B(i^degM, k^degP);
 		MTEST(frob_norm(residual) < 1e-10, frob_norm(residual));
 	}
+});
+
+static misc::UnitTest tensor_solve_w_extra_degree("Tensor", "solve with extra degrees", [](){
+    Index ii,jj,kk,ll,mm,nn;
+  	Tensor A = xerus::Tensor::random({2,2});
+  	Tensor B = xerus::Tensor::random({2,2});
+  	Tensor X({2,2});
+  	Tensor tmp({2,2});
+
+  	//non symmetric
+  	xerus::solve(X, A, B,1);
+
+  	tmp(ii,kk) = A(ii,jj)*X(jj,kk);
+    TEST((tmp - B).frob_norm() < 1e-13);
+
+    //symmetric
+  	A(ii,jj) = A(ii,jj) + A(jj,ii);
+  	xerus::solve(X, A, B,1);
+  	tmp(ii,kk) = A(ii,jj)*X(jj,kk);
+    TEST((tmp - B).frob_norm() < 1e-13);
+
+    //higher order
+  	Tensor A2 = xerus::Tensor::random({5,5,5,5});
+  	Tensor B2 = xerus::Tensor::random({5,5,5,5});
+  	Tensor X2({5,5,5,5});
+  	Tensor tmp2({5,5,5,5});
+
+  	xerus::solve(X2, A2, B2,2);
+		tmp2(ii^2,kk^2) = A2(ii^2,jj^2)*X2(jj^2,kk^2);
+		TEST((tmp2 - B2).frob_norm() < 1e-13);
+
+  	Tensor A3 = xerus::Tensor::random({5,5,5,5});
+  	Tensor B3 = xerus::Tensor::random({5,5,5});
+  	Tensor X3({5,5,5});
+  	Tensor tmp3({5,5,5});
+
+		xerus::solve(X3, A3, B3,1);
+		tmp3(ii^2,kk) = A3(ii^2,jj^2)*X3(jj^2,kk);
+		TEST((tmp3 - B3).frob_norm() < 1e-13);
 });

@@ -118,14 +118,13 @@ namespace xerus {
 			
 			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
-			
+
 			XERUS_PA_START;
 			if(!_transposed) {
 				cblas_dgemv(CblasRowMajor, CblasNoTrans, static_cast<int>(_m), static_cast<int>(_n), _alpha, _A, static_cast<int>(_n), _y, 1, 0.0, _x, 1);
 			} else {
 				cblas_dgemv(CblasRowMajor, CblasTrans, static_cast<int>(_n), static_cast<int>(_m), _alpha, _A, static_cast<int>(_m) , _y, 1, 0.0, _x, 1);
 			}
-			
 			XERUS_PA_END("Dense BLAS", "Matrix Vector Product", misc::to_string(_m)+"x"+misc::to_string(_n)+" * "+misc::to_string(_n));
 		}
 		
@@ -565,7 +564,7 @@ namespace xerus {
 				
 				std::unique_ptr<int[]> pivot(new int[_n]);
 				
-				misc::copy(_x, _b, _n);
+				misc::copy(_x, _b, _n*_nrhs);
 				
 				IF_CHECK( int lapackAnswer = ) LAPACKE_dgesv(
 					LAPACK_ROW_MAJOR,
@@ -605,7 +604,7 @@ namespace xerus {
 					LOG(debug, "cholesky");
 					XERUS_PA_START;
 					
-					misc::copy(_x, _b, _n);
+					misc::copy(_x, _b, _n*_nrhs);
 					
 					lapackAnswer = LAPACKE_dpotrs(
 						LAPACK_ROW_MAJOR,
@@ -632,7 +631,7 @@ namespace xerus {
 			// non-definite diagonal or choleksy failed -> fallback to LDL^T decomposition
 			XERUS_PA_START;
 			
-			misc::copy(_x, _b, _n);
+			misc::copy(_x, _b, _n*_nrhs);
 			std::unique_ptr<int[]> pivot(new int[_n]);
 			
 			LAPACKE_dsysv(
@@ -650,6 +649,40 @@ namespace xerus {
 			XERUS_PA_END("Dense LAPACK", "Solve (LDL)", misc::to_string(_n)+"x"+misc::to_string(_n)+"x"+misc::to_string(_nrhs));
 		}
 		
+		/// Solves Ax = x*lambda for x and lambda
+		void solve_ev(double* const _x, double* const _re, double* const _im, const double* const _A, const size_t _n) {
+			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
+
+			const std::unique_ptr<double[]> tmpA(new double[_n*_n]);
+			misc::copy(tmpA.get(), _A, _n * _n);
+
+			LOG(debug, "solving with...");
+
+			//so far only non symmetric -> dgeev
+			LOG(debug, "DGEEV");
+			XERUS_PA_START;
+
+			std::unique_ptr<double[]> leftev(new double[1]);
+
+			IF_CHECK( int lapackAnswer = ) LAPACKE_dgeev(
+				LAPACK_ROW_MAJOR,
+				'N', 										// No left eigenvalues are computed
+				'V', 										// Right eigenvalues are computed
+				static_cast<int>(_n),		// Dimensions of A (nxn)
+				tmpA.get(),							// input: A, output: L and U
+				static_cast<int>(_n),		// LDA
+				_re, 										// real part of the eigenvalues
+				_im, 										// imaginary part of the eigenvalues
+				leftev.get(),						// output: left eigenvectors, here dummy
+				static_cast<int>(_n), 	// LDVL
+				_x,											// right eigenvectors
+				static_cast<int>(_n) 		// LDVR TODO check size of _x
+			);
+			CHECK(lapackAnswer == 0, error, "Unable to solve Ax = lambda*x (DGEEV solver). Lapacke says: " << lapackAnswer);
+			XERUS_PA_END("Dense LAPACK", "Solve (DGEEV)", misc::to_string(_n)+"x"+misc::to_string(_n)+"x"+misc::to_string(_nrhs));
+
+			return;
+		}
 	
 		void solve_least_squares( double* const _x, const double* const _A, const size_t _m, const size_t _n, const double* const _b, const size_t _p){
 			const std::unique_ptr<double[]> tmpA(new double[_m*_n]);

@@ -30,6 +30,7 @@
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
+#include <xerus/arpackWrapper.h>
 #include <xerus/blasLapackWrapper.h>
 #include <xerus/cholmod_wrapper.h>
 #include <xerus/sparseTimesFullContraction.h>
@@ -1708,8 +1709,149 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
+	double get_smallest_eigenvalue(Tensor& _X, const Tensor& _A) {
+			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
+			REQUIRE(&_X != &_A, "Not supportet yet");
+			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
+
+			const size_t degN = _A.degree() / 2;
+
+			// Calculate multDimensions
+			const size_t m = misc::product(_A.dimensions, 0, degN);
+			const size_t n = misc::product(_A.dimensions, degN, 2*degN);
+			REQUIRE(m == n, "Inconsistent dimensions.");
+
+			// Make sure X has right dimensions
+			if(	_X.degree() != degN
+				|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
+			{
+				Tensor::DimensionTuple newDimX;
+				newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
+				_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
+			}
+
+			std::unique_ptr<double[]> re(new double[n]);      // real eigenvalues
+			std::unique_ptr<double[]> im(new double[n]);      // imaginary eigenvalues
+			std::unique_ptr<double[]> rev(new double[n * n]); // right eigenvectors
+
+			// Note that A is dense here
+			blasWrapper::solve_ev(
+				rev.get(), // right eigenvectors
+				re.get(),  // real eigenvalues
+				im.get(),  // imaginary eigenvalues
+				_A.get_unsanitized_dense_data(),  n);
+
+			//get eigenvalue with minimal real part
+			double ev = re[0];
+			size_t idx = 0;
+			for (size_t i = 1; i < n; ++i) {
+				if (re[i] < ev){
+					ev = re[i];
+					idx = i;
+				}
+			}
+
+			//get eigenvector oof smallest eigenvalue
+			auto tmpX = _X.override_dense_data();
+			for (size_t i = 0; i < n; ++i)
+				tmpX[i] = rev[idx + i * n];
+
+			return ev;
+		}
 	
-	
+#ifdef ARPACK_LIBRARIES
+	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps) {
+		REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
+		REQUIRE(&_X != &_A, "Not supportet yet");
+		REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
+		REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
+
+		const size_t degN = _A.degree() / 2;
+		int info = _info;
+		// Calculate multDimensions
+		const size_t m = misc::product(_A.dimensions, 0, degN);
+		const size_t n = misc::product(_A.dimensions, degN, 2*degN);
+		XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
+
+		// Make sure X has right dimensions
+		if(	_X.degree() != degN
+			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
+		{
+			Tensor::DimensionTuple newDimX;
+			newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
+			_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
+			info = 0; // info must be 0 if X is not random
+		}
+
+		std::unique_ptr<double[]> rev(new double[n]); // right eigenvectors
+		std::unique_ptr<double[]> res(new double[n]); // residual
+		if (info > 0)
+			misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
+
+		// Note that A is dense here
+		arpackWrapper::solve_ev_smallest(
+			rev.get(), // right ritz vectors
+			_A.get_unsanitized_dense_data(),
+			_ev, 1, n,
+			res.get(),
+			_miter,
+			_eps, info
+		);
+
+		// eigenvector of smallest eigenvalue
+		auto tmpX = _X.override_dense_data();
+		for (size_t i = 0; i < n; ++i)
+			tmpX[i] = rev[i];
+		return;
+	}
+
+	void get_smallest_eigenvalue_iterative_dmrg_special(Tensor& _X, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, int _info, const size_t _miter, const double _eps) {
+			REQUIRE(_l.is_dense() && _A.is_dense() && _A1.is_dense() && _r.is_dense(), "for now only dense is implemented"); //TODO implement sparse
+			//REQUIRE(&_X != &_A, "Not supportet yet");
+			REQUIRE(_l.degree()  == 3, "The tensor _l needs to be of order 3");
+			REQUIRE(_A.degree()  == 4, "The tensor _A needs to be of order 4");
+			REQUIRE(_A1.degree() == 4, "The tensor _A1 needs to be of order 4");
+			REQUIRE(_r.degree()  == 3, "The tensor _r needs to be of order 3");
+
+			REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
+
+			const size_t degN = 4;
+			int info = _info;
+			// Calculate multDimensions
+			const size_t m = _l.dimensions[0] * _A.dimensions[1] * _A1.dimensions[1] * _r.dimensions[0];
+			const size_t n = _l.dimensions[2] * _A.dimensions[2] * _A1.dimensions[2] * _r.dimensions[2];
+			XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
+
+			// Make sure X has right dimensions
+			if(	_X.degree() != degN || _X.dimensions[0] !=_l.dimensions[2] || _X.dimensions[1] !=_A.dimensions[2] || _X.dimensions[2] !=_A1.dimensions[2] || _X.dimensions[3] !=_r.dimensions[2])
+			{
+				_X.reset({_l.dimensions[2], _A.dimensions[2], _A1.dimensions[2], _r.dimensions[2]}, Tensor::Representation::Dense, Tensor::Initialisation::None);
+				info = 0; // info must be 0 if X is not random
+			}
+
+			std::unique_ptr<double[]> rev(new double[n]); // right eigenvectors
+			std::unique_ptr<double[]> res(new double[n]); // residual
+			if (info > 0)
+				misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
+
+			// Note that A is dense here
+			arpackWrapper::solve_ev_smallest_dmrg_special(
+				rev.get(), // right ritz vectors
+				_l,_A,_A1,_r,
+				_ev, 1, n,
+				res.get(),
+				_miter,
+				_eps, info
+			);
+
+			// eigenvector of smallest eigenvalue
+			auto tmpX = _X.override_dense_data();
+			for (size_t i = 0; i < n; ++i)
+				tmpX[i] = rev[i];
+			return;
+		}
+#endif
+
 	Tensor entrywise_product(const Tensor &_A, const Tensor &_B) {
 		REQUIRE(_A.dimensions == _B.dimensions, "Entrywise product ill-defined for non-equal dimensions.");
 		if(_A.is_dense() && _B.is_dense()) {
