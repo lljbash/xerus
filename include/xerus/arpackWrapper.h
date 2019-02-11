@@ -49,7 +49,7 @@
 
 
 namespace xerus {
-	class Tensor;
+	class TensorNetwork;
 	/**
 	* @brief In this namespace the minimal wrappers for the ARPACK functions are collected.
 	* @details As an end user of xerus it should never be nessecary to call any of these functions, unless
@@ -66,9 +66,9 @@ namespace xerus {
 
 		//TODO check if this can be simplified!!
 		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
-		void solve_ev_dmrg_special(double* const _x, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
+		void solve_ev_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
 		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
-		void solve_ev_smallest_dmrg_special(double* const _x, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+		void solve_ev_smallest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
 
 
 

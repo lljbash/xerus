@@ -59,6 +59,7 @@
 #include <xerus/misc/basicArraySupport.h>
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
+#include "xerus/tensorNetwork.h"
 #include "xerus/tensor.h"
 
 
@@ -173,13 +174,14 @@ namespace xerus {
 		}
 	
 		/// Solves Ax = x*lambda for x and lambda for the _k smallest eigenvalues
-		void solve_ev_dmrg_special(double* const _x, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info) {
+		void solve_ev_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info) {
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for ARPACK");
 			REQUIRE(_info >= 0, "Info == 0, random; Info > 0, take residual; info is " << _info);
 			REQUIRE(_k < _n, "For some reason the number of Eigenvalues must be smaller than the dimension. see https://github.com/opencollab/arpack-ng/blob/master/SRC/dsaupd.f and error code -3" );
 			//REQUIRE(is_symmetric(_A, _n), "A must be symmetric");
 
 			// iteration variables dsaupd
+			std::vector<size_t> dims(_op.dimensions.begin(), _op.dimensions.begin() +_op.dimensions.size()/2);
 			int ido = 0;
 			auto bmat_option = arpack::bmat::identity;
 			int nev = static_cast<int>(_k);
@@ -236,12 +238,12 @@ namespace xerus {
 				);
 
 				if (ido == -1 or ido == 1){
-					Tensor tmpX({_l.dimensions[2], _A.dimensions[2], _A1.dimensions[2], _r.dimensions[2]});
-					Tensor tmpX1({_l.dimensions[0], _A.dimensions[1], _A1.dimensions[1], _r.dimensions[0]});
+					Tensor tmpX(dims);
+					Tensor tmpX1(dims);
 					auto tmpX_ptr = tmpX.override_dense_data();
 					misc::copy(tmpX_ptr, workd.get() + ipntr[0] - 1, _n);
 					Index i1,i2,i3,i4,j1,j2,j3,j4,k1,k2,k3;
-					tmpX1(i1,i2,i3,i4) = _l(i1, k1, j1)* (_A(k1, i2, j2, k2) * (_A1(k2,i3,j3,k3)* (_r(i4, k3, j4) * tmpX(j1,j2,j3,j4))));
+					tmpX1(i1&0) = _op(i1/2,j1/2) * tmpX(j1&0);
 
 					auto tmpX1_ptr = tmpX1.override_dense_data();
 					misc::copy(workd.get() + ipntr[1] - 1,tmpX1_ptr, _n);
@@ -294,8 +296,8 @@ namespace xerus {
 			solve_ev (_x, _A, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::largest_algebraic, _info);
 		}
 
-		void solve_ev_smallest_dmrg_special(double* const _x, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
-			solve_ev_dmrg_special (_x, _l, _A, _A1, _r, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::smallest_algebraic, _info);
+		void solve_ev_smallest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
+			solve_ev_special (_x, _op, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::smallest_algebraic, _info);
 		}
 
 	} // namespace arpackWrapper
