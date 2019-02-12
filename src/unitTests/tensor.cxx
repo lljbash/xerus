@@ -218,6 +218,68 @@ static misc::UnitTest tensor_constructors("Tensor", "Constructors", [](){
 
 
 
+static misc::UnitTest tensor_solve_failtests("Tensor", "solve_failtests", []() {
+	xerus::Tensor A = xerus::Tensor::identity({5, 5});
+	
+	for(size_t k = 0; k < 2; ++k) { // Sparse and dense A
+		xerus::Tensor x = xerus::Tensor({4});
+		xerus::Tensor b = xerus::Tensor::random({3});
+		FAILTEST(solve(x, A, b););
+		
+		x = xerus::Tensor({5});
+		b = xerus::Tensor::random({3});
+		FAILTEST(solve(x, A, b););
+		
+		x = xerus::Tensor({6});
+		b = xerus::Tensor::random({6});
+		FAILTEST(solve(x, A, b););
+		
+		x = xerus::Tensor({3});
+		b = xerus::Tensor::random({5});
+		solve(x, A, b);
+		TEST(approx_equal(x, b, 1e-10));
+		
+		x = xerus::Tensor({5});
+		b = xerus::Tensor::random({5});
+		solve(x, A, b);
+		TEST(approx_equal(x, b, 1e-10));
+		
+		x = xerus::Tensor({4,3});
+		b = xerus::Tensor::random({3});
+		FAILTEST(solve(x, A, b););
+		
+		if(k==1) { // Currently extra orders only works in dense.
+			x = xerus::Tensor({4,3});
+			b = xerus::Tensor::random({3,4});
+			FAILTEST(solve(x, A, b););
+			
+			x = xerus::Tensor({5,3});
+			b = xerus::Tensor::random({3,3});
+			FAILTEST(solve(x, A, b, 1););
+			
+			x = xerus::Tensor({5,3});
+			b = xerus::Tensor::random({3,5});
+			FAILTEST(solve(x, A, b, 1););
+			
+			x = xerus::Tensor::random({3,7,2});
+			b = xerus::Tensor::random({5,3});
+			solve(x, A, b, 1);
+			TEST(approx_equal(x, b, 1e-10));
+			
+			x = xerus::Tensor::random({5,5,2});
+			b = xerus::Tensor::random({5,3,4});
+			solve(x, A, b, 2);
+			TEST(approx_equal(x, b, 1e-10));
+		}
+		
+		A.use_dense_representation();
+	}
+	
+   	return 0;
+});
+
+
+
 static misc::UnitTest tensor_sparse_dense("Tensor", "Sparse_Dense_Conversions", [](){
 	Tensor n({3,3,3,3});
 	const size_t dim = 100;
