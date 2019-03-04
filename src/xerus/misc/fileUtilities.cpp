@@ -50,6 +50,10 @@ namespace xerus { namespace misc {
         return files;
     }
     
+    bool file_exists(const std::string& _path) {
+		return boost::filesystem::exists(_path);
+	}
+    
     bool file_is_empty(const std::string& _filename) {
         std::ifstream pFile(_filename);
         REQUIRE(pFile.is_open(), "IE: Failed to open file");

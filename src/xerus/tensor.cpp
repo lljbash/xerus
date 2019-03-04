@@ -1591,9 +1591,6 @@ namespace xerus {
 		const size_t degM = _B.degree() - _extraDegree;
 		const size_t degN = _A.degree() - degM;
 		
-		REQUIRE(_A.degree() == degM+degN, "Inconsistent dimensions.");
-		REQUIRE(_B.degree() == degM+_extraDegree, "Inconsistent dimensions.");
-		
 		// Make sure X has right dimensions
 		if(	_X.degree() != degN + _extraDegree
 			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degM)
@@ -1605,6 +1602,9 @@ namespace xerus {
 			_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
 		}
 		
+		REQUIRE(std::equal(_A.dimensions.begin(), _A.dimensions.begin() + degM, _B.dimensions.begin()), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		XERUS_INTERNAL_CHECK(std::equal(_A.dimensions.begin() + degM, _A.dimensions.end(), _X.dimensions.begin()), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		XERUS_INTERNAL_CHECK(std::equal(_B.dimensions.begin() + degM, _B.dimensions.end(), _X.dimensions.begin()+degN), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
 		
 		// Calculate multDimensions
 		const size_t m = misc::product(_A.dimensions, 0, degM);
@@ -1662,14 +1662,13 @@ namespace xerus {
 			solve_least_squares(_X, _A, _B, _extraDegree);
 			return;
 		}
-		REQUIRE(&_X != &_B && &_X != &_A, "Not supportet yet");
+		
+		REQUIRE(&_X != &_B && &_X != &_A, "x=b and x=a is not supported yet.");
+		
 		const size_t degM = _B.degree() - _extraDegree;
 		const size_t degN = _A.degree() - degM;
 		
-		REQUIRE(_A.degree() == degM+degN, "Inconsistent dimensions.");
-		REQUIRE(_B.degree() == degM+_extraDegree, "Inconsistent dimensions.");
-		
-		// Make sure X has right dimensions
+		// Make sure X has the right dimensions
 		if(	_X.degree() != degN + _extraDegree
 			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degM)
 			|| !std::equal(_X.dimensions.begin()+ degN, _X.dimensions.end(), _B.dimensions.begin() + degM))
@@ -1680,13 +1679,20 @@ namespace xerus {
 			_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
 		}
 		
+		REQUIRE(std::equal(_A.dimensions.begin(), _A.dimensions.begin() + degM, _B.dimensions.begin()), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		XERUS_INTERNAL_CHECK(std::equal(_A.dimensions.begin() + degM, _A.dimensions.end(), _X.dimensions.begin()), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		XERUS_INTERNAL_CHECK(std::equal(_B.dimensions.begin() + degM, _B.dimensions.end(), _X.dimensions.begin()+degN), "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		
 		// Calculate multDimensions
 		const size_t m = misc::product(_A.dimensions, 0, degM);
 		const size_t n = misc::product(_A.dimensions, degM, degM+degN);
 		const size_t p = misc::product(_B.dimensions, degM, degM+_extraDegree);
 		
+		REQUIRE(_B.size == m*p, "A and b have incompatible dimensions. A: " << _A.dimensions << ", b: " << _B.dimensions);
+		XERUS_INTERNAL_CHECK(_X.size == n*p, "Invalid dimension of x");
 		
-		// Note that A isdense here
+		
+		// Note that A is dense here
 		if(_B.is_dense()) {
 			blasWrapper::solve(
 				_X.override_dense_data(), 

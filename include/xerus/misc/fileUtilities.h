@@ -34,6 +34,8 @@ namespace xerus { namespace misc {
     
     std::set<std::string> get_files(const std::string& _path);
 
+	bool file_exists(const std::string& _path);
+	
     bool file_is_empty(const std::string& _filename);
 
     std::string read_file(const std::string& _path);
