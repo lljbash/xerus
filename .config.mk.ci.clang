@@ -21,6 +21,7 @@ LAPACK_LIBRARIES = -llapacke -llapack                     # Standard Lapack + La
 
 # Uncomment or add the appropriate CXSparse library
 SUITESPARSE = -lcholmod -lspqr
+BOOST_LIBS = -lboost_filesystem
 
 
 # custom include paths

@@ -35,7 +35,7 @@ job_test_gcc_nocheck:
 
 job_build_python:
   stage: build_python
-  script: "g++ --version; cp .config.mk.ci.gcc config.mk; make python"
+  script: "g++ --version; cp .config.mk.ci.gcc config.mk; make python2"
   when: always
 
 job_make_clang:

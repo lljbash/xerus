@@ -21,7 +21,7 @@ LOGGING += -D XERUS_LOG_INFO                     # Information that is not linke
 BLAS_LIBRARIES = -lopenblas -lgfortran                    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack                     # Standard Lapack + Lapacke libraries
 SUITESPARSE = -lcholmod -lspqr
-
+BOOST_LIBS = -lboost_filesystem
 
 # custom include paths
 # OTHER += -I /path/to/include

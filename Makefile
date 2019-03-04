@@ -147,7 +147,7 @@ shared: build/libxerus_misc.so build/libxerus.so
 
 build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) -lboost_filesystem -o build/libxerus_misc.so
+	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) $(BOOST_LIBS) -o build/libxerus_misc.so
 
 build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
 	mkdir -p $(dir $@)
@@ -159,12 +159,12 @@ python3: build/python3/xerus.so
 
 build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so `$(PYTHON2_CONFIG) --cflags --ldflags` $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
 
 build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 	mkdir -p $(dir $@)
 	@# -fpermissive is needed because of a bug in the definition of BOOST_PYTHON_MODULE_INIT in <boost/python/module_init.h>
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so `$(PYTHON3_CONFIG) --cflags --ldflags` $(PYTHON_FLAGS) -fpermissive -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON3) -o $@
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON3_CONFIG) $(PYTHON_FLAGS) -fpermissive -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON3) -o $@
 
 
 static: build/libxerus_misc.a build/libxerus.a
@@ -233,10 +233,10 @@ test:  $(TEST_NAME)
 	./$(TEST_NAME) all
 
 
-test_python2: # build/libxerus.so build/python2/xerus.so
+test_python2: build/libxerus.so build/python2/xerus.so
 	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
 
-test_python3: # build/libxerus.so build/python3/xerus.so
+test_python3: build/libxerus.so build/python3/xerus.so
 	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 
@@ -257,9 +257,6 @@ clean:
 
 
 
-benchmark: $(MINIMAL_DEPS) $(LOCAL_HEADERS) benchmark.cxx $(LIB_NAME_STATIC)
-	$(CXX) $(FLAGS) benchmark.cxx $(LIB_NAME_STATIC) $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -lboost_filesystem -lboost_system -o Benchmark
-
 # Build rule for normal misc objects
 build/.miscObjects/%.o: %.cpp $(MINIMAL_DEPS)
 	mkdir -p $(dir $@)
@@ -274,12 +271,6 @@ build/.libObjects/%.o: %.cpp $(MINIMAL_DEPS)
 
 # Build rule for test lib objects
 build/.testObjects/%.o: %.cpp $(MINIMAL_DEPS)
-	mkdir -p $(dir $@)
-	$(CXX) -D XERUS_UNITTEST -I include $< -c $(FLAGS) -MMD -o $@
-
-
-# Build rule for benchmark objects
-build/%.o: %.cpp $(MINIMAL_DEPS)
 	mkdir -p $(dir $@)
 	$(CXX) -D XERUS_UNITTEST -I include $< -c $(FLAGS) -MMD -o $@
 
