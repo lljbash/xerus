@@ -10,7 +10,7 @@ stages:
 
 job_build_homepage:
   stage: build_homepage
-  script: "cp .config.mk.ci.gcc config.mk; make -C doc doc; scp -r doc/html xerusweb:libxerus.org-443"
+  script: "cp .config.mk.ci.gcc config.mk; make -C doc doc && scp -r doc/html xerusweb:libxerus.org-443"
   when: always
   only: 
     - master
