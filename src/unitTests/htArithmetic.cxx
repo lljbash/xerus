@@ -33,10 +33,12 @@ static misc::UnitTest ht_consistent("HT", "consistent networks", [](){
 	xerus::HTOperator rtop2(rt2,0.5);
 
 
-	rt.require_valid_network();
-	ones.require_valid_network();
-	rtop.require_valid_network();
-	rtop2.require_valid_network();
+
+
+	rt.require_correct_format();
+	ones.require_correct_format();
+	rtop.require_correct_format();
+	rtop2.require_correct_format();
 });
 
 

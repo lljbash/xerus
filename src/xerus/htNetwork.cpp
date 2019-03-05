@@ -405,68 +405,88 @@ namespace xerus {
 		return dirac(_dimensions, Tensor::position_to_multiIndex(_position, _dimensions));
 	}
 
-//	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-//
-//	#ifndef XERUS_DISABLE_RUNTIME_CHECKS
-//		template<bool isOperator>
-//		void TTNetwork<isOperator>::require_correct_format() const {
-//			require_valid_network(); // Network must at least be valid.
-//
-//			const size_t numComponents = degree()/N;
-//			const size_t numNodes = degree() == 0 ? 1 : degree()/N + 2;
-//			REQUIRE(nodes.size() == numNodes, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
-//			REQUIRE(!canonicalized || (degree() == 0 && corePosition == 0) || corePosition < numComponents, "Invalid corePosition: " << corePosition << " there are only " << numComponents << " components.");
-//
-//			// Per external link
-//			for (size_t n = 0; n < externalLinks.size(); ++n) {
-//				const TensorNetwork::Link &l = externalLinks[n];
-//				REQUIRE(l.other == (n%numComponents)+1, "The " << n << "-th external link must point the the " << (n%numComponents) << "-th component (i.e. the " << (n%numComponents)+1 << "-th node) but does point to the " << l.other << "-th node.");
-//			}
-//
-//			// Virtual nodes
-//			if(degree() > 0) {
-//				REQUIRE(nodes.front().degree() == 1, "The left virtual node must have degree 1, but has size " << nodes.front().degree());
-//				REQUIRE(nodes.front().neighbors[0].dimension == 1, "The left virtual node's single dimension must be 1, but is " << nodes.front().neighbors[0].dimension);
-//				REQUIRE(nodes.front().neighbors[0].other == 1, "The left virtual node's single link must be to node 1, but is towards node " << nodes.front().neighbors[0].other);
-//				REQUIRE(nodes.front().neighbors[0].indexPosition == 0, "The left virtual node's single link must link at indexPosition 0, but link at " << nodes.front().neighbors[0].indexPosition);
-//				REQUIRE(misc::hard_equal((*nodes.front().tensorObject)[0], 1.0), "The left virtual node's single entry must be 1.0, but it is " << (*nodes.front().tensorObject)[0]);
-//				REQUIRE(!nodes.front().tensorObject->has_factor(), "The left virtual node must no carry a non-trivial factor.");
-//
-//				REQUIRE(nodes.back().degree() == 1, "The right virtual node must have degree 1, but has size " << nodes.back().degree());
-//				REQUIRE(nodes.back().neighbors[0].dimension == 1, "The right virtual node's single dimension must be 1, but is " << nodes.back().neighbors[0].dimension);
-//				REQUIRE(nodes.back().neighbors[0].other == numNodes-2, "The right virtual node's single link must be to node " << numNodes-2 << ", but is towards node " << nodes.back().neighbors[0].other);
-//				REQUIRE(nodes.back().neighbors[0].indexPosition == N+1, "The right virtual node's single link must link at indexPosition " << N+1 << ", but link at " << nodes.back().neighbors[0].indexPosition);
-//				REQUIRE(misc::hard_equal((*nodes.back().tensorObject)[0], 1.0), "The right virtual node's single entry must be 1.0, but it is " << (*nodes.back().tensorObject)[0]);
-//				REQUIRE(!nodes.back().tensorObject->has_factor(), "The right virtual node must no carry a non-trivial factor.");
-//			}
-//
-//			// Per component
-//			for (size_t n = 0; n < numComponents; ++n) {
-//				const TensorNode& node = nodes[n+1];
-//
-//				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized TTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
-//
-//				REQUIRE(node.degree() == N+2, "Every TT-Component must have degree " << N+2 << ", but component " << n << " has degree " << node.degree());
-//				REQUIRE(!node.neighbors[0].external, "The first link of each TT-Component must not be external. Violated by component " << n);
-//				REQUIRE(node.neighbors[0].other == n, "The first link of each TT-Component must link to the previous node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << n << ").");
-//				REQUIRE(node.neighbors[0].indexPosition == (n==0?0:N+1), "The first link of each TT-Component must link to the last last index of the previous node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (n==0?0:N+1) << ").");
-//
-//				REQUIRE(node.neighbors[1].external, "The second link of each TT-Component must be external. Violated by component " << n << ".");
-//				REQUIRE(node.neighbors[1].indexPosition == n, "The second link of each TT-Component must link to the external dimension equal to the component position. Violated by component " << n << " which links at " << node.neighbors[1].indexPosition);
-//				REQUIRE(!isOperator || node.neighbors[2].external, "The third link of each TTO-Component must be external. Violated by component " << n << ".");
-//				REQUIRE(!isOperator || node.neighbors[2].indexPosition == numComponents+n, "The third link of each TTO-Component must link to the external dimension equal to the component position + numComponents. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << numComponents+n << ").");
-//
-//				REQUIRE(!node.neighbors.back().external, "The last link of each TT-Component must not be external. Violated by component " << n);
-//				REQUIRE(node.neighbors.back().other == n+2, "The last link of each TT-Component must link to the next node. Violated by component " << n << ", which instead links to node " << node.neighbors.back().other << " (expected " << n+2 << ").");
-//				REQUIRE(node.neighbors.back().indexPosition == 0, "The last link of each TT-Component must link to the first index of the next node. Violated by component " << n << ", which instead links to index " << node.neighbors.back().indexPosition << " (expected 0).");
-//			}
-//		}
-//	#else
-//		template<bool isOperator>
-//		void TTNetwork<isOperator>::require_correct_format() const { }
-//	#endif
-//
-//
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+	#ifndef XERUS_DISABLE_RUNTIME_CHECKS
+		template<bool isOperator>
+		void HTNetwork<isOperator>::require_correct_format() const {
+			require_valid_network(); // Network must at least be valid.
+			XERUS_LOG(info,"Checking if network is correct");
+			const size_t numLeaves = degree()/N;
+			const size_t numNodes = 2*numLeaves - 1;
+			REQUIRE(nodes.size() == numNodes + 1, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
+			REQUIRE(!canonicalized || (degree() == 0 && corePosition == 0) || corePosition < numNodes, "Invalid corePosition: " << corePosition << " there are only " << numNodes << " components.");
+
+			const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+
+			std::vector<size_t> leaf_order;
+			for (size_t i = numFullLeaves - 1; i < numNodes; ++i)
+				leaf_order.emplace_back(i);
+			for (size_t i = numLeaves - 1; i < numFullLeaves - 1 ; ++i)
+				leaf_order.emplace_back(i);
+
+			// Per external link
+			for (size_t n = 0; n < externalLinks.size(); ++n) {
+				const TensorNetwork::Link &l = externalLinks[n];
+				REQUIRE(l.other == leaf_order[(n%numLeaves)], "The " << n << "-th external link must point the the " << leaf_order[(n%numLeaves)] << "-th component,  but does point to the " << l.other << "-th node.");
+			}
+
+			// Virtual nodes
+			if(degree() > 0) {
+				REQUIRE(nodes.back().degree() == 1, "The virtual node must have degree 1, but has size " << nodes.back().degree());
+				REQUIRE(nodes.back().neighbors[0].dimension == 1, "The virtual node's single dimension must be 1, but is " << nodes.back().neighbors[0].dimension);
+				REQUIRE(nodes.back().neighbors[0].other == 0, "The virtual node's single link must be to node " << 0 << ", but is towards node " << nodes.back().neighbors[0].other);
+				REQUIRE(nodes.back().neighbors[0].indexPosition == 0, "The virtual node's single link must link at indexPosition " << 0 << ", but link at " << nodes.back().neighbors[0].indexPosition);
+				REQUIRE(misc::hard_equal((*nodes.back().tensorObject)[0], 1.0), "The virtual node's single entry must be 1.0, but it is " << (*nodes.back().tensorObject)[0]);
+				REQUIRE(!nodes.back().tensorObject->has_factor(), "The virtual node must not carry a non-trivial factor.");
+			}
+
+			// Per  internal component
+			for (size_t n = 0; n < numLeaves-1; ++n) {
+				const TensorNode& node = nodes[n];
+
+				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized HTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
+
+				REQUIRE(node.degree() == 3, "Every internal HT-Component must have degree " << 3 << ", but component " << n << " has degree " << node.degree());
+				REQUIRE(!node.neighbors[0].external, "The first link of each internal HT-Component must not be external. Violated by component " << n);
+				REQUIRE(node.neighbors[0].other == (n==0? 2*numLeaves - 1 : (n-1)/2), "The first link of each internal HT-Component must link to the parent node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << (n==0? 2*numLeaves - 1 : (n-1)/2) << ").");
+				REQUIRE(node.neighbors[0].indexPosition == (n==0?0:(is_left_child(n) ? 1 : 2)), "The first link of each HT-Component must link to the correct child index of the parent node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (n==0?0:(is_left_child(n) ? 1 : 2)) << ").");
+
+				REQUIRE(!node.neighbors[1].external, "The second link of each TT-Component must not be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[1].other == 2*n + 1, "The second link of each internal HT-Component must link to the left child node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << 2*n + 1 << ").");
+				REQUIRE(node.neighbors[1].indexPosition == 0, "The second link of each HT-Component must link to the first index of the child node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << 0 << ").");
+
+				REQUIRE(!node.neighbors[2].external, "The third link of each TT-Component must not be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[2].other == 2*n + 2, "The third link of each internal HT-Component must link to the left child node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << 2*n + 2 << ").");
+				REQUIRE(node.neighbors[2].indexPosition == 0, "The third link of each HT-Component must link to the first index of the child node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << 0 << ").");
+
+			}
+			// Per leaves
+			size_t i = 0;
+			for (size_t n: leaf_order){
+				const TensorNode& node = nodes[n];
+				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized HTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
+				REQUIRE(node.degree() == N+1, "Every leaf HT-Component must have degree " << N+1 << ", but component " << n << " has degree " << node.degree());
+
+				REQUIRE(!node.neighbors[0].external, "The first link of each leaf  HT-Component must not be external. Violated by component " << n);
+				REQUIRE(node.neighbors[0].other == (n-1)/2, "The first link of each internal HT-Component must link to the parent node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << (n-1)/2 << ").");
+				REQUIRE(node.neighbors[0].indexPosition == (is_left_child(n) ? 1 : 2), "The first link of each HT-Component must link to the correct child index of the parent node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (is_left_child(n) ? 1 : 2) << ").");
+
+				REQUIRE(node.neighbors[1].external, "The second link of each HTO-Component must be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[1].indexPosition == i, "The second link of each HTO-Component must link to the external dimension equal to the leave position. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << i << ").");
+
+				REQUIRE(!isOperator || node.neighbors[2].external, "The third link of each HTO-Component must be external. Violated by component " << n << ".");
+				REQUIRE(!isOperator || node.neighbors[2].indexPosition == i + numLeaves, "The third link of each HTO-Component must link to the external dimension equal to the leave position + numLeaves. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << i + numLeaves << ").");
+
+				i++;
+			}
+		}
+	#else
+		template<bool isOperator>
+		void TTNetwork<isOperator>::require_correct_format() const { }
+	#endif
+
+
 
 	template<bool isOperator>
 	size_t HTNetwork<isOperator>::num_ranks() const {

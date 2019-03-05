@@ -458,7 +458,7 @@ namespace xerus {
 		 * @brief Tests whether the network resembles that of a HTTensor and checks consistency with the underlying tensor objects.
 		 * @details Note that this will NOT check for orthogonality of canonicalized HTNetworks.
 		 */
-//		virtual void require_correct_format() const override;
+		virtual void require_correct_format() const override;
 		
 		
 
