@@ -482,7 +482,7 @@ namespace xerus {
 		}
 	#else
 		template<bool isOperator>
-		void TTNetwork<isOperator>::require_correct_format() const { }
+		void HTNetwork<isOperator>::require_correct_format() const { }
 	#endif
 
 
