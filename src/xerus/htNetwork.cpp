@@ -411,7 +411,6 @@ namespace xerus {
 		template<bool isOperator>
 		void HTNetwork<isOperator>::require_correct_format() const {
 			require_valid_network(); // Network must at least be valid.
-			XERUS_LOG(info,"Checking if network is correct");
 			const size_t numLeaves = degree()/N;
 			const size_t numNodes = 2*numLeaves - 1;
 			REQUIRE(nodes.size() == numNodes + 1, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
