@@ -47,10 +47,6 @@ void expose_ttnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTTensor::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("constant",
-			+[](value_t _constant, std::vector<size_t> _dim, std::vector<size_t> _rank) {
-				return xerus::TTTensor::constant(_constant, _dim, _rank);
-			}).staticmethod("constant")
 		.def("ones", &TTTensor::ones).staticmethod("ones")
 		.def("kronecker", &TTTensor::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
@@ -115,10 +111,6 @@ void expose_ttnetwork() {
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTOperator::random(_dim, _rank);
 			}).staticmethod("random")
-		.def("constant",
-			+[](value_t _constant, std::vector<size_t> _dim, std::vector<size_t> _rank) {
-				return xerus::TTOperator::constant(_constant, _dim, _rank);
-			}).staticmethod("constant")
 		.def("ones", &TTOperator::ones).staticmethod("ones")
 		.def("kronecker", &TTOperator::kronecker).staticmethod("kronecker")
 		.def("dirac", static_cast<TTOperator (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTOperator::dirac))

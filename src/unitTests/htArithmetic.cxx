@@ -24,7 +24,7 @@
 #include "../../include/xerus/misc/internal.h"
 using namespace xerus;
 
-static misc::UnitTest ht_consitent("HT", "consistent networks", [](){
+static misc::UnitTest ht_consistent("HT", "consistent networks", [](){
 	auto ones = xerus::HTTensor::ones({3,4,5});
 	auto rt = xerus::HTNetwork<false>::random({2,3,4,5,6,7},3);
 	auto rtop = xerus::HTNetwork<true>::random({2,3,4,5,6,7},3);

@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2017 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2018 Benjamin Huber, Sebastian Wolf, Michael Götte.
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -43,8 +43,8 @@
 
 namespace xerus {
 	/**
-	* @brief Specialized TensorNetwork class used to represent HTTensor and HToperators.
-	* @details TTTensors correspond to isOperator=FALSE and TTOperators correspond to isOperator=FALSE.
+	* @brief Specialized TensorNetwork class used to represent balanced HTTensor and HToperators.
+	* @details HTTensors correspond to isOperator=FALSE and HTOperators correspond to isOperator=FALSE.
 	*/
 	template<bool isOperator>
 	class HTNetwork final : public TensorNetwork {
@@ -57,8 +57,8 @@ namespace xerus {
 		
 		/**
 		* @brief The position of the core.
-		* @details If canonicalized is TRUE, corePosition gives the position of the core tensor. All components
-		* with smaller index are then left-orthogonalized and all components with larger index right-orthogonalized.
+		* @details If canonicalized is TRUE, corePosition gives the position of the core tensor. All other components
+		* are orthoginal with respect to the edge closest to the core.
 		*/
 		size_t corePosition;		
 		
@@ -81,14 +81,16 @@ namespace xerus {
 		
 		/** 
 		* @brief Constructs an zero initialized HTNetwork with the given degree and ranks all equal to one.
-		* @details Naturally for TTOperators the degree must be even.
+		* @details Naturally for HTOperators the degree must be even.
+		* @param _degree number of physical indices
 		*/
 		explicit HTNetwork(const size_t _degree);
 		
 		
 		/** 
 		* @brief Constructs an zero initialized HTNetwork with the given dimensions and ranks all equal to one.
-		* @details Naturally for TTOperators the degree must be even.
+		* @details Naturally for HTOperators the degree must be even.
+		* @params _dimensions Tuple of the dimensions of the physical indices
 		*/
 		explicit HTNetwork(Tensor::DimensionTuple _dimensions);
 		
@@ -105,7 +107,7 @@ namespace xerus {
 		
 		/** 
 		* @brief Constructs a HTNetwork from the given Tensor.
-		* @details  The higher order SVD algorithm is used to decompose the given Tensor into the TT format.
+		* @details  The higher order SVD algorithm is used to decompose the given Tensor into the HT format.
 		* @param _tensor The Tensor to decompose.
 		* @param _eps the accuracy to be used in the decomposition.
 		* @param _maxRanks maximal ranks to be used
@@ -113,20 +115,12 @@ namespace xerus {
 		explicit HTNetwork(const Tensor& _tensor, const double _eps, const RankTuple& _maxRanks);
 		
 		
-		/** 
-		* @brief Transforms a given TensorNetwork to a TTNetwork.
-		* @details This is not yet implemented different from casting to Tensor and then using a HOSVD.
-		* @param _network The network to transform.
-		* @param _eps the accuracy to be used in the transformation.
-		*/
-// 		explicit TTNetwork(const TensorNetwork &_network, double _eps=EPSILON);
-		
 		
 		/** 
 		 * @brief Random constructs a HTNetwork with the given dimensions and ranks.
-		 * @details The entries of the componend tensors are sampled independendly using the provided random generator and distribution.
-		 * @param _dimensions the dimensions of the to be created TTNetwork.
-		 * @param _ranks the ranks of the to be created TTNetwork.
+		 * @details The entries of the component tensors are sampled independently using the provided random generator and distribution.
+		 * @param _dimensions the dimensions of the to be created HTNetwork.
+		 * @param _ranks the ranks of the to be created HTNetwork.
 		 * @param _rnd the random engine to be passed to the constructor of the component tensors.
 		 * @param _dist the random distribution to be passed to the constructor of the component tensors.
 		 */
@@ -177,8 +171,8 @@ namespace xerus {
 		
 		/** 
 		 * @brief Random constructs a HTNetwork with the given dimensions and ranks limited by the given rank.
-		 * @details The entries of the componend tensors are sampled independendly using the provided random generator and distribution.
-		 * @param _dimensions the dimensions of the to be created TTNetwork.
+		 * @details The entries of the component tensors are sampled independently using the provided random generator and distribution.
+		 * @param _dimensions the dimensions of the to be created HTNetwork.
 		 * @param _rank the maximal allowed rank. 
 		 * @param _rnd the random engine to be passed to the constructor of the component tensors.
 		 * @param _dist the random distribution to be passed to the constructor of the component tensors.
@@ -187,46 +181,10 @@ namespace xerus {
 		static HTNetwork XERUS_warn_unused random(const std::vector<size_t>& _dimensions, const size_t _rank, distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine) {
 			return HTNetwork::random(_dimensions, std::vector<size_t>(2 * _dimensions.size()/N - 2, _rank), _dist, _rnd);
 		}
-
-		
-		/**
-		 * @brief Random constructs a TTNetwork with the given dimensions and ranks. 
-		 * @details The entries of the componend tensors are sampled independendly using the provided random generator and distribution.
-		 *  the singular values of all matricisations M(1..n,n+1..N) are fixed according to the given function a posteriori
-		 *  The callback function is assumed to take a reference to a diagonal tensor and modify it to represent the desired singular values.
-		 */
-//		template<class distribution=std::normal_distribution<value_t>, class generator=std::mt19937_64>
-//		static TTNetwork XERUS_warn_unused random(const std::vector<size_t>& _dimensions, const std::vector<size_t> &_ranks,
-//								const std::function<void(Tensor&)> &_modifySingularValues,
-//								distribution& _dist=xerus::misc::defaultNormalDistribution, generator& _rnd=xerus::misc::randomEngine)
-//		{
-//			const size_t numComponents = _dimensions.size()/N;
-//
-//			TTNetwork result = random(_dimensions, _ranks, _dist, _rnd);
-//
-//			const Index i,j,k,l,m;
-//
-//			for (size_t pos = 0; pos+1 < numComponents; ++pos) {
-//				Tensor A;
-//				A(i,j^N,k^N,l) = result.component(pos)(i,j^N,m) * result.component(pos+1)(m,k^N,l);
-//				Tensor U,S,Vt;
-//				(U(i&1,j),S(j,k),Vt(k,l&1)) = SVD(A(i/2,l/2));
-//				_modifySingularValues(S);
-//				Vt(j,l&1) = S(j,k) * Vt(k,l&1);
-//				result.set_component(pos, U);
-//				result.set_component(pos+1, Vt);
-//				result.assume_core_position(pos+1);
-//			}
-//
-//			result.require_correct_format();
-//			XERUS_INTERNAL_CHECK(!result.exceeds_maximal_ranks(), "Internal Error");
-//			result.canonicalize_left();
-//			return result;
-//		}
 		
 		
 		/** 
-		 * @brief: Returns a the (rank one) HT-Tensor with all entries equal to one.
+		 * @brief: Returns a  (rank one) HTTensor with all entries equal to one.
 		 * @param _dimensions the dimensions of the new tensor.
 		 */
 		static HTNetwork XERUS_warn_unused ones(const std::vector<size_t>& _dimensions);
@@ -234,12 +192,12 @@ namespace xerus {
 		
 		/** 
 		 * @brief: Construct a HTOperator with the given dimensions representing the identity.
-		 * @details Only applicable for HTOperators, i.e. not for HhTtensors
-		 * @param _dimensions the dimensions of the new TTOperator.
+		 * @details Only applicable for HTOperators, i.e. not for HTTensosr
+		 * @param _dimensions the dimensions of the new HTOperator.
 		 */
-//		template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>
-//		static HTNetwork XERUS_warn_unused identity(const std::vector<size_t>& _dimensions);
-//
+		template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>
+		static HTNetwork XERUS_warn_unused identity(const std::vector<size_t>& _dimensions);
+
 		
 		/** 
 		 * @brief: Returns a HTNetwork representation of the kronecker delta.
@@ -250,19 +208,19 @@ namespace xerus {
 		
 		
 		/** 
+		 * @brief: Returns a HTNetwork with a single entry equals one and all other zero.
+		 * @param _dimensions the dimensions of the new tensor.
+		 * @param _position The position of the one
+		 */
+		static HTNetwork XERUS_warn_unused dirac(std::vector<size_t> _dimensions, const std::vector<size_t>& _position);
+		
+		
+		/** 
 		 * @brief: Returns a HTNetwork with a single entry equals oen and all other zero.
 		 * @param _dimensions the dimensions of the new tensor.
 		 * @param _position The position of the one
 		 */
-//		static HTNetwork XERUS_warn_unused dirac(std::vector<size_t> _dimensions, const std::vector<size_t>& _position);
-		
-		
-		/** 
-		 * @brief: Returns a Tensor with a single entry equals oen and all other zero.
-		 * @param _dimensions the dimensions of the new tensor.
-		 * @param _position The position of the one
-		 */
-//		static HTNetwork XERUS_warn_unused dirac(std::vector<size_t> _dimensions, const size_t _position);
+		static HTNetwork XERUS_warn_unused dirac(std::vector<size_t> _dimensions, const size_t _position);
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Standard Operators - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		///@brief HTNetworks are default assignable.
@@ -275,67 +233,65 @@ namespace xerus {
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	protected:
-		///@brief Constructs a TTNetwork in _out by decomposing the given Tensor _A.
-//		static void construct_train_from_full(TensorNetwork& _out, const Tensor& _A, const double _eps);
-		
-		
-		/** 
-		 * @brief Tests whether any rank exceeds the theoretic maximal value it should have.
-		 * @details Does not check for the actual minimal rank for this tensor. But if any rank exceeds the theoretic maximum it is guaranteed not to be the minimal rank.
-		 * @return TRUE if any rank exceeds its theoretic maximum.
+		/**
+		 * @brief Return the number of ranks, i.e. 0 for degree zero and number of components -1 otherwise.
+		 * @return number of ranks
 		 */
-//		bool exceeds_maximal_ranks() const;
-		
-		
-		///@brief Return the number of ranks, i.e. 0 for degree zero and degree()/N-1 otherwise.
 		size_t num_ranks() const;
 		
 		/**
 		 * @brief returns the path from one node to another in the binary tree
 		 * @details this function is used to shift the core tensor along this path when the core tensor is moved, e.g. in a level 3 hierachical where 0 is the root
 		 * and 3,4,5,6 are the leaves the path from 1 to 6 would be 1 -> 0 -> 2 -> 6
-		 * @param start node
-		 * @param end node
+		 * @param _start node
+		 * @param _end node
+		 * @return path from start to end
 		 */
 		std::vector<size_t> get_path(size_t _start, size_t _end) const;
 
 		/**
 		 * @brief function to recursively find the path from the root to a destination
-		 * @param root starting point for the downward search is 0 for the first call
-		 * @param dest destination node
-		 * @param path path from root to dest
+		 * @param _root starting point for the downward search is 0 for the first call
+		 * @param _dest destination node
+		 * @param _path path from root to dest
+		 * @return returns true if dest was found
 		 */
 		bool get_path_from_root(size_t _root, size_t _dest, std::vector<size_t>& _path ) const;
 
 		/**
 		 * @brief function which returns the parent of a given component
 		 * @details implements the root to leaves numbering of the HTNetwork
-		 * @param comp index of the component
+		 * @param _comp index of the component
+		 * @return returns parent of a component
 		 */
 		size_t get_parent_component(size_t _comp) const;
 
 		/**
 		 * @brief function which returns the left child of a given component
 		 * @details implements the root to leaves numbering of the HTNetwork
-		 * @param comp index of the component
+		 * @param _comp index of the component
+		 * @return returns left child of a component
 		 */
 		size_t get_left_child_component(size_t _comp) const;
 
 		/**
 		 * @brief function which returns the right child of a given component
 		 * @details implements the root to leaves numbering of the HTNetwork
-		 * @param comp index of the component
+		 * @param _comp index of the component
+		 * @return returns right child of a component
 		 */
 		size_t get_right_child_component(size_t _comp) const;
 
 		/**
 		 * @brief function which returns true if the component is the left child of its parent component or false if it is the right child
-		 * @param comp index of the component
+		 * @param _comp index of the component
+		 * @return bool if it is left child
 		 */
 		bool is_left_child(size_t _comp) const;
 
 		/**
 		 * @brief function which returns the number of components in an HTTensor
+		 * @return numbe rof components
 		 */
 		size_t get_number_of_components() const;
 
@@ -351,28 +307,16 @@ namespace xerus {
 		 */
 		//static std::vector<size_t> reduce_to_maximal_ranks(std::vector<size_t> _ranks, const std::vector<size_t>& _dimensions);
 		
-		/** 
-		 * @brief calculates the number of degrees of freedom of the manifold of fixed tt-rank @a _ranks with the given @a _dimensions
-		 */
-//		static size_t degrees_of_freedom(const std::vector<size_t> &_dimensions, const std::vector<size_t> &_ranks);
-		
-		/** 
-		 * @brief calculates the number of degrees of freedom of the manifold of fixed tt-rank that the given TTTensor is part of
-		 */
-//		size_t degrees_of_freedom();
-		
-//		virtual void fix_mode(const size_t _mode, const size_t _slatePosition) override;
-		
-//		virtual void resize_mode(const size_t _mode, const size_t _newDim, const size_t _cutPos=~0ul) override;
-		
+
+
 		/**
 		 * @brief Converts all components to use dense representations.
-		 * @note This might be required because not all functionality of TTNetworks is available with sparse component tensors.
+		 * @note This might be required because not all functionality of HTNetworks is available with sparse component tensors.
 		 */
-//		void use_dense_representations();
+		void use_dense_representations();
 		
 		/** 
-		* @brief Complete access to a specific component of the TT decomposition.
+		* @brief Complete access to a specific component of the HT decomposition.
 		* @note This function will not update rank and external dimension informations if it is used to set a component.
 		* @details This function gives complete access to the components, only intended for internal use.
 		* @param _idx index of the component to access.
@@ -384,9 +328,7 @@ namespace xerus {
 		/** 
 		* @brief Read access to a specific component of the HT decomposition.
 		* @details This function should be used to access the components, instead of direct access via
-		* nodes[...], because the implementation does not store the first component in nodes[0] but rather as
-		* nodes[1] etc. nodes[0] is an order one node with dimension one only used to allow the first component
-		* to be an order three tensor.
+		* nodes[...]
 		* @param _idx index of the component to access.
 		* @returns a const reference to the requested component.
 		*/
@@ -404,15 +346,6 @@ namespace xerus {
 		* @param i_isleave true if the component set is a leave false if it is an inner component
 		*/
 		void set_component(const size_t _idx, Tensor _T);
-		
-		
-		/** 
-		* @brief Splits the HTNetwork into two parts by removing the node.
-		* @param _position index of the component to be removed, thereby also defining the position 
-		*  of the split.
-		* @return a std::pair containing the two remaining parts as TensorNetworks.
-		*/
-//		std::pair<TensorNetwork, TensorNetwork> chop(const size_t _position) const;
 		
 		
 		/** 
@@ -466,7 +399,7 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Gets the rank of a specific egde of the HTNetwork.
+		* @brief Gets the rank of a specific edge of the HTNetwork.
 		* @param _i Position of the edge in question.
 		* @return The current rank of edge _i.
 		*/
@@ -486,7 +419,7 @@ namespace xerus {
 		
 		/**
 		* @brief stores @a _pos as the current core position without verifying of ensuring that this is the case
-		* @details this is particularly useful after constructing an own TT tensor with set_component calls
+		* @details this is particularly useful after constructing an own HT tensor with set_component calls
 		* as these will assume that all orthogonalities are destroyed
 		*/
 		void assume_core_position(const size_t _pos);
@@ -497,15 +430,7 @@ namespace xerus {
 		* @details Basically calls move_core() with _position = 0
 		*/
 		void canonicalize_root();
-		
-		
-		/** 
-		* @brief Move the core to the left.
-		* @details Basically calls move_core() with _position = degree()-1
-		*/
-//		void canonicalize_right();
-		
-		
+
 		/** 
 		* @brief Transpose the HTOperator
 		* @details Swaps all external indices to create the transposed operator.
@@ -524,15 +449,14 @@ namespace xerus {
 		virtual TensorNetwork* get_copy() const override;
 		
 		
-//		virtual void contract_unconnected_subnetworks() override;
 		
 		
 		virtual value_t frob_norm() const override;
 		
 		
 		/** 
-		 * @brief Tests whether the network resembles that of a TTTensor and checks consistency with the underlying tensor objects.
-		 * @details Note that this will NOT check for orthogonality of canonicalized TTNetworks.
+		 * @brief Tests whether the network resembles that of a HTTensor and checks consistency with the underlying tensor objects.
+		 * @details Note that this will NOT check for orthogonality of canonicalized HTNetworks.
 		 */
 //		virtual void require_correct_format() const override;
 		
@@ -649,45 +573,20 @@ namespace xerus {
 	HTNetwork<isOperator> operator/(HTNetwork<isOperator> _network, const value_t _divisor);
 
 
-//	/**
-//	* @brief Calculates the componentwise product of two tensors given in the TT format.
-//	* @details In general the resulting rank = rank(A)*rank(B). Retains the core position of @a _A
-//	*/
-//	template<bool isOperator>
-//	TTNetwork<isOperator> entrywise_product(const TTNetwork<isOperator>& _A, const TTNetwork<isOperator>& _B);
-//
-//	/**
-//	 * @brief Computes the dyadic product of @a _lhs and @a _rhs.
-//	 * @details This function is currently needed to keep the resulting network in the TTNetwork class.
-//	 * Apart from that the result is the same as result(i^d1, j^d2) = _lhs(i^d1)*_rhs(j^d2).
-//	 * @returns the dyadic product as a TTNetwork.
-//	 */
-//	template<bool isOperator>
-//	TTNetwork<isOperator> dyadic_product(const TTNetwork<isOperator> &_lhs, const TTNetwork<isOperator> &_rhs);
-//
-//
-//	/**
-//	 * @brief Computes the dyadic product of all given TTNetworks.
-//	 * @details This is nothing but the repeated application of dyadic_product() for the given TTNetworks.
-//	 * @returns the dyadic product as a TTNetwork.
-//	 */
-//	template<bool isOperator>
-//	TTNetwork<isOperator> dyadic_product(const std::vector<TTNetwork<isOperator>> &_tensors);
-//
-//
-//	namespace misc {
-//
-//		/**
-//		* @brief Pipes all information necessary to restore the current TensorNetwork into @a _stream.
-//		* @note that this excludes header information
-//		*/
-//		template<bool isOperator>
-//		void stream_writer(std::ostream& _stream, const TTNetwork<isOperator> &_obj, misc::FileFormat _format);
-//
-//		/**
-//		* @brief Restores the TTNetwork from a stream of data.
-//		*/
-//		template<bool isOperator>
-//		void stream_reader(std::istream& _stream, TTNetwork<isOperator> &_obj, const misc::FileFormat _format);
-//	}
+
+	namespace misc {
+
+		/**
+		* @brief Pipes all information necessary to restore the current TensorNetwork into @a _stream.
+		* @note that this excludes header information
+		*/
+		template<bool isOperator>
+		void stream_writer(std::ostream& _stream, const HTNetwork<isOperator> &_obj, misc::FileFormat _format);
+
+		/**
+		* @brief Restores the HTNetwork from a stream of data.
+		*/
+		template<bool isOperator>
+		void stream_reader(std::istream& _stream, HTNetwork<isOperator> &_obj, const misc::FileFormat _format);
+	}
 }
