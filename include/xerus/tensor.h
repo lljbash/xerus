@@ -233,9 +233,9 @@ namespace xerus {
 		/** 
 		 * @brief Constructs a dense Tensor with the given dimensions and uses the given random generator and distribution to assign the values to the entries.
 		 * @details The entries are assigned in the order they are stored (i.e. row-major order). Each assigned is a seperate call to the random distribution.
-		 * @param _dimensions the future dimensions of the Tensor.
+		 * @param _dimensions1 the future dimensions of the Tensor. Define the matrification on where the Tensor is orthogonal.
+		 * @param _dimensions2 the future dimensions of the Tensor.
 		 * @param _rnd the random generator to be used.
-		 * @param _dist the random distribution to be used.
 		 */
 		template<class generator=std::mt19937_64>
 		static Tensor XERUS_warn_unused random_orthogonal(DimensionTuple _dimensions1, DimensionTuple _dimensions2, generator& _rnd=xerus::misc::randomEngine) {
@@ -378,7 +378,7 @@ namespace xerus {
 		
 		/** 
 		 * @brief Assigns the given TensorNetwork to this Tensor by completely contracting the network.
-		 * @param _other the TensorNetwork to be to this Tensor.
+		 * @param _network the TensorNetwork to be to this Tensor.
 		 * @return a reference to this Tensor.
 		 */
 		Tensor& operator=(const TensorNetwork& _network);
@@ -944,6 +944,8 @@ namespace xerus {
 	 * @param _Vt Output Tensor for the resulting Vt.
 	 * @param _input input Tensor of which the SVD shall be calculated.
 	 * @param _splitPos index position at defining the matrification for which the SVD is calculated.
+	 * @param _maxRank maximal Rank to be kept by SVD
+	 * @param _eps all singular values smaller than _eps are cut off
 	 */
 	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps);
 	

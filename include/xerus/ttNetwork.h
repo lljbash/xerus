@@ -108,7 +108,7 @@ namespace xerus {
         explicit TTNetwork(const Tensor& _tensor, const double _eps, const RankTuple& _maxRanks);
 
 
-        /**
+        /*
         * @brief Transforms a given TensorNetwork to a TTNetwork.
         * @details This is not yet implemented different from casting to Tensor and then using a HOSVD.
         * @param _network The network to transform.
@@ -573,6 +573,7 @@ namespace xerus {
     /**
     * @brief Calculates the entrywise divison of this TTNetwork by a constant @a _divisor.
     * @details Internally this only results in a change in the global factor.
+    * @param _network the TTNetwork
     * @param _divisor the divisor,
     * @return the resulting scaled TTNetwork.
     */

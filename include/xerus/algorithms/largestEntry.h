@@ -30,6 +30,7 @@ namespace xerus {
 	 * @brief Finds the position of the approximately largest entry.
 	 * @details Finds an entry that is at least of size @a _accuracy * X_max in absolute value,
 	 * where X_max is the largest entry of the tensor. The smaller @a _accuracy, the faster the algorithm will work.
+	 * @param _T TTNetwork to check for largest entry
 	 * @param _accuracy factor that determains the maximal deviation of the returned entry from the true largest entry.
 	 * @param _lowerBound a lower bound for the largest entry, i.e. there must be an entry in the tensor which is at least of
 	 * this size (in absolute value). The algorithm may fail completely if this is not fullfilled, but will work using its own 
