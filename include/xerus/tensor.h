@@ -1019,25 +1019,35 @@ namespace xerus {
 
 	/**
 	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the LAPACK routine DGEEV. It calculates the eigenvalue with smallest real part.
-	 * @param _X Output Tensor for the result
+	 * @param _X Output Tensor for the result, this is the eigenvector in the appropriate tensor format
 	 * @param _A input Operator A symmetric with respect to matrification
 	 * @return the smallest eigenvalue
 	 */
-	double get_smallest_eigenvalue(Tensor &_X, const Tensor &_A);
+	value_t get_smallest_eigenpair(Tensor &_X, const Tensor &_A);
 
 
 #ifdef ARPACK_LIBRARIES
 	/**
-	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algerbaic values.
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
 	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
-	 * @param _A input Operator A symmetric with respect to matrification
-	 * @param _ev array holding smallest eigenvalue (ev[0]) after calculation
-	 * @param _info if 0 algorithm is randomly initialized, if > 0 it takes _X as starting point
+	 * @param _A input Operator A in Tensor Format, symmetric with respect to matrification
+	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
 	 * @param _miter maximal number of iterations of algorithm
 	 * @param _eps tolerance for iterative algorithm
+	 * @return smallest eigenvalue
 	 */
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps);
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const TensorNetwork& _op, double* const _ev, int _info, const size_t _miter, const double _eps);
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
+
+	/**
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
+	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
+	 * @param _A input Operator A in Tensor Network Format, symmetric with respect to matrification
+	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
+	 * @param _miter maximal number of iterations of algorithm
+	 * @param _eps tolerance for iterative algorithm
+	 * @return smallest eigenvalue
+	 */
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
 
 #endif
 

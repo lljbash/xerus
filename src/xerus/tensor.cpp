@@ -1715,7 +1715,7 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
-	double get_smallest_eigenvalue(Tensor& _X, const Tensor& _A) {
+	double get_smallest_eigenpair(Tensor& _X, const Tensor& _A) {
 			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 			REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
@@ -1766,14 +1766,16 @@ namespace xerus {
 		}
 	
 #ifdef ARPACK_LIBRARIES
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps) {
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize, const size_t _miter, const double _eps) {
 		REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 		REQUIRE(&_X != &_A, "Not supportet yet");
 		REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
 		REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
 
 		const size_t degN = _A.degree() / 2;
-		int info = _info;
+		int info = _initialize ? 0 : 1;
+		std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
+
 		// Calculate multDimensions
 		const size_t m = misc::product(_A.dimensions, 0, degN);
 		const size_t n = misc::product(_A.dimensions, degN, 2*degN);
@@ -1798,7 +1800,7 @@ namespace xerus {
 		arpackWrapper::solve_ev_smallest(
 			rev.get(), // right ritz vectors
 			_A.get_unsanitized_dense_data(),
-			_ev, 1, n,
+			ev.get(), 1, n,
 			res.get(),
 			_miter,
 			_eps, info
@@ -1808,26 +1810,27 @@ namespace xerus {
 		auto tmpX = _X.override_dense_data();
 		for (size_t i = 0; i < n; ++i)
 			tmpX[i] = rev[i];
-		return;
+		return ev[0];
 	}
 
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const TensorNetwork& _op, double* const _ev, int _info, const size_t _miter, const double _eps) {
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize, const size_t _miter, const double _eps) {
 			//REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
-			REQUIRE(_op.degree() % 2 == 0, "operator degree must be positive");
+			REQUIRE(_A.degree() % 2 == 0, "operator degree must be positive");
 
-			const size_t degN = _op.degree() / 2;
-			int info = _info;
+			const size_t degN = _A.degree() / 2;
+			int info = _initialize ? 0 : 1;
+			std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
 			// Calculate multDimensions
-			const size_t m = misc::product(_op.dimensions, 0, degN);
-			const size_t n =  misc::product(_op.dimensions, degN, 2*degN);
+			const size_t m = misc::product(_A.dimensions, 0, degN);
+			const size_t n =  misc::product(_A.dimensions, degN, 2*degN);
 			XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
 
 			// Make sure X has right dimensions
-			if(	_X.degree() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _op.dimensions.begin() + degN))
+			if(	_X.degree() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
 			{
 				Tensor::DimensionTuple newDimX;
-				newDimX.insert(newDimX.end(), _op.dimensions.begin()+degN, _op.dimensions.end());
+				newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
 				_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
 				info = 0; // info must be 0 if X is not random
 			}
@@ -1840,8 +1843,8 @@ namespace xerus {
 			// Note that A is dense here
 			arpackWrapper::solve_ev_smallest_special(
 				rev.get(), // right ritz vectors
-				_op,
-				_ev, 1, n,
+				_A,
+				ev.get(), 1, n,
 				res.get(),
 				_miter,
 				_eps, info
@@ -1851,7 +1854,7 @@ namespace xerus {
 			auto tmpX = _X.override_dense_data();
 			for (size_t i = 0; i < n; ++i)
 				tmpX[i] = rev[i];
-			return;
+			return ev[0];
 		}
 #endif
 

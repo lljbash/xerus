@@ -76,45 +76,51 @@ static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalu
 
     Tensor A1 = Tensor::random({4,3,4,3});
     Tensor x1({4,3});
-    double lambda1 = get_smallest_eigenvalue(x1,A1);
+    value_t lambda1 = get_smallest_eigenpair(x1,A1);
     TEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)) < 1e-13);
 
     Tensor A2 = Tensor::random({4,3,4,5,4,3,4,5});
 		Tensor x2({4,3,4,5});
-		double lambda2 = get_smallest_eigenvalue(x2,A2);
+		value_t lambda2 = get_smallest_eigenpair(x2,A2);
 		TEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 5e-12);
 });
 
 #ifdef ARPACK_LIBRARIES
 static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest eigenvalue of Matrix (iterative)", [](){
     Index i,j,k,l,m,n,o,p;
-
+    TensorNetwork A11,A22,A33;
     Tensor A1 = Tensor::random({4,3,4,3}) + (-1)*Tensor::identity({4,3,4,3});
+    A11(i/2,j/2) = A1(i/2, k/2) * A1(j/2, k/2);
   	A1(i/2,j/2) = A1(i/2, k/2) * A1(j/2, k/2);
     Tensor x1({4,3});
-  	std::unique_ptr<double[]> ev1(new double[1]);      // real eigenvalues
-  	std::unique_ptr<double[]> ev2(new double[1]);      // real eigenvalues
-  	std::unique_ptr<double[]> ev3(new double[1]);      // real eigenvalues
+    Tensor x11({4,3});
 
-  	get_smallest_eigenvalue_iterative(x1,A1,ev1.get(), 0, 10000, 1e-8);
-    double lambda1 = ev1[0];
+    value_t lambda1 = get_smallest_eigenpair_iterative(x1,A1, true, 10000, 1e-8);
+    value_t lambda11 = get_smallest_eigenpair_iterative(x11,A11, true, 10000, 1e-8);
     MTEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1* x1(i,j)) < 1e-8, frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)));
+    MTEST(frob_norm(A11(i,j,k,l)*x1(k,l) - lambda11* x11(i,j)) < 1e-8, frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11 * x11(i,j)));
 
     Tensor A2 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A22(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
   	A2(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
 
 		Tensor x2({2,2,2,2});
-		get_smallest_eigenvalue_iterative(x2,A2,ev2.get(), 0, 10000, 1e-8);
-    double lambda2 = ev2[0];
+		Tensor x22({2,2,2,2});
+		value_t lambda2 = get_smallest_eigenpair_iterative(x2,A2, true, 10000, 1e-8);
+		value_t lambda22 = get_smallest_eigenpair_iterative(x22,A22, true, 10000, 1e-8);
     MTEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 1e-8, frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)));
+    MTEST(frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)) < 1e-8, frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)));
 
     Tensor A3 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A33(i/2,j/2) = A3(i/2, k/2) * A3(j/2, k/2);
   	A3(i/2,j/2) = A3(i/2, k/2) * A3(j/2, k/2);
 
     Tensor x3 = Tensor::random({2,2,2,2});
-		get_smallest_eigenvalue_iterative(x3,A3,ev3.get(), 1, 10000, 1e-8);
-    double lambda3 = ev3[0];
+    Tensor x33 = Tensor::random({2,2,2,2});
+    value_t lambda3 = get_smallest_eigenpair_iterative(x3,A3, false, 10000, 1e-8);
+    value_t lambda33 = get_smallest_eigenpair_iterative(x33,A33, false, 10000, 1e-8);
     MTEST(frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)) < 1e-8, frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)));
+    MTEST(frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)) < 1e-8, frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)));
 });
 #endif
 
