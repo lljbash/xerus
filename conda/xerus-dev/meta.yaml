@@ -4,7 +4,7 @@ package:
 
 source:
   git_url: https://github.com/libxerus/xerus.git
-  git_tag: development
+  git_tag: conda
 
 requirements:
   build:
