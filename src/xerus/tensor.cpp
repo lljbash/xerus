@@ -1491,8 +1491,11 @@ namespace xerus {
 		_U.resize_mode(_U.degree()-1, rank);
 		_Vt.resize_mode(0, rank);
 
-        if (rank < full_rank) { return std::abs(_input.factor)*tmpS[rank]; }
-        else { return 0; }
+        if (rank < full_rank) { 
+			return blasWrapper::two_norm(tmpS.get()+rank, full_rank-rank);
+		} else {
+			return 0;
+		}
 	}
 	
 	

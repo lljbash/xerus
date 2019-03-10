@@ -945,7 +945,8 @@ namespace xerus {
 	 * @param _input input Tensor of which the SVD shall be calculated.
 	 * @param _splitPos index position at defining the matrification for which the SVD is calculated.
 	 * @param _maxRank maximal Rank to be kept by SVD
-	 * @param _eps all singular values smaller than _eps are cut off
+	 * @param _eps small singular values are removed as long as the introduced error is < @a _eps (_after_ @a _maxRank was applied)
+	 * @return the frobenious norm of the error introduced by the rank reduction
 	 */
 	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps);
 	
