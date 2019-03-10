@@ -73,33 +73,19 @@ static misc::UnitTest tt_round("TT", "TTTensor_Rounding", [](){
     
     
     Tensor A4 = Tensor::random({2,2,2,2,2,2,2,2});
-    Tensor B4;
-    TTTensor TTA4(A4, 1e-14);
-    B4(j,i^7) = TTA4(j,i^7);
-    TEST(approx_equal(B4,A4, 1e-14));
-    
-    TTA4.round(1e-14);
-    B4(j,i^7) = TTA4(j,i^7);
-    TEST(approx_equal(B4,A4, 1e-14));
-    
-    TTA4.round(512);
-    B4(j,i^7) = TTA4(j,i^7);
-    TEST(approx_equal(B4,A4, 1e-14));
+	for (double eps = 1e-3; eps < 1.0; eps*=1.2) {
+		TTTensor B4(A4);
+		B4.round(eps);
+		MTEST(approx_equal(A4, B4, eps), eps << " vs " << frob_norm(A4-Tensor(B4))/frob_norm(A4));
+	}
     
     
     Tensor A5 = Tensor::random({5,6,3,1,4,2,8,1});
-    Tensor B5;
-    TTTensor TTA5(A5, 1e-14);
-    B5(j,i^7) = TTA5(j,i^7);
-    TEST(approx_equal(B5,A5, 1e-14));
-    
-    TTA5.round(1e-14);
-    B5(j,i^7) = TTA5(j,i^7);
-    TEST(approx_equal(B5,A5, 1e-14));
-    
-    TTA5.round(576);
-    B5(j,i^7) = TTA5(j,i^7);
-    TEST(approx_equal(B5,A5, 1e-14));
+	for (double eps = 1e-3; eps < 1.0; eps*=1.2) {
+		TTTensor B5(A5);
+		B5.round(eps);
+		MTEST(approx_equal(A5, B5, eps), eps << " vs " << frob_norm(A5-Tensor(B5))/frob_norm(A5));
+	}
 });
 
 

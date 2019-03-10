@@ -1469,11 +1469,12 @@ namespace xerus {
 		}
 		
 		// Find rank due to the Epsilon (NOTE the scaling factor can be ignored, as it does not change the ratios).
-		for(size_t j = 1; j < rank; ++j) {
-			if (tmpS[j] <= _eps*tmpS[0]) {
-				rank = j;
-				break;
-			}
+		// For the total error to be < _eps, the sum of discarded singular value squares must be smaller than _eps times the norm, squared
+		value_t maxErrorSqr = misc::sqr(blasWrapper::two_norm(tmpS.get(), rank) * _eps);
+		value_t error = 0;
+		while (rank > 1 && error + misc::sqr(tmpS[rank-1]) <= maxErrorSqr) {
+			error += misc::sqr(tmpS[rank-1]);
+			rank -= 1;
 		}
 		
 		// Create tensor from diagonal values

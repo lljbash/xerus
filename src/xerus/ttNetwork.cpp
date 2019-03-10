@@ -662,9 +662,11 @@ namespace xerus {
         const size_t initialCorePosition = corePosition;
 
         canonicalize_right();
+		
+		auto epsPerSite = _eps / std::sqrt((double)numComponents-1);
 
         for(size_t i = 0; i+1 < numComponents; ++i) {
-            round_edge(numComponents-i, numComponents-i-1, _maxRanks[numComponents-i-2], _eps, 0.0);
+			round_edge(numComponents-i, numComponents-i-1, _maxRanks[numComponents-i-2], epsPerSite, 0.0);
         }
 
         assume_core_position(0);
