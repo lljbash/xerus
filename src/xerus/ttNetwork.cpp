@@ -270,11 +270,14 @@ namespace xerus {
         TTNetwork<isOperator> result(_dimensions);
 
         for (size_t i = 0; i < numComponents; ++i) {
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
             if(isOperator) {
                 result.set_component(i, Tensor::dirac({1, result.dimensions[i], result.dimensions[numComponents+i], 1}, _position[i]*result.dimensions[numComponents+i] + _position[numComponents+i]));
             } else {
                 result.set_component(i, Tensor::dirac({1, result.dimensions[i], 1}, _position[i]));
             }
+			#pragma GCC diagnostic pop
         }
         return result;
     }
@@ -1054,7 +1057,10 @@ namespace xerus {
         internal::TTStack<isOperator>* stackOther;
         if(moveOther && (stackOther = dynamic_cast<internal::TTStack<isOperator>*>(moveOther->tensorObject))) {
             ttOther = TTNetwork(*stackOther);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
             INTERNAL_CHECK(ttOther.dimensions == stackOther->dimensions, "Ie");
+			#pragma GCC diagnostic pop
         } else { // Other is normal
             INTERNAL_CHECK(dynamic_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable TTStack (or other error) detected.");
             ttOther = *static_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly);

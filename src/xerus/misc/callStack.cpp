@@ -144,7 +144,7 @@ namespace xerus { namespace misc { namespace internal {
 					continue;
 				}
 				res << ' ' << section->name;
-				if ((section->flags | SEC_CODE) == 0u) {
+				if ((section->flags & SEC_CODE) == 0u) {
 					return res.str()+"] <non executable address>";
 				}
 				// get more info on legal addresses

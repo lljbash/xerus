@@ -391,11 +391,14 @@ namespace xerus {
 		for (size_t i = numLeaves - 1; i < 2*numLeaves-1; ++i, ++dim_counter) {
 			if (dim_counter == numLeaves)
 				dim_counter = 0;
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			if(isOperator) {
 				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter], result.dimensions[numLeaves+dim_counter]}, _position[dim_counter]*result.dimensions[numLeaves+dim_counter] + _position[numLeaves+dim_counter]));
 			} else {
 				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter]}, _position[dim_counter]));
 			}
+			#pragma GCC diagnostic pop
 		}
 		return result;
 	}
@@ -1091,7 +1094,10 @@ namespace xerus {
 		internal::HTStack<isOperator>* stackOther;
 		if(moveOther && (stackOther = dynamic_cast<internal::HTStack<isOperator>*>(moveOther->tensorObject))) {
 			htOther = HTNetwork(*stackOther);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			INTERNAL_CHECK(htOther.dimensions == stackOther->dimensions, "Ie");
+			#pragma GCC diagnostic pop
 		} else { // Other is normal
 			INTERNAL_CHECK(dynamic_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable HTStack (or other error) detected.");
 			htOther = *static_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly);
