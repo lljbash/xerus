@@ -37,7 +37,6 @@
 #include "misc/timeMeasure.h"
 #include "misc/performanceAnalysis.h"
 #include "misc/exceptions.h"
-#include "misc/allocator.h"
 #include "misc/histogram.h"
 #include "misc/sort.h"
 #include "misc/math.h"

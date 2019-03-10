@@ -25,7 +25,6 @@
 #pragma once
 
 #include <stddef.h>
-#include "misc/allocator.h"
 #include "misc/standard.h"
 #include "misc/namedLogger.h"
 #include "tensorLogger.h"
