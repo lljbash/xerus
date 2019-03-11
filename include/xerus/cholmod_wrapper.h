@@ -39,24 +39,6 @@ namespace xerus {
 	namespace internal {
 		
 		
-		///@brief wrapper object for the cholmod_common struct to automatically call the constructor and destructor
-		struct CholmodCommon final {
-			struct RestrictedAccess final {
-				cholmod_common* const c;
-				std::mutex &lock;
-				RestrictedAccess(cholmod_common* const _c, std::mutex &_lock);
-				operator cholmod_common*() const;
-				~RestrictedAccess();
-			};
-			
-			std::unique_ptr<cholmod_common> c;
-			std::mutex lock;
-			CholmodCommon();
-			~CholmodCommon();
-			RestrictedAccess get();
-			std::function<void(cholmod_sparse*)> get_deleter();
-		};
-		
 		///@brief wrapper class for the cholmod sparse matrix objects
 		class CholmodSparse final {
 		public:
@@ -137,8 +119,5 @@ namespace xerus {
 				bool _fullrank
 			);
 		};
-		
-		
-		extern thread_local CholmodCommon cholmodObject;
 	}
 }
