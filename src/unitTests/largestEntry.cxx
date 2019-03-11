@@ -28,12 +28,13 @@ using namespace xerus;
 static misc::UnitTest alg_largestEntry("Algorithm", "LargestEntry", [](){
     //Random numbers
     std::mt19937_64 rnd = xerus::misc::randomEngine;
-	std::uniform_int_distribution<size_t> dimDist(1,3);
-	std::uniform_int_distribution<size_t> rankDist(1,4);
+	std::uniform_real_distribution<double> realDist(0.75, 1.0);
+	std::uniform_int_distribution<size_t> dimDist(1, 4);
+	std::uniform_int_distribution<size_t> rankDist(1, 5);
     
-	const size_t D = 16;
+	const size_t D = 15;
 	
-	for(size_t k = 0; k < 2; ++k) {
+	for(size_t k = 0; k < 3; ++k) {
 		std::vector<size_t> stateDims;
 		stateDims.push_back(dimDist(rnd));
 		
@@ -49,30 +50,42 @@ static misc::UnitTest alg_largestEntry("Algorithm", "LargestEntry", [](){
 			
 			Tensor fullX(X);
 			
-			size_t posA = 0, posB = 0;
+			size_t posA = 0, posB = 0, posC = 0;
 			for(size_t i = 1; i < fullX.size; ++i) {
-				if(std::abs(fullX[i]) >= std::abs(fullX[posA])) {
+				if (std::abs(fullX[i]) >= std::abs(fullX[posA])) {
+					posC = posB;
 					posB = posA;
 					posA = i;
-				}
-				else if(std::abs(fullX[i]) >= std::abs(fullX[posB])) {
+				} else if (std::abs(fullX[i]) >= std::abs(fullX[posB])) {
+					posC = posB;
 					posB = i;
+				} else if (std::abs(fullX[i]) >= std::abs(fullX[posC])) {
+					posC = i;
 				}
 			}
-			LOG(largestEntry, "Largest entries are: " << fullX[posA] << " and " << fullX[posB] << " at " << posA << " and " << posB);
+			
+// 			LOG(largestEntry, "Largest entries are: " << fullX[posA] << " , " << fullX[posB] << " and " << fullX[posC] << " at " << posA << " , " << posB << " and " << posC);
 			
 			double alpha = std::abs(fullX[posB]/fullX[posA]);
-			double Xn = std::abs(fullX[posA]);
+			double Xn = realDist(rnd)*std::abs(fullX[posA]);
 			
 			size_t position = find_largest_entry(X, alpha, Xn);
 			
-			LOG(largestEntry, "Result: " << fullX[position] << " vs " << fullX[posA] << " at positions " << position << " and " << posA);
+// 			LOG(largestEntry, "Result: " << fullX[position] << " vs " << fullX[posA] << " at positions " << position << " and " << posA);
 			TEST(position == posA);
-			if(position != posA) {
-				LOG(omg, fullX.to_string());
-			}
+			
+			alpha = std::abs(fullX[posC]/fullX[posA]);
+			Xn = realDist(rnd)*std::abs(fullX[posA]);
+			
+			position = find_largest_entry(X, alpha, Xn);
+			
+// 			LOG(largestEntry, "Result: " << fullX[position] << " vs " << fullX[posA] << " at positions " << position << " and " << posA);
+			TEST(position == posA || position == posB);
+			
+			
 		}
 	}
+	
 });
 
 // UNIT_TEST(Algorithm, rankRange,

@@ -38,6 +38,6 @@ namespace xerus {
 	 * @return the position of the entry found.
 	 */
 	template<bool isOperator>
-	size_t find_largest_entry(const TTNetwork<isOperator> &_T, double _accuracy, value_t _lowerBound = 0.0);
+	size_t find_largest_entry(const TTNetwork<isOperator> &_T, const double _accuracy, const value_t _lowerBound = 0.0);
 }
 

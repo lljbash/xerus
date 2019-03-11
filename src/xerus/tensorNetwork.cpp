@@ -764,7 +764,22 @@ namespace xerus {
             // ... calculate svd ...
             calculate_svd(coreA, S, coreB, X, 1, _maxRank, _eps);
 
-            S.modify_diagonal_entries([&](value_t& _d){ _d = std::max(0.0, _d - _softThreshold); });
+			if(_softThreshold > 0.0) {
+				// Reduce SVs and find new rank
+				size_t newRank = 0;
+				do {
+					S[{newRank, newRank}] = std::max(0.0, S[{newRank, newRank}]- _softThreshold);
+					newRank++;
+				} while (newRank < S.dimensions[0] && S[{newRank, newRank}] > _softThreshold);
+				
+				// Resize Tensors accordingly
+				S.resize_mode(0, newRank);
+				S.resize_mode(1, newRank);
+				
+				coreA.resize_mode(1, newRank);
+				coreB.resize_mode(0, newRank);
+				XERUS_REQUIRE_TEST;
+			}
 
             // ... contract S to the right ...
             xerus::contract(coreB, S, false, coreB, false, 1);
@@ -785,8 +800,23 @@ namespace xerus {
             xerus::contract(X, fromTensor, transFrom, toTensor, transTo, 1);
 
             calculate_svd(fromTensor, S, toTensor, X, fromDegree-1, _maxRank, _eps);
-
-            S.modify_diagonal_entries([&](value_t& _d){ _d = std::max(0.0, _d - _softThreshold); });
+			
+			if(_softThreshold > 0.0) {
+				// Reduce SVs and find new rank
+				size_t newRank = 0;
+				do {
+					S[{newRank, newRank}] = std::max(0.0, S[{newRank, newRank}]- _softThreshold);
+					newRank++;
+				} while (newRank < S.dimensions[0] && S[{newRank, newRank}] > _softThreshold);
+				
+				// Resize Tensors accordingly
+				S.resize_mode(0, newRank);
+				S.resize_mode(1, newRank);
+				
+				fromTensor.resize_mode(fromDegree-1, newRank);
+				toTensor.resize_mode(0, newRank);
+				XERUS_REQUIRE_TEST;
+			}
 
             if(transTo) {
                 xerus::contract(toTensor, toTensor, true, S, true, 1);
