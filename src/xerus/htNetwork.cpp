@@ -716,7 +716,8 @@ namespace xerus {
 		require_correct_format();
 		const size_t numOfLeaves = degree()/N;
 		const size_t numIntComp = numOfLeaves - 1;
-		const size_t numComponents = numIntComp + numOfLeaves;		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
+		const size_t numComponents = numIntComp + numOfLeaves;
+		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
 		REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0) ,"There must be exactly degree/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
 
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Trying to round a HTTensor to rank 0 is not possible.");
@@ -727,7 +728,7 @@ namespace xerus {
 		canonicalize_root();
 
 		for (size_t n = numComponents - 1; n > 0; --n) {
-			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n], _eps, 0.0);
+			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n - 1], _eps, 0.0);
 		}
 
 		assume_core_position(0);
