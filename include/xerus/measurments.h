@@ -51,7 +51,7 @@ namespace xerus {
 		MeasurementSet& operator=(const MeasurementSet&  _other) = default;
 		MeasurementSet& operator=(      MeasurementSet&& _other) = default;
 		
-		virtual ~MeasurementSet() = 0;
+		virtual ~MeasurementSet() = default;
 		
 		
 		///@brief Returns the number of measuremts.
@@ -98,7 +98,7 @@ namespace xerus {
 		virtual void check_consitency() = 0;
 		
 	protected:
-		virtual void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+		virtual void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) = 0;
 		
 		virtual void check_position(const std::vector<PositionType>& _position) = 0;
 		
@@ -144,7 +144,9 @@ namespace xerus {
 		virtual void get_values(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const override;
 	};
 
-
+	/**
+	* @brief Class used to represent a set of rank-one measurments.
+	*/
 	class RankOneMeasurementSet : public MeasurementSet<Tensor> {
 	public:
 		RankOneMeasurementSet() = default;

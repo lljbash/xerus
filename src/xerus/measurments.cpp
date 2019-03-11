@@ -200,6 +200,10 @@ namespace xerus {
 		return relative_weighted_l2_difference(measuredValues, testValues, weights);
 	}
 	
+	// Explicit instantiation of the two template parameters that will be implemented in the xerus library
+	template class MeasurementSet<size_t>;
+	template class MeasurementSet<Tensor>;
+	
 	
 	// --------------------- SinglePointMeasurementSet -----------------
 
@@ -245,35 +249,42 @@ namespace xerus {
 		);
 	}
 	
-
+	
+	struct vec_compare final {
+		bool operator() (const std::vector<size_t>& _lhs, const std::vector<size_t>& _rhs) const {
+			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions.");
+			for (size_t i = 0; i < _lhs.size(); ++i) {
+				if (_lhs[i] < _rhs[i]) { return true; }
+				if (_lhs[i] > _rhs[i]) { return false; }
+			}
+			return false; // equality
+		}
+	};
+	
 	void SinglePointMeasurementSet::create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) {
 		XERUS_REQUIRE(misc::product(_dimensions) >= _numMeasurements, "It's impossible to perform as many measurements as requested. " << _numMeasurements << " > " << _dimensions);
-
+		
 		// Create distributions
 		std::vector<std::uniform_int_distribution<size_t>> indexDist;
 		for (size_t i = 0; i < _dimensions.size(); ++i) {
 			indexDist.emplace_back(0, _dimensions[i]-1);
 		}
 
+		std::set<std::vector<size_t>, vec_compare> measuredPositions;
 		std::vector<size_t> multIdx(_dimensions.size());
-		for (size_t i = 0; i < _numMeasurements; ++i) {
-			for (size_t k = 0; k < _dimensions.size(); ++k) {
-				multIdx[k] = indexDist[k](misc::randomEngine);
+		while (measuredPositions.size() < _numMeasurements) {
+			for (size_t i = 0; i < _dimensions.size(); ++i) {
+				multIdx[i] = indexDist[i](misc::randomEngine);
 			}
-			positions.push_back(multIdx);
+			measuredPositions.insert(multIdx);
 		}
-		
-		std::sort(positions.begin(), positions.end(), [](const std::vector<size_t>& _lhs, const std::vector<size_t>& _rhs) {
-			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions.");
-			for (size_t i = 0; i < _lhs.size(); ++i) {
-				const auto res = internal::compare(_lhs[i], _rhs[i]);
-				if(res == -1) { return true; }
-				if(res == 1) { return false; }
-			}
-			return false; // equality
-		});
+
+		for(const auto& pos : measuredPositions) {
+			positions.push_back(pos);
+		}
 
 		measuredValues.resize(_numMeasurements, 0.0);
+
 	}
 	
 	
