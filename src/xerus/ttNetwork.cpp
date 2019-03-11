@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -270,11 +270,14 @@ namespace xerus {
         TTNetwork<isOperator> result(_dimensions);
 
         for (size_t i = 0; i < numComponents; ++i) {
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
             if(isOperator) {
                 result.set_component(i, Tensor::dirac({1, result.dimensions[i], result.dimensions[numComponents+i], 1}, _position[i]*result.dimensions[numComponents+i] + _position[numComponents+i]));
             } else {
                 result.set_component(i, Tensor::dirac({1, result.dimensions[i], 1}, _position[i]));
             }
+			#pragma GCC diagnostic pop
         }
         return result;
     }
@@ -662,9 +665,11 @@ namespace xerus {
         const size_t initialCorePosition = corePosition;
 
         canonicalize_right();
+		
+		auto epsPerSite = _eps / std::sqrt(double(numComponents)-1);
 
         for(size_t i = 0; i+1 < numComponents; ++i) {
-            round_edge(numComponents-i, numComponents-i-1, _maxRanks[numComponents-i-2], _eps, 0.0);
+			round_edge(numComponents-i, numComponents-i-1, _maxRanks[numComponents-i-2], epsPerSite, 0.0);
         }
 
         assume_core_position(0);
@@ -1052,7 +1057,10 @@ namespace xerus {
         internal::TTStack<isOperator>* stackOther;
         if(moveOther && (stackOther = dynamic_cast<internal::TTStack<isOperator>*>(moveOther->tensorObject))) {
             ttOther = TTNetwork(*stackOther);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
             INTERNAL_CHECK(ttOther.dimensions == stackOther->dimensions, "Ie");
+			#pragma GCC diagnostic pop
         } else { // Other is normal
             INTERNAL_CHECK(dynamic_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable TTStack (or other error) detected.");
             ttOther = *static_cast<const TTNetwork<isOperator>*>(_other.tensorObjectReadOnly);

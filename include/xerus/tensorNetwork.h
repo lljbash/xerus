@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -321,7 +321,7 @@ namespace xerus {
 
         /**
         * @brief Indexes the TensorNetwork for read/write use.
-        * @param _args several [indices](@ref Index) determining the desired index order.
+        * @param _indices several [indices](@ref Index) determining the desired index order.
         * @return an internal representation of an IndexedTensor(Network).
         */
         internal::IndexedTensor<TensorNetwork> operator()(const std::vector<Index> & _indices);
@@ -329,15 +329,15 @@ namespace xerus {
 
         /**
         * @brief Indexes the TensorNetwork for read/write use.
-        * @param _args several [indices](@ref Index) determining the desired index order.
+        * @param _indices several [indices](@ref Index) determining the desired index order.
         * @return an internal representation of an IndexedTensor(Network).
         */
-        internal::IndexedTensor<TensorNetwork> operator()(      std::vector<Index>&& _indices);
+        internal::IndexedTensor<TensorNetwork> operator()(std::vector<Index>&& _indices);
 
 
         /**
         * @brief Indexes the TensorNetwork for read only use.
-        * @param _args several [indices](@ref Index) determining the desired index order.
+        * @param _indices several [indices](@ref Index) determining the desired index order.
         * @return an internal representation of an IndexedTensor(Network).
         */
         internal::IndexedTensorReadOnly<TensorNetwork> operator()(const std::vector<Index> & _indices) const;
@@ -345,10 +345,10 @@ namespace xerus {
 
         /**
         * @brief Indexes the TensorNetwork for read only use.
-        * @param _args several [indices](@ref Index) determining the desired index order.
+        * @param _indices several [indices](@ref Index) determining the desired index order.
         * @return an internal representation of an IndexedTensor(Network).
         */
-        internal::IndexedTensorReadOnly<TensorNetwork> operator()(      std::vector<Index>&& _indices) const;
+        internal::IndexedTensorReadOnly<TensorNetwork> operator()(std::vector<Index>&& _indices) const;
 
 
         /*- - - - - - - - - - - - - - - - - - - - - - - - - - Operator specializations - - - - - - - - - - - - - - - - - - - - - - - - - - */

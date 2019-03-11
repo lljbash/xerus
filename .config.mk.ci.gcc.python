@@ -3,27 +3,26 @@
 #=================================================================================================
 CXX = g++
 COMPATIBILITY = -std=c++11
+PYTHON2_CONFIG = `python2-config --cflags --ldflags`
+PYTHON3_CONFIG = `python3-config --cflags --ldflags`
+PYTEST2 = pytest
+PYTEST3 = pytest-3
 
 STRICT_WARNINGS = TRUE
-
-# HIGH_OPTIMIZATION = TRUE          # Activates -O3 -march=native and some others
-DEBUG += -D XERUS_DISABLE_RUNTIME_CHECKS    # Disable all runtime checks
-DEBUG += -D XERUS_REPLACE_ALLOCATOR
+# DEBUG += -D XERUS_TEST_COVERAGE                 # Enable coverage tests
 
  DEBUG += -g                # Adds debug symbols
-
-
-LOGGING += -D XERUS_LOG_INFO                     # Information that is not linked to any unexpected behaviour bu
 
 #=================================================================================================
 # External libraries
 #=================================================================================================
 BLAS_LIBRARIES = -lopenblas -lgfortran                    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack                     # Standard Lapack + Lapacke libraries
-SUITESPARSE = -lcholmod -lspqr
+SUITESPARSE = -lcholmod  -lspqr
 BOOST_LIBS = -lboost_filesystem
 
-# custom include paths
-# OTHER += -I /path/to/include
+OTHER += -I /usr/include/python2.7/ -lboost_python -I/usr/lib64/python2.7/site-packages/numpy/core/include/ -lpython2.7 -fno-var-tracking-assignments
 
+BOOST_PYTHON2 = -lboost_python-py27
+BOOST_PYTHON3 = -lboost_python-py35
 

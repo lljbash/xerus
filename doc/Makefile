@@ -32,11 +32,13 @@ include ../makeIncludes/general.mk
 include ../makeIncludes/warnings.mk
 include ../makeIncludes/optimization.mk
 
-FLAGS = $(strip $(WARNINGS) $(OPTIMIZE) $(OTHER)) -std=c++11
+FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(OPTIMIZE) $(OTHER))
+MINIMAL_DEPS = Makefile ../config.mk
 
-parseDoxytags: ../src/docHelper/parseDoxytags.cpp
+
+parseDoxytags: $(MINIMAL_DEPS) ../src/docHelper/parseDoxytags.cpp
 	$(CXX) $(FLAGS) ../src/docHelper/parseDoxytags.cpp -o parseDoxytags
 
 
-findDoxytag: ../src/docHelper/findDoxytag.cpp
+findDoxytag: $(MINIMAL_DEPS) ../src/docHelper/findDoxytag.cpp
 	$(CXX) $(FLAGS) ../src/docHelper/findDoxytag.cpp -o findDoxytag

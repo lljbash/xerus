@@ -15,5 +15,8 @@ DEBUG += -D XERUS_TEST_COVERAGE                 # Enable coverage tests
 BLAS_LIBRARIES = -lopenblas -lgfortran                    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack                     # Standard Lapack + Lapacke libraries
 SUITESPARSE = -lcholmod  -lspqr
+BOOST_LIBS = -lboost_filesystem
 
 OTHER += -I /usr/include/python2.7/ -lboost_python -I/usr/lib64/python2.7/site-packages/numpy/core/include/ -lpython2.7 -fno-var-tracking-assignments
+
+

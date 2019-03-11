@@ -2,6 +2,12 @@
 
 Potentially breaking changes are marked with an exclamation point '!' at the begin of their description.
 
+* 2019-03-?? v4.0.0
+ * Added the HTTensor class for Hierarchical Tensor Decompositions with balanced trees.
+ * ! Changed the truncated SVD, TensorNetwork::round_edge and TT:round with epsilon to limit their respective relative errors to epsilon.
+ * ! Removed support for the replacement allocator.
+ * ! Changed some Makefile configs for more flexibility. See the new config.mk.default file and update your own config.
+
 * 2017-05-31 v3.0.1
  * Added TTNetwork::use_dense_representations() to convert all components to dense representation.
  * Exporting Tensor::dense_copy() and Tensor::sparse_copy() to python.

@@ -286,12 +286,15 @@ namespace xerus {
 		}
 
 		HTNetwork result(_dimensions.size());
+		size_t dim_counter = 2*numOfLeaves - static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
 		//Leaves
 		std::vector<size_t> dimensions(isOperator ? 3 : 2, 1);
-		for(size_t i = numIntComp; i < numComponents; ++i) {
-			dimensions[1] = _dimensions[i - numIntComp];
+		for(size_t i = numIntComp; i < numComponents; ++i,++dim_counter) {
+			if (dim_counter == numOfLeaves)
+							dim_counter = 0;
+			dimensions[1] = _dimensions[dim_counter];
 			if (isOperator) {
-				dimensions[2] = _dimensions[i - numIntComp + numOfLeaves];
+				dimensions[2] = _dimensions[dim_counter + numOfLeaves];
 			}
 			result.set_component(i, Tensor::ones(dimensions));
 		}
@@ -304,36 +307,38 @@ namespace xerus {
 		result.canonicalize_root();
 		return result;
 	}
-//
-//
-//	template<> template<>
-//	TTNetwork<true> TTNetwork<true>::identity(const std::vector<size_t>& _dimensions) {
-//		REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for ttOperator");
-//		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a TTTensor with dimension 0 is not possible.");
-//
-//		if(_dimensions.empty()) {
-//			return TTNetwork(Tensor::ones({}));
-//		}
-//
-//		const size_t numComponents = _dimensions.size()/N;
-//
-//		TTNetwork result(_dimensions.size());
-//
-//		std::vector<size_t> constructionVector(4, 1);
-//		for (size_t i = 0; i < numComponents; ++i) {
-//			constructionVector[1] = _dimensions[i];
-//			constructionVector[2] = _dimensions[i+numComponents];
-//			result.set_component(i, Tensor(constructionVector, [](const std::vector<size_t> &_idx){
-//				if (_idx[1] == _idx[2]) {
-//					return 1.0;
-//				}
-//				return 0.0;
-//			}));
-//		}
-//
-//		result.canonicalize_left();
-//		return result;
-//	}
+
+
+	template<> template<>
+	HTNetwork<true> HTNetwork<true>::identity(const std::vector<size_t>& _dimensions) {
+		REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for htOperator");
+		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
+
+		if(_dimensions.empty()) {
+			return HTNetwork(Tensor::ones({}));
+		}
+
+		const size_t numLeaves = _dimensions.size()/N;
+
+		HTNetwork result(_dimensions.size());
+		size_t dim_counter = 2*numLeaves - static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+		std::vector<size_t> constructionVector(3, 1);
+		for (size_t i = numLeaves-1; i < 2*numLeaves - 1; ++i, ++dim_counter) {
+			if (dim_counter == numLeaves)
+				dim_counter = 0;
+			constructionVector[1] = _dimensions[dim_counter];
+			constructionVector[2] = _dimensions[dim_counter + numLeaves];
+			result.set_component(i, Tensor(constructionVector, [](const std::vector<size_t> &_idx){
+				if (_idx[1] == _idx[2]) {
+					return 1.0;
+				}
+				return 0.0;
+			}));
+		}
+
+		result.canonicalize_root();
+		return result;
+	}
 //
 //	template<bool isOperator>
 //	TTNetwork<isOperator> TTNetwork<isOperator>::kronecker(const std::vector<size_t>& _dimensions) {
@@ -368,112 +373,123 @@ namespace xerus {
 //		return result;
 //	}
 //
-//	template<bool isOperator>
-//	TTNetwork<isOperator> TTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const std::vector<size_t>& _position) {
-//		REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for ttOperator");
-//		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a TTTensor with dimension 0 is not possible.");
-//		REQUIRE(_dimensions.size() == _position.size(), "Inconsitend number of entries in _dimensions and _position.");
-//
-//		const size_t numComponents = _dimensions.size()/N;
-//
-//		if(numComponents <= 1) {
-//			return TTNetwork(Tensor::dirac(_dimensions, _position));
-//		}
-//
-//		TTNetwork result(_dimensions);
-//
-//		for (size_t i = 0; i < numComponents; ++i) {
-//			if(isOperator) {
-//				result.set_component(i, Tensor::dirac({1, result.dimensions[i], result.dimensions[numComponents+i], 1}, _position[i]*result.dimensions[numComponents+i] + _position[numComponents+i]));
-//			} else {
-//				result.set_component(i, Tensor::dirac({1, result.dimensions[i], 1}, _position[i]));
-//			}
-//		}
-//		return result;
-//	}
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> TTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const size_t _position) {
-//		return dirac(_dimensions, Tensor::position_to_multiIndex(_position, _dimensions));
-//	}
-//
-//
-//	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-//
-//	#ifndef XERUS_DISABLE_RUNTIME_CHECKS
-//		template<bool isOperator>
-//		void TTNetwork<isOperator>::require_correct_format() const {
-//			require_valid_network(); // Network must at least be valid.
-//
-//			const size_t numComponents = degree()/N;
-//			const size_t numNodes = degree() == 0 ? 1 : degree()/N + 2;
-//			REQUIRE(nodes.size() == numNodes, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
-//			REQUIRE(!canonicalized || (degree() == 0 && corePosition == 0) || corePosition < numComponents, "Invalid corePosition: " << corePosition << " there are only " << numComponents << " components.");
-//
-//			// Per external link
-//			for (size_t n = 0; n < externalLinks.size(); ++n) {
-//				const TensorNetwork::Link &l = externalLinks[n];
-//				REQUIRE(l.other == (n%numComponents)+1, "The " << n << "-th external link must point the the " << (n%numComponents) << "-th component (i.e. the " << (n%numComponents)+1 << "-th node) but does point to the " << l.other << "-th node.");
-//			}
-//
-//			// Virtual nodes
-//			if(degree() > 0) {
-//				REQUIRE(nodes.front().degree() == 1, "The left virtual node must have degree 1, but has size " << nodes.front().degree());
-//				REQUIRE(nodes.front().neighbors[0].dimension == 1, "The left virtual node's single dimension must be 1, but is " << nodes.front().neighbors[0].dimension);
-//				REQUIRE(nodes.front().neighbors[0].other == 1, "The left virtual node's single link must be to node 1, but is towards node " << nodes.front().neighbors[0].other);
-//				REQUIRE(nodes.front().neighbors[0].indexPosition == 0, "The left virtual node's single link must link at indexPosition 0, but link at " << nodes.front().neighbors[0].indexPosition);
-//				REQUIRE(misc::hard_equal((*nodes.front().tensorObject)[0], 1.0), "The left virtual node's single entry must be 1.0, but it is " << (*nodes.front().tensorObject)[0]);
-//				REQUIRE(!nodes.front().tensorObject->has_factor(), "The left virtual node must no carry a non-trivial factor.");
-//
-//				REQUIRE(nodes.back().degree() == 1, "The right virtual node must have degree 1, but has size " << nodes.back().degree());
-//				REQUIRE(nodes.back().neighbors[0].dimension == 1, "The right virtual node's single dimension must be 1, but is " << nodes.back().neighbors[0].dimension);
-//				REQUIRE(nodes.back().neighbors[0].other == numNodes-2, "The right virtual node's single link must be to node " << numNodes-2 << ", but is towards node " << nodes.back().neighbors[0].other);
-//				REQUIRE(nodes.back().neighbors[0].indexPosition == N+1, "The right virtual node's single link must link at indexPosition " << N+1 << ", but link at " << nodes.back().neighbors[0].indexPosition);
-//				REQUIRE(misc::hard_equal((*nodes.back().tensorObject)[0], 1.0), "The right virtual node's single entry must be 1.0, but it is " << (*nodes.back().tensorObject)[0]);
-//				REQUIRE(!nodes.back().tensorObject->has_factor(), "The right virtual node must no carry a non-trivial factor.");
-//			}
-//
-//			// Per component
-//			for (size_t n = 0; n < numComponents; ++n) {
-//				const TensorNode& node = nodes[n+1];
-//
-//				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized TTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
-//
-//				REQUIRE(node.degree() == N+2, "Every TT-Component must have degree " << N+2 << ", but component " << n << " has degree " << node.degree());
-//				REQUIRE(!node.neighbors[0].external, "The first link of each TT-Component must not be external. Violated by component " << n);
-//				REQUIRE(node.neighbors[0].other == n, "The first link of each TT-Component must link to the previous node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << n << ").");
-//				REQUIRE(node.neighbors[0].indexPosition == (n==0?0:N+1), "The first link of each TT-Component must link to the last last index of the previous node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (n==0?0:N+1) << ").");
-//
-//				REQUIRE(node.neighbors[1].external, "The second link of each TT-Component must be external. Violated by component " << n << ".");
-//				REQUIRE(node.neighbors[1].indexPosition == n, "The second link of each TT-Component must link to the external dimension equal to the component position. Violated by component " << n << " which links at " << node.neighbors[1].indexPosition);
-//				REQUIRE(!isOperator || node.neighbors[2].external, "The third link of each TTO-Component must be external. Violated by component " << n << ".");
-//				REQUIRE(!isOperator || node.neighbors[2].indexPosition == numComponents+n, "The third link of each TTO-Component must link to the external dimension equal to the component position + numComponents. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << numComponents+n << ").");
-//
-//				REQUIRE(!node.neighbors.back().external, "The last link of each TT-Component must not be external. Violated by component " << n);
-//				REQUIRE(node.neighbors.back().other == n+2, "The last link of each TT-Component must link to the next node. Violated by component " << n << ", which instead links to node " << node.neighbors.back().other << " (expected " << n+2 << ").");
-//				REQUIRE(node.neighbors.back().indexPosition == 0, "The last link of each TT-Component must link to the first index of the next node. Violated by component " << n << ", which instead links to index " << node.neighbors.back().indexPosition << " (expected 0).");
-//			}
-//		}
-//	#else
-//		template<bool isOperator>
-//		void TTNetwork<isOperator>::require_correct_format() const { }
-//	#endif
-//
-//
-//	template<bool isOperator>
-//	bool TTNetwork<isOperator>::exceeds_maximal_ranks() const {
-//		const size_t numComponents = dimensions.size()/N;
-//		for (size_t i = 0; i < numComponents; ++i) {
-//			const Tensor& comp = get_component(i);
-//			const size_t extDim = isOperator ? comp.dimensions[1]*comp.dimensions[2] : comp.dimensions[1];
-//			if (comp.dimensions.front() > extDim * comp.dimensions.back() || comp.dimensions.back() > extDim * comp.dimensions.front()) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
-//
-//
+	template<bool isOperator>
+	HTNetwork<isOperator> HTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const std::vector<size_t>& _position) {
+		REQUIRE(_dimensions.size()%N==0, "Illegal number of dimensions for htOperator");
+		REQUIRE(!misc::contains(_dimensions, size_t(0)), "Trying to construct a HTTensor with dimension 0 is not possible.");
+		REQUIRE(_dimensions.size() == _position.size(), "Inconsistend number of entries in _dimensions and _position.");
+
+		const size_t numLeaves = _dimensions.size()/N;
+
+		if(numLeaves <= 1) {
+			return HTNetwork(Tensor::dirac(_dimensions, _position));
+		}
+
+		HTNetwork result(_dimensions);
+		size_t dim_counter = 2*numLeaves - static_cast<size_t>(std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+
+		for (size_t i = numLeaves - 1; i < 2*numLeaves-1; ++i, ++dim_counter) {
+			if (dim_counter == numLeaves)
+				dim_counter = 0;
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+			if(isOperator) {
+				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter], result.dimensions[numLeaves+dim_counter]}, _position[dim_counter]*result.dimensions[numLeaves+dim_counter] + _position[numLeaves+dim_counter]));
+			} else {
+				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter]}, _position[dim_counter]));
+			}
+			#pragma GCC diagnostic pop
+		}
+		return result;
+	}
+
+	template<bool isOperator>
+	HTNetwork<isOperator> HTNetwork<isOperator>::dirac(std::vector<size_t> _dimensions, const size_t _position) {
+		return dirac(_dimensions, Tensor::position_to_multiIndex(_position, _dimensions));
+	}
+
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+	#ifndef XERUS_DISABLE_RUNTIME_CHECKS
+		template<bool isOperator>
+		void HTNetwork<isOperator>::require_correct_format() const {
+			require_valid_network(); // Network must at least be valid.
+			const size_t numLeaves = degree()/N;
+			const size_t numNodes = 2*numLeaves - 1;
+			REQUIRE(nodes.size() == numNodes + 1, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
+			REQUIRE(!canonicalized || (degree() == 0 && corePosition == 0) || corePosition < numNodes, "Invalid corePosition: " << corePosition << " there are only " << numNodes << " components.");
+
+			const size_t numFullLeaves = numLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numLeaves)))));
+
+			std::vector<size_t> leaf_order;
+			for (size_t i = numFullLeaves - 1; i < numNodes; ++i)
+				leaf_order.emplace_back(i);
+			for (size_t i = numLeaves - 1; i < numFullLeaves - 1 ; ++i)
+				leaf_order.emplace_back(i);
+
+			// Per external link
+			for (size_t n = 0; n < externalLinks.size(); ++n) {
+				const TensorNetwork::Link &l = externalLinks[n];
+				REQUIRE(l.other == leaf_order[(n%numLeaves)], "The " << n << "-th external link must point the the " << leaf_order[(n%numLeaves)] << "-th component,  but does point to the " << l.other << "-th node.");
+			}
+
+			// Virtual nodes
+			if(degree() > 0) {
+				REQUIRE(nodes.back().degree() == 1, "The virtual node must have degree 1, but has size " << nodes.back().degree());
+				REQUIRE(nodes.back().neighbors[0].dimension == 1, "The virtual node's single dimension must be 1, but is " << nodes.back().neighbors[0].dimension);
+				REQUIRE(nodes.back().neighbors[0].other == 0, "The virtual node's single link must be to node " << 0 << ", but is towards node " << nodes.back().neighbors[0].other);
+				REQUIRE(nodes.back().neighbors[0].indexPosition == 0, "The virtual node's single link must link at indexPosition " << 0 << ", but link at " << nodes.back().neighbors[0].indexPosition);
+				REQUIRE(misc::hard_equal((*nodes.back().tensorObject)[0], 1.0), "The virtual node's single entry must be 1.0, but it is " << (*nodes.back().tensorObject)[0]);
+				REQUIRE(!nodes.back().tensorObject->has_factor(), "The virtual node must not carry a non-trivial factor.");
+			}
+
+			// Per  internal component
+			for (size_t n = 0; n < numLeaves-1; ++n) {
+				const TensorNode& node = nodes[n];
+
+				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized HTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
+
+				REQUIRE(node.degree() == 3, "Every internal HT-Component must have degree " << 3 << ", but component " << n << " has degree " << node.degree());
+				REQUIRE(!node.neighbors[0].external, "The first link of each internal HT-Component must not be external. Violated by component " << n);
+				REQUIRE(node.neighbors[0].other == (n==0? 2*numLeaves - 1 : (n-1)/2), "The first link of each internal HT-Component must link to the parent node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << (n==0? 2*numLeaves - 1 : (n-1)/2) << ").");
+				REQUIRE(node.neighbors[0].indexPosition == (n==0?0:(is_left_child(n) ? 1 : 2)), "The first link of each HT-Component must link to the correct child index of the parent node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (n==0?0:(is_left_child(n) ? 1 : 2)) << ").");
+
+				REQUIRE(!node.neighbors[1].external, "The second link of each TT-Component must not be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[1].other == 2*n + 1, "The second link of each internal HT-Component must link to the left child node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << 2*n + 1 << ").");
+				REQUIRE(node.neighbors[1].indexPosition == 0, "The second link of each HT-Component must link to the first index of the child node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << 0 << ").");
+
+				REQUIRE(!node.neighbors[2].external, "The third link of each TT-Component must not be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[2].other == 2*n + 2, "The third link of each internal HT-Component must link to the left child node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << 2*n + 2 << ").");
+				REQUIRE(node.neighbors[2].indexPosition == 0, "The third link of each HT-Component must link to the first index of the child node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << 0 << ").");
+
+			}
+			// Per leaves
+			size_t i = 0;
+			for (size_t n: leaf_order){
+				const TensorNode& node = nodes[n];
+				REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized HTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
+				REQUIRE(node.degree() == N+1, "Every leaf HT-Component must have degree " << N+1 << ", but component " << n << " has degree " << node.degree());
+
+				REQUIRE(!node.neighbors[0].external, "The first link of each leaf  HT-Component must not be external. Violated by component " << n);
+				REQUIRE(node.neighbors[0].other == (n-1)/2, "The first link of each internal HT-Component must link to the parent node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << (n-1)/2 << ").");
+				REQUIRE(node.neighbors[0].indexPosition == (is_left_child(n) ? 1 : 2), "The first link of each HT-Component must link to the correct child index of the parent node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (is_left_child(n) ? 1 : 2) << ").");
+
+				REQUIRE(node.neighbors[1].external, "The second link of each HTO-Component must be external. Violated by component " << n << ".");
+				REQUIRE(node.neighbors[1].indexPosition == i, "The second link of each HTO-Component must link to the external dimension equal to the leave position. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << i << ").");
+
+				REQUIRE(!isOperator || node.neighbors[2].external, "The third link of each HTO-Component must be external. Violated by component " << n << ".");
+				REQUIRE(!isOperator || node.neighbors[2].indexPosition == i + numLeaves, "The third link of each HTO-Component must link to the external dimension equal to the leave position + numLeaves. Violated by component " << n << " which links at " << node.neighbors[2].indexPosition << " (expected " << i + numLeaves << ").");
+
+				i++;
+			}
+		}
+	#else
+		template<bool isOperator>
+		void HTNetwork<isOperator>::require_correct_format() const { }
+	#endif
+
+
+
 	template<bool isOperator>
 	size_t HTNetwork<isOperator>::num_ranks() const {
 		return degree() == 0 ? 0 : get_number_of_components() - 1;
@@ -584,58 +600,16 @@ namespace xerus {
 //		return _ranks;
 //	}
 
-//
-//	template<bool isOperator>
-//	size_t TTNetwork<isOperator>::degrees_of_freedom(const std::vector<size_t> &_dimensions, const std::vector<size_t> &_ranks) {
-//		if (_dimensions.empty()) { return 1; }
-//		const size_t numComponents = _dimensions.size()/N;
-//		REQUIRE(_dimensions.size()%N == 0, "invalid number of dimensions for TTOperator");
-//		REQUIRE(numComponents == _ranks.size()+1, "Invalid number of ranks ("<<_ranks.size()<<") or dimensions ("<<_dimensions.size()<<") given.");
-//		size_t result = 0;
-//		for (size_t i=0; i<numComponents; ++i) {
-//			size_t component = i==0? 1 : _ranks[i-1];
-//			component *= _dimensions[i];
-//			if (isOperator) { component *= _dimensions[i+numComponents]; }
-//			if (i<_ranks.size()) { component *= _ranks[i]; }
-//			result += component;
-//		}
-//		for (const auto r : _ranks) {
-//			result -= misc::sqr(r);
-//		}
-//		return result;
-//	}
-//
-//	template<bool isOperator>
-//	size_t TTNetwork<isOperator>::degrees_of_freedom() {
-//		return degrees_of_freedom(dimensions, ranks());
-//	}
-//
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::fix_mode(const size_t _mode, const size_t _slatePosition) {
-//		REQUIRE(!isOperator, "fix_mode(), does not work for TTOperators, if applicable cast to TensorNetwork first");
-//		TensorNetwork::fix_mode(_mode, _slatePosition);
-//	}
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::resize_mode(const size_t _mode, const size_t _newDim, const size_t _cutPos) {
-//		TensorNetwork::resize_mode(_mode, _newDim, _cutPos);
-//		if(canonicalized && _newDim != corePosition) {
-//			const size_t oldCorePosition = corePosition;
-//			const size_t numComponents = degree()/N;
-//			move_core(_mode%numComponents);
-//			move_core(oldCorePosition);
-//		}
-//	}
-//
-//
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::use_dense_representations() {
-//		for (size_t i = 0; i < degree(); ++i) {
-//			component(i).use_dense_representation();
-//		}
-//	}
-//
+
+
+
+	template<bool isOperator>
+	void HTNetwork<isOperator>::use_dense_representations() {
+		for (size_t i = 0; i < get_number_of_components(); ++i) {
+			component(i).use_dense_representation();
+		}
+	}
+
 	template<bool isOperator>
 	Tensor& HTNetwork<isOperator>::component(const size_t _idx) {
 		REQUIRE(_idx >= 0 || _idx < get_number_of_components(), "Illegal index " << _idx <<" in HTNetwork::component, as there are only " << get_number_of_components() << " components.");
@@ -678,94 +652,7 @@ namespace xerus {
 
 		canonicalized = canonicalized && (corePosition == _idx);
 	}
-//
-//
-//	template<bool isOperator>
-//	std::vector<std::vector<std::tuple<size_t, size_t, value_t>>> get_grouped_entries(const Tensor& _component) {
-//		REQUIRE(_component.is_sparse(), "Not usefull (and not implemented) for dense Tensors.");
-//
-//		const size_t externalDim = isOperator ? _component.dimensions[1] * _component.dimensions[2] : _component.dimensions[1];
-//
-//		std::vector<std::vector<std::tuple<size_t, size_t, value_t>>> groups(externalDim);
-//
-//		for(const auto& entry : _component.get_unsanitized_sparse_data()) {
-//			const size_t r2 = entry.first%_component.dimensions.back();
-//			const size_t n = (entry.first/_component.dimensions.back())%externalDim;
-//			const size_t r1 = (entry.first/_component.dimensions.back())/externalDim;
-//			groups[n].emplace_back(r1, r2, _component.factor*entry.second);
-//		}
-//
-//		return groups;
-//	}
-//
-//
-//	template<bool isOperator>
-//	std::pair<TensorNetwork, TensorNetwork> TTNetwork<isOperator>::chop(const size_t _position) const {
-//		require_correct_format();
-//
-//		const size_t numComponents = degree()/N;
-//		REQUIRE(_position < numComponents, "Can't split a " << numComponents << " component TTNetwork at position " << _position);
-//
-//		// Create the resulting TNs
-//		TensorNetwork left(ZeroNode::None);
-//		TensorNetwork right(ZeroNode::None);
-//
-//		left.nodes.push_back(nodes[0]);
-//		for (size_t i = 0; i < _position; ++i) {
-//			left.dimensions.push_back(dimensions[i]);
-//			left.externalLinks.push_back(externalLinks[i]);
-//			left.nodes.push_back(nodes[i+1]);
-//		}
-//		if(isOperator) {
-//			for(size_t i = 0; i < _position; ++i) {
-//				left.dimensions.push_back(dimensions[i+numComponents]);
-//				left.externalLinks.push_back(externalLinks[i+numComponents]);
-//			}
-//		}
-//		left.dimensions.push_back(left.nodes.back().neighbors.back().dimension);
-//		left.externalLinks.emplace_back(_position, _position==0?0:N+1, left.nodes.back().neighbors.back().dimension , false);
-//		left.nodes.back().neighbors.back().external = true;
-//		left.nodes.back().neighbors.back().indexPosition = isOperator ? 2*_position-1 : _position;
-//
-//		right.dimensions.push_back(nodes[_position+2].neighbors.front().dimension);
-//		right.externalLinks.emplace_back(_position+2, 0, nodes[_position+2].neighbors.front().dimension , false); // NOTE other will be corrected to 0 in the following steps
-//
-//		for(size_t i = _position+1; i < numComponents; ++i) {
-//			right.dimensions.push_back(dimensions[i]);
-//			right.externalLinks.push_back(externalLinks[i]);
-//			right.nodes.push_back(nodes[i+1]);
-//		}
-//		if(isOperator) {
-//			for(size_t i = _position+1; i < numComponents+1; ++i) {
-//				right.dimensions.push_back(dimensions[i+numComponents]);
-//				right.externalLinks.push_back(externalLinks[i+numComponents]);
-//			}
-//		}
-//		// The last node
-//		right.nodes.push_back(nodes.back());
-//
-//		right.nodes.front().neighbors.front().external = true;
-//		right.nodes.front().neighbors.front().indexPosition = _position; // NOTE indexPosition will be corrected to 0 in the following steps
-//
-//		// Account for the fact that the first _position+2 nodes do not exist
-//		for(TensorNetwork::Link& link : right.externalLinks) {
-//			link.other -= _position+2;
-//		}
-//
-//		for(TensorNode& node : right.nodes) {
-//			for(TensorNetwork::Link& link : node.neighbors) {
-//				if(link.external) {
-//					link.indexPosition -= _position;
-//				} else {
-//					link.other -= _position+2;
-//				}
-//			}
-//		}
-//
-//		return std::pair<TensorNetwork, TensorNetwork>(std::move(left), std::move(right));
-//	}
-//
-//
+
 	template<bool isOperator>
 	void HTNetwork<isOperator>::move_core(const size_t _position, const bool _keepRank) {
 		const size_t numComponents = get_number_of_components();
@@ -829,7 +716,8 @@ namespace xerus {
 		require_correct_format();
 		const size_t numOfLeaves = degree()/N;
 		const size_t numIntComp = numOfLeaves - 1;
-		const size_t numComponents = numIntComp + numOfLeaves;		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
+		const size_t numComponents = numIntComp + numOfLeaves;
+		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
 		REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0) ,"There must be exactly degree/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
 
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Trying to round a HTTensor to rank 0 is not possible.");
@@ -840,7 +728,7 @@ namespace xerus {
 		canonicalize_root();
 
 		for (size_t n = numComponents - 1; n > 0; --n) {
-			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n], _eps, 0.0);
+			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n - 1], _eps, 0.0);
 		}
 
 		assume_core_position(0);
@@ -932,39 +820,7 @@ namespace xerus {
 		return new HTNetwork(*this);
 	}
 
-//	template<bool isOperator>
-//	void TTNetwork<isOperator>::contract_unconnected_subnetworks() {
-//		if(degree() == 0) {
-//			std::set<size_t> all;
-//			for(size_t i = 0; i < nodes.size(); ++i) { all.emplace_hint(all.end(), i); }
-//			contract(all);
-//			canonicalized = false;
-//		} else {
-//			REQUIRE(nodes.size() > 2, "Invalid TTNetwork");
-//			const size_t numComponents = nodes.size()-2;
-//
-//			for(size_t i = 0; i+1 < numComponents; ++i) {
-//				if(nodes[i+1].degree() == 2) {
-//						// If we are the core, everything is fine, we contract ourself to the next node, then get removed and the corePositions stays. If the next Node is the core, we have to change the corePosition to ours, because we will be removed. In all other cases cannonicalization is destroyed.
-//						if(corePosition == i+1) { corePosition = i; }
-//						else if(corePosition != i) { canonicalized = false; }
-//						contract(i+1, i+2);
-//				}
-//			}
-//
-//			// Extra treatment for last component to avoid contraction to the pseudo-node.
-//			if(nodes[numComponents].degree() == 2) {
-//				if(corePosition == numComponents-1) { corePosition = numComponents-2; }
-//				else if(corePosition != numComponents-2) { canonicalized = false; }
-//				contract(numComponents-1, numComponents);
-//			}
-//		}
-//
-//		INTERNAL_CHECK(corePosition < degree() || !canonicalized, "Woot");
-//
-//		sanitize();
-//	}
-//
+
 //
 	template<bool isOperator>
 	value_t HTNetwork<isOperator>::frob_norm() const {
@@ -976,8 +832,8 @@ namespace xerus {
 		return std::sqrt(value_t((*this)(i&0)*(*this)(i&0)));
 	}
 
-//
-//
+
+
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     // TODO why sparse?
@@ -1239,7 +1095,10 @@ namespace xerus {
 		internal::HTStack<isOperator>* stackOther;
 		if(moveOther && (stackOther = dynamic_cast<internal::HTStack<isOperator>*>(moveOther->tensorObject))) {
 			htOther = HTNetwork(*stackOther);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			INTERNAL_CHECK(htOther.dimensions == stackOther->dimensions, "Ie");
+			#pragma GCC diagnostic pop
 		} else { // Other is normal
 			INTERNAL_CHECK(dynamic_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable HTStack (or other error) detected.");
 			htOther = *static_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly);
@@ -1402,291 +1261,46 @@ namespace xerus {
 	template HTNetwork<false> operator/(HTNetwork<false> _network, const value_t _divisor);
 	template HTNetwork<true> operator/(HTNetwork<true> _network, const value_t _divisor);
 
-//
-//
-//
-//	template<bool isOperator>
-//	void perform_component_product(Tensor& _newComponent, const Tensor& _componentA, const Tensor& _componentB) {
-//		const size_t externalDim = isOperator ? _componentA.dimensions[1] * _componentA.dimensions[2] : _componentA.dimensions[1];
-//
-//		if(_componentA.is_dense() && _componentB.is_dense()) {
-//			INTERNAL_CHECK(_newComponent.is_dense(), "IE");
-//			value_t* const newCompData = _newComponent.get_dense_data();
-//			const value_t* const compBData = _componentB.get_unsanitized_dense_data();
-//			for (size_t r1 = 0; r1 < _componentA.dimensions.front(); ++r1) {
-//				for (size_t s1 = 0; s1 < _componentB.dimensions.front(); ++s1) {
-//					for (size_t n = 0; n < externalDim; ++n) {
-//						for (size_t r2 = 0; r2 < _componentA.dimensions.back(); ++r2) {
-//							const size_t offsetA = (r1*externalDim + n)*_componentA.dimensions.back()+r2;
-//							const size_t offsetB = (s1*externalDim + n)*_componentB.dimensions.back();
-//							const size_t offsetResult = (((r1*_componentB.dimensions.front() + s1)*externalDim + n)*_componentA.dimensions.back()+r2)*_componentB.dimensions.back();
-//							misc::copy_scaled(newCompData+offsetResult, _componentB.factor*_componentA[offsetA], compBData+offsetB, _componentB.dimensions.back());
-//						}
-//					}
-//				}
-//			}
-//		} else if(_componentA.is_dense()) { // B sparse
-//			const std::vector<std::vector<std::tuple<size_t, size_t, value_t>>> groupedEntriesB = get_grouped_entries<isOperator>(_componentB);
-//			value_t* const newCompData = _newComponent.get_dense_data();
-//			for (size_t r1 = 0; r1 < _componentA.dimensions.front(); ++r1) {
-//				for (size_t n = 0; n < externalDim; ++n) {
-//					for (size_t r2 = 0; r2 < _componentA.dimensions.back(); ++r2) {
-//						for(const std::tuple<size_t, size_t, value_t>& entryB : groupedEntriesB[n]) {
-//							const size_t offsetA = (r1*externalDim + n)*_componentA.dimensions.back()+r2;
-//							const size_t offsetResult = (((r1*_componentB.dimensions.front() + std::get<0>(entryB))*externalDim + n)*_componentA.dimensions.back()+r2)*_componentB.dimensions.back()+std::get<1>(entryB);
-//							newCompData[offsetResult] = _componentA[offsetA]*std::get<2>(entryB);
-//						}
-//					}
-//				}
-//			}
-//		} else if(_componentB.is_dense()) { // A sparse
-//			LOG(woot, "");
-//			value_t* const newCompData = _newComponent.get_dense_data();
-//			const value_t* const compBData = _componentB.get_unsanitized_dense_data();
-//			for(const auto& entryA : _componentA.get_unsanitized_sparse_data()) {
-//				const size_t r2 = entryA.first%_componentA.dimensions.back();
-//				const size_t n = (entryA.first/_componentA.dimensions.back())%externalDim;
-//				const size_t r1 = (entryA.first/_componentA.dimensions.back())/externalDim;
-//
-//				for (size_t s1 = 0; s1 < _componentB.dimensions.front(); ++s1) {
-//					const size_t offsetB = (s1*externalDim + n)*_componentB.dimensions.back();
-//					const size_t offsetResult = (((r1*_componentB.dimensions.front() + s1)*externalDim + n)*_componentA.dimensions.back()+r2)*_componentB.dimensions.back();
-//					misc::copy_scaled(newCompData+offsetResult, _componentB.factor*_componentA.factor*entryA.second, compBData+offsetB, _componentB.dimensions.back());
-//				}
-//			}
-//		} else {
-//			const std::vector<std::vector<std::tuple<size_t, size_t, value_t>>> groupedEntriesB = get_grouped_entries<isOperator>(_componentB);
-//			std::map<size_t, value_t>& dataMap = _newComponent.get_sparse_data();
-//			INTERNAL_CHECK(dataMap.empty(), "IE");
-//			for(const auto& entryA : _componentA.get_unsanitized_sparse_data()) {
-//				const size_t r2 = entryA.first%_componentA.dimensions.back();
-//				const size_t n = (entryA.first/_componentA.dimensions.back())%externalDim;
-//				const size_t r1 = (entryA.first/_componentA.dimensions.back())/externalDim;
-//
-//				for(const std::tuple<size_t, size_t, value_t>& entryB : groupedEntriesB[n]) {
-//					dataMap.emplace((((r1*_componentB.dimensions.front() + std::get<0>(entryB))*externalDim + n)*_componentA.dimensions.back()+r2)*_componentB.dimensions.back()+std::get<1>(entryB), _componentA.factor*entryA.second*std::get<2>(entryB));
-//				}
-//			}
-//		}
-//	}
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> entrywise_product(const TTNetwork<isOperator> &_A, const TTNetwork<isOperator> &_B) {
-//		static constexpr const size_t N = isOperator?2:1;
-//		REQUIRE(_A.dimensions == _B.dimensions, "Entrywise_product ill-defined for different external dimensions.");
-//
-//		if(_A.degree() == 0) {
-//			TTNetwork<isOperator> result(_A);
-//			result *= _B[0];
-//			return result;
-//		}
-//
-//		TTNetwork<isOperator> result(_A.degree());
-//		const size_t numComponents = _A.degree() / N;
-//
-//		#pragma omp for schedule(static)
-//		for (size_t i = 0; i < numComponents; ++i) {
-//			const Tensor& componentA = _A.get_component(i);
-//			const Tensor& componentB = _B.get_component(i);
-//			const Tensor::Representation newRep = componentA.is_sparse() && componentB.is_sparse() ? Tensor::Representation::Sparse : Tensor::Representation::Dense;
-//			Tensor newComponent(isOperator ?
-//				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions[2], componentA.dimensions.back()*componentB.dimensions.back()}) :
-//				Tensor::DimensionTuple({componentA.dimensions.front()*componentB.dimensions.front(), componentA.dimensions[1], componentA.dimensions.back()*componentB.dimensions.back()}), newRep);
-//
-//			perform_component_product<isOperator>(newComponent, componentA, componentB);
-//
-//			#pragma omp critical
-//			{
-//				result.set_component(i, std::move(newComponent));
-//			}
-//		}
-//
-//		if (_A.canonicalized && _B.canonicalized) {
-//			result.move_core(_A.corePosition);
-//		}
-//		return result;
-//	}
-//
-//
-//	//Explicit instantiation for both types
-//	template TTNetwork<false> entrywise_product(const TTNetwork<false> &_A, const TTNetwork<false> &_B);
-//	template TTNetwork<true> entrywise_product(const TTNetwork<true> &_A, const TTNetwork<true> &_B);
-//
-//
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> dyadic_product(const TTNetwork<isOperator> &_lhs, const TTNetwork<isOperator> &_rhs) {
-//		constexpr size_t N = isOperator?2:1;
-//		_lhs.require_correct_format();
-//		_rhs.require_correct_format();
-//
-//		if (_lhs.degree() == 0) {
-//			TTNetwork<isOperator> result(_rhs);
-//			result *= _lhs[0];
-//			return result;
-//		}
-//
-//		TTNetwork<isOperator> result(_lhs);
-//		if (_rhs.degree() == 0) {
-//			result *= _rhs[0];
-//			return result;
-//		}
-//
-//		const size_t lhsNumComponents = _lhs.degree()/N;
-//		const size_t rhsNumComponents = _rhs.degree()/N;
-//
-//		// fix external links of lhs nodes
-//		for (size_t i=1; i<result.nodes.size(); ++i) {
-//			for (TensorNetwork::Link &l : result.nodes[i].neighbors) {
-//				if (l.external) {
-//					if (l.indexPosition >= lhsNumComponents) {
-//						l.indexPosition += rhsNumComponents;
-//					}
-//				}
-//			}
-//		}
-//
-//		// Add all nodes of rhs and fix neighbor relations
-//		result.nodes.pop_back();
-//		result.nodes.reserve(_lhs.degree()+_rhs.degree()+2);
-//		for (size_t i = 1; i < _rhs.nodes.size(); ++i) {
-//			result.nodes.emplace_back(_rhs.nodes[i]);
-//			for (TensorNetwork::Link &l : result.nodes.back().neighbors) {
-//				if (l.external) {
-//					if (l.indexPosition < rhsNumComponents) {
-//						l.indexPosition += lhsNumComponents;
-//					} else {
-//						l.indexPosition += 2*lhsNumComponents;
-//					}
-//				} else {
-//					if (l.other==0) {
-//						l.indexPosition = N+1;
-//					}
-//					l.other += lhsNumComponents;
-//				}
-//			}
-//		}
-//
-//		// Add all external indices of rhs
-//		result.externalLinks.clear(); // NOTE that this is necessary because in the operator case we added indices
-//		result.dimensions.clear();   //        in the wrong position when we copied the lhs
-//		result.externalLinks.reserve(_lhs.degree()+_rhs.degree());
-//		result.dimensions.reserve(_lhs.degree()+_rhs.degree());
-//
-//		for (size_t i = 0; i < lhsNumComponents; ++i) {
-//			const size_t d=_lhs.dimensions[i];
-//			result.externalLinks.emplace_back(i+1, 1, d, false);
-//			result.dimensions.push_back(d);
-//		}
-//
-//		for (size_t i = 0; i < rhsNumComponents; ++i) {
-//			const size_t d = _rhs.dimensions[i];
-//			result.externalLinks.emplace_back(lhsNumComponents+i+1, 1, d, false);
-//			result.dimensions.push_back(d);
-//		}
-//
-//		if (isOperator) {
-//			for (size_t i = 0; i < lhsNumComponents; ++i) {
-//				const size_t d = _lhs.dimensions[i];
-//				result.externalLinks.emplace_back(i+1, 2, d, false);
-//				result.dimensions.push_back(d);
-//			}
-//			for (size_t i = 0; i < rhsNumComponents; ++i) {
-//				const size_t d = _rhs.dimensions[i];
-//				result.externalLinks.emplace_back(lhsNumComponents+i+1, 2, d, false);
-//				result.dimensions.push_back(d);
-//			}
-//		}
-//
-//		if (_lhs.canonicalized && _rhs.canonicalized) {
-//			if (_lhs.corePosition == 0 && _rhs.corePosition == 0) {
-//				result.canonicalized = true;
-//				result.corePosition = lhsNumComponents;
-//				// the other core might have carried a factor
-//				if (result.nodes[1].tensorObject->has_factor()) {
-//					(*result.nodes[lhsNumComponents+1].tensorObject) *= result.nodes[1].tensorObject->factor;
-//					result.nodes[1].tensorObject->factor = 1.0;
-//				}
-//				result.move_core(0);
-//			} else if (_lhs.corePosition == lhsNumComponents-1 && _rhs.corePosition == rhsNumComponents-1) {
-//				result.canonicalized = true;
-//				result.corePosition = lhsNumComponents-1;
-//				const size_t lastIdx = lhsNumComponents + rhsNumComponents -1;
-//				// the other core might have carried a factor
-//				if (result.nodes[lastIdx+1].tensorObject->has_factor()) {
-//					(*result.nodes[lhsNumComponents].tensorObject) *= result.nodes[lastIdx+1].tensorObject->factor;
-//					result.nodes[lastIdx+1].tensorObject->factor = 1.0;
-//				}
-//				result.move_core(lastIdx);
-//			}
-//		} else {
-//			result.canonicalized = false;
-//		}
-//
-//		result.require_correct_format();
-//		return result;
-//	}
-//
-//	template TTNetwork<true> dyadic_product(const TTNetwork<true> &_lhs, const TTNetwork<true> &_rhs);
-//	template TTNetwork<false> dyadic_product(const TTNetwork<false> &_lhs, const TTNetwork<false> &_rhs);
-//
-//	template<bool isOperator>
-//	TTNetwork<isOperator> dyadic_product(const std::vector<TTNetwork<isOperator>>& _tensors) {
-//		if (_tensors.empty()) { return TTNetwork<isOperator>(); }
-//
-//		TTNetwork<isOperator> result(_tensors.back());
-//		// construct dyadic products right to left as default cannonicalization is left
-//		for (size_t i = _tensors.size()-1; i > 0; --i) {
-//			XERUS_REQUIRE_TEST;
-//			result = dyadic_product(_tensors[i-1], result);
-//		}
-//		return result;
-//	}
-//
-//	template TTNetwork<true> dyadic_product(const std::vector<TTNetwork<true>>& _tensors);
-//	template TTNetwork<false> dyadic_product(const std::vector<TTNetwork<false>>& _tensors);
-//
-//
-//
-//	namespace misc {
-//
-//		template<bool isOperator>
-//		void stream_writer(std::ostream& _stream, const TTNetwork<isOperator> &_obj, misc::FileFormat _format) {
-//			if(_format == misc::FileFormat::TSV) {
-//				_stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
-//			}
-//			// storage version number
-//			write_to_stream<size_t>(_stream, 1, _format);
-//
-//			// store TN specific data
-//			write_to_stream<bool>(_stream, _obj.canonicalized, _format);
-//            write_to_stream<size_t>(_stream, _obj.corePosition, _format);
-//
-//
-//			// save rest of TN
-//			write_to_stream<TensorNetwork>(_stream, _obj, _format);
-//		}
-//		template void stream_writer(std::ostream& _stream, const TTNetwork<true> &_obj, misc::FileFormat _format);
-//		template void stream_writer(std::ostream& _stream, const TTNetwork<false> &_obj, misc::FileFormat _format);
-//
-//
-//		template<bool isOperator>
-//		void stream_reader(std::istream& _stream, TTNetwork<isOperator> &_obj, const misc::FileFormat _format) {
-//			IF_CHECK( size_t ver = ) read_from_stream<size_t>(_stream, _format);
-//			REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
-//
-//			// load TN specific data
-//			read_from_stream<bool>(_stream, _obj.canonicalized, _format);
-//            read_from_stream<size_t>(_stream, _obj.corePosition, _format);
-//
-//
-//			// load rest of TN
-//			read_from_stream<TensorNetwork>(_stream, _obj, _format);
-//
-//			_obj.require_correct_format();
-//		}
-//		template void stream_reader(std::istream& _stream, TTNetwork<true> &_obj, const misc::FileFormat _format);
-//		template void stream_reader(std::istream& _stream, TTNetwork<false> &_obj, const misc::FileFormat _format);
-	//} // namespace misc
+
+	namespace misc {
+
+		template<bool isOperator>
+		void stream_writer(std::ostream& _stream, const HTNetwork<isOperator> &_obj, misc::FileFormat _format) {
+			if(_format == misc::FileFormat::TSV) {
+				_stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
+			}
+			// storage version number
+			write_to_stream<size_t>(_stream, 1, _format);
+
+			// store TN specific data
+			write_to_stream<bool>(_stream, _obj.canonicalized, _format);
+            write_to_stream<size_t>(_stream, _obj.corePosition, _format);
+
+
+			// save rest of TN
+			write_to_stream<TensorNetwork>(_stream, _obj, _format);
+		}
+		template void stream_writer(std::ostream& _stream, const HTNetwork<true> &_obj, misc::FileFormat _format);
+		template void stream_writer(std::ostream& _stream, const HTNetwork<false> &_obj, misc::FileFormat _format);
+
+
+		template<bool isOperator>
+		void stream_reader(std::istream& _stream, HTNetwork<isOperator> &_obj, const misc::FileFormat _format) {
+			IF_CHECK( size_t ver = ) read_from_stream<size_t>(_stream, _format);
+			REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
+
+			// load TN specific data
+			read_from_stream<bool>(_stream, _obj.canonicalized, _format);
+            read_from_stream<size_t>(_stream, _obj.corePosition, _format);
+
+
+			// load rest of TN
+			read_from_stream<TensorNetwork>(_stream, _obj, _format);
+
+			_obj.require_correct_format();
+		}
+		template void stream_reader(std::istream& _stream, HTNetwork<true> &_obj, const misc::FileFormat _format);
+		template void stream_reader(std::istream& _stream, HTNetwork<false> &_obj, const misc::FileFormat _format);
+	} // namespace misc
 	
 } // namespace xerus

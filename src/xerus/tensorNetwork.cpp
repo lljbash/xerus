@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -256,48 +256,32 @@ namespace xerus {
 
 
     void TensorNetwork::sanitize() {
-				std::vector<size_t> idMap(nodes.size());
-				std::vector<size_t> oldNodes;
+		std::vector<size_t> idMap(nodes.size());
+		
+		// Move nodes
+		size_t newId = 0, oldId = 0;
+		for (; oldId < nodes.size(); ++oldId) {
+			if (!nodes[oldId].erased) {
+				idMap[oldId] = newId;
+				if (newId != oldId) { std::swap(nodes[newId], nodes[oldId]); }
+				newId++;
+			}
+		}
+		
+		// Update links
+		nodes.resize(newId);
+		for (TensorNode &n : nodes) {
+			for (TensorNetwork::Link &l : n.neighbors) {
+				if (!l.external) { l.other = idMap[l.other]; }
+			}
+		}
+		
+		// Update external links
+		for (TensorNetwork::Link &l : externalLinks) {
+			l.other = idMap[l.other];
+		}
+	}
 
-        // Move nodes
-        size_t newId = 0, oldId = 0;
-        for (; oldId < nodes.size(); ++oldId) {
-            if (!nodes[oldId].erased) {
-                idMap[oldId] = newId;
-                if (newId != oldId) { std::swap(nodes[newId], nodes[oldId]); }
-                newId++;
-            } else {
-            		oldNodes.emplace_back(oldId);
-            }
-        }
-
-        // Update external links
-        for (TensorNetwork::Link &l : externalLinks) {
-            l.other = idMap[l.other];
-        }
-
-        // Update links
-        nodes.resize(newId);
-        size_t external_index_pos = externalLinks.size();
-        size_t count_nodes = 0;
-        for (TensorNode &n : nodes) {
-          	size_t count_links = 0;
-            for (TensorNetwork::Link &l : n.neighbors) {
-            		bool new_external = std::find(oldNodes.begin(), oldNodes.end(), l.other) != oldNodes.end();
-                if (!l.external && !new_external) { l.other = idMap[l.other]; }
-                if (!l.external && new_external) {
-                	l.other = 0;
-                	l.indexPosition = external_index_pos;
-                	external_index_pos++;
-                	l.external = true;
-                	externalLinks.emplace_back(count_nodes,count_links,l.dimension,false);
-                	dimensions.emplace_back(l.dimension);
-                }
-                count_links++;
-            }
-            count_nodes++;
-        }
-    }
 
 
     /*- - - - - - - - - - - - - - - - - - - - - - - - - - Conversions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/

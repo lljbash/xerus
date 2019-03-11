@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -76,7 +76,7 @@ namespace xerus {
                 if (measurments.positions[_a][j-1] > measurments.positions[_b][j-1]) { return false; }
             }
         }
-        /* LOG(fatal, "Measurments must not appear twice."); // NOTE that the algorithm works fine even if measurements appear twice. */
+        LOG(fatal, "Measurments must not appear twice."); // NOTE that the algorithm works fine even if measurements appear twice.
         return false;
     }
 

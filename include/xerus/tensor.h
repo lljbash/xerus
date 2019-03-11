@@ -1,5 +1,5 @@
 // // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -233,9 +233,9 @@ namespace xerus {
 		/** 
 		 * @brief Constructs a dense Tensor with the given dimensions and uses the given random generator and distribution to assign the values to the entries.
 		 * @details The entries are assigned in the order they are stored (i.e. row-major order). Each assigned is a seperate call to the random distribution.
-		 * @param _dimensions the future dimensions of the Tensor.
+		 * @param _dimensions1 the future dimensions of the Tensor. Define the matrification on where the Tensor is orthogonal.
+		 * @param _dimensions2 the future dimensions of the Tensor.
 		 * @param _rnd the random generator to be used.
-		 * @param _dist the random distribution to be used.
 		 */
 		template<class generator=std::mt19937_64>
 		static Tensor XERUS_warn_unused random_orthogonal(DimensionTuple _dimensions1, DimensionTuple _dimensions2, generator& _rnd=xerus::misc::randomEngine) {
@@ -378,7 +378,7 @@ namespace xerus {
 		
 		/** 
 		 * @brief Assigns the given TensorNetwork to this Tensor by completely contracting the network.
-		 * @param _other the TensorNetwork to be to this Tensor.
+		 * @param _network the TensorNetwork to be to this Tensor.
 		 * @return a reference to this Tensor.
 		 */
 		Tensor& operator=(const TensorNetwork& _network);
@@ -944,6 +944,9 @@ namespace xerus {
 	 * @param _Vt Output Tensor for the resulting Vt.
 	 * @param _input input Tensor of which the SVD shall be calculated.
 	 * @param _splitPos index position at defining the matrification for which the SVD is calculated.
+	 * @param _maxRank maximal Rank to be kept by SVD
+	 * @param _eps small singular values are removed as long as the introduced error is < @a _eps (_after_ @a _maxRank was applied)
+	 * @return the frobenious norm of the error introduced by the rank reduction
 	 */
 	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps);
 	
@@ -1017,25 +1020,35 @@ namespace xerus {
 
 	/**
 	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the LAPACK routine DGEEV. It calculates the eigenvalue with smallest real part.
-	 * @param _X Output Tensor for the result
+	 * @param _X Output Tensor for the result, this is the eigenvector in the appropriate tensor format
 	 * @param _A input Operator A symmetric with respect to matrification
 	 * @return the smallest eigenvalue
 	 */
-	double get_smallest_eigenvalue(Tensor &_X, const Tensor &_A);
+	value_t get_smallest_eigenpair(Tensor &_X, const Tensor &_A);
 
 
 #ifdef ARPACK_LIBRARIES
 	/**
-	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algerbaic values.
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
 	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
-	 * @param _A input Operator A symmetric with respect to matrification
-	 * @param _ev array holding smallest eigenvalue (ev[0]) after calculation
-	 * @param _info if 0 algorithm is randomly initialized, if > 0 it takes _X as starting point
+	 * @param _A input Operator A in Tensor Format, symmetric with respect to matrification
+	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
 	 * @param _miter maximal number of iterations of algorithm
 	 * @param _eps tolerance for iterative algorithm
+	 * @return smallest eigenvalue
 	 */
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps);
-	void get_smallest_eigenvalue_iterative_dmrg_special(Tensor& _X, const Tensor& _l, const Tensor& _A, const Tensor& _A1, const Tensor& _r, double* const _ev, int _info, const size_t _miter, const double _eps);
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
+
+	/**
+	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
+	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
+	 * @param _A input Operator A in Tensor Network Format, symmetric with respect to matrification
+	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
+	 * @param _miter maximal number of iterations of algorithm
+	 * @param _eps tolerance for iterative algorithm
+	 * @return smallest eigenvalue
+	 */
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
 
 #endif
 

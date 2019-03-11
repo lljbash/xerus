@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -85,7 +85,7 @@ namespace xerus {
 		* @param _A operator to solve for
 		* @param[in,out] _x in: initial guess, out: solution as found by the algorithm
 		* @param _b right-hand side of the equation to be solved
-		* @param _numHalfSweeps maximum number of half-sweeps to perform
+		* @param _numSteps maximum number of half-sweeps to perform
 		* @param _perfData vector of performance data (residuals after every microiteration)
 		* @returns the residual @f$|Ax-b|@f$ of the final @a _x
 		*/
@@ -121,7 +121,7 @@ namespace xerus {
 		* call to minimze @f$ \|x - b\|^2 @f$ for @f$ x @f$
 		* @param[in,out] _x in: initial guess, out: solution as found by the algorithm
 		* @param _b right-hand side of the equation to be solved
-		* @param _numHalfSweeps maximum number of half-sweeps to perform
+		* @param _numSteps maximum number of half-sweeps to perform
 		* @param _perfData vector of performance data (residuals after every microiteration)
 		* @returns the residual @f$|x-b|@f$ of the final @a _x
 		*/

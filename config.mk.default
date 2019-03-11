@@ -6,8 +6,14 @@
 # If you want to use OpenMP, make sure that your compiler supports OpenMP 4.0.
 CXX = g++
 # CXX = clang++
-PYTHON2_CONFIG = python2-config
-PYTHON3_CONFIG = python3-config
+
+#=================================================================================================
+# Python Settings
+#=================================================================================================
+# To build and test the python bindings for Xerus we need the python configs and the name of the
+# pytest executable(s). If you installed these system-wide you likely don't need to change anything.
+PYTHON2_CONFIG = `python2-config --cflags --ldflags`
+PYTHON3_CONFIG = `python3-config --cflags --ldflags`
 PYTEST2 = pytest2
 PYTEST3 = pytest3
 
@@ -62,13 +68,6 @@ COMPILE_THREADS = 8                     # Number of threads to use during link t
 # DEBUG += -D XERUS_TEST_COVERAGE           # Enable coverage tests
 
 
-# Xerus uses many small objects (Indices, vectors of dimensions etc.) for which the standard allocator
-# is not very efficient. With the following option, an experimental replacement allocator will be
-# included in the library, which will _globally_ replace the 'new' and 'delete' operators in your program.
-# Note also, that the replacement allocator is not (yet) thread safe!
-# DEBUG += -D XERUS_REPLACE_ALLOCATOR
-
-
 # You can add all kind of debuging options. In the following are some examples
 DEBUG += -g                            # Adds debug symbols
 # DEBUG += -D _GLIBCXX_ASSERTIONS        # Activate GLIBCXX assertions
@@ -118,7 +117,7 @@ LOGGING += -D XERUS_LOG_INFO                     # Information that is not linke
 # and bfd, all of which are available through common GNU/Linux packaging systems. If you want to
 # build a shared library or run the unit tests of Xerus you have to provide the corresponding
 # libraries here (otherwise only when linking your own program using Xerus).
-# Make sure to use a parallel version of blas when compiling with -fopenmp.
+# Make sure to use a thread safe version of blas when compiling with -fopenmp.
 
 # Uncomment or add the appropriate blas libraries
 BLAS_LIBRARIES = -lopenblas -lgfortran                      # Openblas, serial
@@ -134,7 +133,10 @@ LAPACK_LIBRARIES = -llapacke -llapack                       # Standard Lapack + 
 # Uncomment or add the appropriate CXSparse library
 SUITESPARSE = -lcholmod -lspqr
 
-# (optional) Uncomment if not needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
+# Uncomment or add the approriate boost libraries
+BOOST_LIBS = -lboost_filesystem
+
+# (optional) Uncomment if needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
 # ARPACK_LIBRARIES = -larpack
 # OTHER += -DARPACK_LIBRARIES
 
