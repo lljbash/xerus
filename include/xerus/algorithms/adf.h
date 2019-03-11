@@ -224,7 +224,7 @@ namespace xerus {
 				{
 					_x.require_correct_format();
 					XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
-					XERUS_REQUIRE(measurments.degree() == degree, "Measurment degree must coincide with x degree.");
+					XERUS_REQUIRE(measurments.order() == degree, "Measurment degree must coincide with x degree.");
 				}
 				
 		};

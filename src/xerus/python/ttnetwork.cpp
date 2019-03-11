@@ -67,11 +67,11 @@ void expose_ttnetwork() {
  		)
 		.def("round", static_cast<void (TTTensor::*)(double)>(&TTTensor::round))
  		.def("round", static_cast<void (TTTensor::*)(size_t)>(&TTTensor::round))
-		.def("soft_threshold", static_cast<void (TTTensor::*)(const double, const bool)>(&TTTensor::soft_threshold),
-			(arg("tau"), arg("preventZero")=false)
+		.def("soft_threshold", static_cast<void (TTTensor::*)(const double)>(&TTTensor::soft_threshold),
+			(arg("tau"))
 		)
-		.def("soft_threshold", static_cast<void (TTTensor::*)(const std::vector<double>&, const bool)>(&TTTensor::soft_threshold),
-			(arg("tau"), arg("preventZero")=false)
+		.def("soft_threshold", static_cast<void (TTTensor::*)(const std::vector<double>&)>(&TTTensor::soft_threshold),
+			(arg("tau"))
 		)
 
 		.def("move_core", &TTTensor::move_core,
@@ -131,11 +131,11 @@ void expose_ttnetwork() {
 		)
 		.def("round", static_cast<void (TTOperator::*)(double)>(&TTOperator::round))
 		.def("round", static_cast<void (TTOperator::*)(size_t)>(&TTOperator::round))
-		.def("soft_threshold", static_cast<void (TTOperator::*)(const double, const bool)>(&TTOperator::soft_threshold),
-			(arg("tau"), arg("preventZero")=false)
+		.def("soft_threshold", static_cast<void (TTOperator::*)(const double)>(&TTOperator::soft_threshold),
+			(arg("tau"))
 		)
-		.def("soft_threshold", static_cast<void (TTOperator::*)(const std::vector<double>&, const bool)>(&TTOperator::soft_threshold),
-			(arg("tau"), arg("preventZero")=false)
+		.def("soft_threshold", static_cast<void (TTOperator::*)(const std::vector<double>&)>(&TTOperator::soft_threshold),
+			(arg("tau"))
 		)
 
 		.def("move_core", &TTOperator::move_core,

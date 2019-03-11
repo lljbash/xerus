@@ -23,11 +23,14 @@
  */
 
 #include <xerus/algorithms/asd.h>
-#include <xerus/blockTT.h>
+
+#include <boost/circular_buffer.hpp>
+
+#include <xerus/misc/math.h>
 #include <xerus/misc/basicArraySupport.h>
 #include <xerus/misc/internal.h>
 
-#include <boost/circular_buffer.hpp>
+#include <xerus/blockTT.h>
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -183,7 +186,7 @@ namespace xerus { namespace impl_TrASD {
 			{
 				_x.require_correct_format();
 				XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
-				XERUS_REQUIRE(measurments.degree() == degree, "Measurment degree must coincide with x degree.");
+				XERUS_REQUIRE(measurments.order() == degree, "Measurment degree must coincide with x degree.");
 				
 				// Create test set
 				std::uniform_real_distribution<double> stochDist(0.0, 1.0);

@@ -71,8 +71,8 @@ XERUS_DEPS    = $(XERUS_SOURCES:%.cpp=build/.libObjects/%.d)
 MISC_OBJECTS = $(MISC_SOURCES:%.cpp=build/.miscObjects/%.o)
 MISC_DEPS    = $(MISC_SOURCES:%.cpp=build/.miscObjects/%.d)
 
-PYTHON_OBJECTS = $(PYTHON_SOURCES:%.cpp=build/.pythonObjects/%.o)
-PYTHON_DEPS    = $(PYTHON_SOURCES:%.cpp=build/.pyhtonObjects/%.d)
+# PYTHON_OBJECTS = $(PYTHON_SOURCES:%.cpp=build/.pythonObjects/%.o)
+# PYTHON_DEPS    = $(PYTHON_SOURCES:%.cpp=build/.pyhtonObjects/%.d)
 
 TEST_OBJECTS = $(TEST_SOURCES:%.cpp=build/.testObjects/%.o)
 TEST_DEPS    = $(TEST_SOURCES:%.cpp=build/.testObjects/%.d)

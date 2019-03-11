@@ -23,6 +23,9 @@
  */
 
 #include <xerus/examples/tensorCompletion.h>
+
+#include <xerus/misc/math.h>
+
 #include <xerus/measurments.h>
 
 namespace xerus { 

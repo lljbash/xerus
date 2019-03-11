@@ -44,10 +44,16 @@ void expose_recoveryAlgorithms() {
         .def("set_measuredValue", +[](SinglePointMeasurementSet &_this, size_t _i, value_t _val){
             _this.measuredValues[_i] = _val;
         })
-        .def("add", &SinglePointMeasurementSet::add)
+//         .def("add", &SinglePointMeasurementSet::add)
+		.def("add", +[](SinglePointMeasurementSet& _self, const std::vector<size_t>& _position, const value_t _measuredValue) {
+                _self.add(_position, _measuredValue);
+            })
+        .def("add", +[](SinglePointMeasurementSet& _self, const std::vector<size_t>& _position, const value_t _measuredValue, const value_t _weight) {
+                _self.add(_position, _measuredValue, _weight);
+            })
         .def("size", &SinglePointMeasurementSet::size)
-        .def("degree", &SinglePointMeasurementSet::degree)
-        .def("frob_norm", &SinglePointMeasurementSet::frob_norm)
+        .def("order", &SinglePointMeasurementSet::order)
+        .def("norm_2", &SinglePointMeasurementSet::norm_2)
         .def("sort", &SinglePointMeasurementSet::sort, arg("positionsOnly")=false)
         .def("measure", static_cast<void (SinglePointMeasurementSet::*)(const Tensor &)>(&SinglePointMeasurementSet::measure), arg("solution"))
         .def("measure", static_cast<void (SinglePointMeasurementSet::*)(const TensorNetwork &)>(&SinglePointMeasurementSet::measure), arg("solution"))
@@ -97,17 +103,15 @@ void expose_recoveryAlgorithms() {
         .def("set_measuredValue", +[](RankOneMeasurementSet &_this, size_t _i, value_t _val){
             _this.measuredValues[_i] = _val;
         })
-        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue); */
         .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue) {
                 _self.add(_position, _measuredValue);
             })
-        /* void add(const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight); */
         .def("add", +[](RankOneMeasurementSet& _self, const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight) {
                 _self.add(_position, _measuredValue, _weight);
             })
         .def("size", &RankOneMeasurementSet::size)
-        .def("degree", &RankOneMeasurementSet::degree)
-        .def("frob_norm", &RankOneMeasurementSet::frob_norm)
+        .def("order", &RankOneMeasurementSet::order)
+        .def("norm_2", &RankOneMeasurementSet::norm_2)
         .def("sort", &RankOneMeasurementSet::sort, arg("positionsOnly")=false)
         .def("normalize", &RankOneMeasurementSet::normalize)
         .def("measure", static_cast<void (RankOneMeasurementSet::*)(const Tensor &)>(&RankOneMeasurementSet::measure), arg("solution"))

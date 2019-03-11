@@ -18,171 +18,171 @@
 // or contact us at contact@libXerus.org.
 
 /**
- * @file
- * @brief Header file for the different measurment classes.
- */
+* @file
+* @brief Header file for the different measurment classes.
+*/
 
 #pragma once
 
-#include <set>
-#include <random>
 #include <functional>
 
 #include "basic.h"
+#include "forwardDeclarations.h"
 
-#include "misc/math.h"
-#include "misc/containerSupport.h"
+
 
 namespace xerus {
-    class Tensor;
-    class TensorNetwork;
-    template<bool isOperator> class TTNetwork;
-    typedef TTNetwork<false> TTTensor;
-    typedef TTNetwork<true> TTOperator;
+	template<class PositionType> class MeasurementSet {
+	public:
+		///@brief Vector containing the positions of the measurments.
+		std::vector<std::vector<PositionType>> positions;
+		
+		///@brief Vector containing the measured values.
+		std::vector<value_t> measuredValues;
+		
+		///@brief If empty no weights are considered, otherwise a vector containign the weights for the measurments.
+		std::vector<value_t> weights;
+		
+		
+		MeasurementSet() = default;
+		MeasurementSet(const MeasurementSet&  _other) = default;
+		MeasurementSet(      MeasurementSet&& _other) = default;
+
+		MeasurementSet& operator=(const MeasurementSet&  _other) = default;
+		MeasurementSet& operator=(      MeasurementSet&& _other) = default;
+		
+		virtual ~MeasurementSet() = 0;
+		
+		
+		///@brief Returns the number of measuremts.
+		size_t size() const;
+
+		///@brief Returns the order of the tensor that is measured.
+		size_t order() const;
+		
+		///@brief Returns the 2-norm of the measurments, with weights considered if appropriate.
+		value_t norm_2() const;
+
+		///@brief Add a measurment at @a _position with @a _value to the set.
+		void add(const std::vector<PositionType>& _position, const value_t _measuredValue);
+		
+		///@brief Add a measurment at @a _position with @a _value and @a _weight to the set.
+		void add(const std::vector<PositionType>& _position, const value_t _measuredValue, const value_t _weight);
+		
+		///@brief Sort the measurments.
+		void sort();
+
+		///@brief Add noise with relative 2-norm @a _epsilon to the measurments.
+		void add_noise(const double _epsilon);
+		
+		///@brief Set the measuredValues equal to the ones measured from @a _solution. 
+		void measure(const Tensor& _solution);
+
+		///@brief Set the measuredValues equal to the ones measured from @a _solution.
+		void measure(const TensorNetwork& _solution);
+
+		///@brief Set the measuredValues equal to the ones given by @a _callback.
+		void measure(std::function<value_t(const std::vector<PositionType>&)> _callback);
+		
+
+		///@brief Returns the relative 2-norm difference between the measuredValues and the ones measured from @a _solution.
+		double test(const Tensor& _solution) const;
+
+		///@brief Returns the relative 2-norm difference between the measuredValues and the ones measured from @a _solution.
+		double test(const TensorNetwork& _solution) const;
+
+		///@brief Returns the relative 2-norm difference between the measuredValues and the ones given by @a _callback.
+		double test(std::function<value_t(const std::vector<PositionType>&)> _callback) const;
+		
+		///@brief Verifies that the MeasurementSet is in a consitent state.
+		virtual void check_consitency() = 0;
+		
+	protected:
+		virtual void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+		
+		virtual void check_position(const std::vector<PositionType>& _position) = 0;
+		
+		virtual void get_values(std::vector<value_t>& _values, const Tensor& _solution) const = 0;
+
+		virtual void get_values(std::vector<value_t>& _values, const TensorNetwork& _solution) const = 0;
+
+		virtual void get_values(std::vector<value_t>& _values, std::function<value_t(const std::vector<PositionType>&)> _callback) const = 0;
+		
+	};
+	
+	/**
+	* @brief Class used to represent a set of single point measurments.
+	*/
+	class SinglePointMeasurementSet : public MeasurementSet<size_t> {
+	public:
+		SinglePointMeasurementSet() = default;
+		SinglePointMeasurementSet(const SinglePointMeasurementSet&  _other) = default;
+		SinglePointMeasurementSet(      SinglePointMeasurementSet&& _other) = default;
+
+		SinglePointMeasurementSet& operator=(const SinglePointMeasurementSet&  _other) = default;
+		SinglePointMeasurementSet& operator=(      SinglePointMeasurementSet&& _other) = default;
+
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
+
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
+
+		static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<size_t>&)> _callback);
+
+		virtual void check_consitency() override;
+		
+	protected:
+		virtual void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) override;
+		
+		virtual void check_position(const std::vector<size_t>& _position) override;
+		
+		virtual void get_values(std::vector<value_t>& _values, const Tensor& _solution) const override;
 
-    /**
-    * @brief Class used to represent a single point measurments.
-    */
-    class SinglePointMeasurementSet {
-    public:
-        std::vector<std::vector<size_t>> positions;
-        std::vector<value_t> measuredValues;
-        std::vector<value_t> weights;
+		virtual void get_values(std::vector<value_t>& _values, const TensorNetwork& _solution) const override;
 
-        SinglePointMeasurementSet() = default;
-        SinglePointMeasurementSet(const SinglePointMeasurementSet&  _other) = default;
-        SinglePointMeasurementSet(      SinglePointMeasurementSet&& _other) = default;
+		virtual void get_values(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const override;
+	};
 
-        SinglePointMeasurementSet& operator=(const SinglePointMeasurementSet&  _other) = default;
-        SinglePointMeasurementSet& operator=(      SinglePointMeasurementSet&& _other) = default;
 
-        static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
+	class RankOneMeasurementSet : public MeasurementSet<Tensor> {
+	public:
+		RankOneMeasurementSet() = default;
+		RankOneMeasurementSet(const RankOneMeasurementSet&  _other) = default;
+		RankOneMeasurementSet(      RankOneMeasurementSet&& _other) = default;
 
-        static SinglePointMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
+		RankOneMeasurementSet(const SinglePointMeasurementSet&  _other, const std::vector<size_t> &_dimensions);
 
-        static SinglePointMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
+		RankOneMeasurementSet& operator=(const RankOneMeasurementSet&  _other) = default;
+		RankOneMeasurementSet& operator=(      RankOneMeasurementSet&& _other) = default;
 
-        static SinglePointMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
 
-        static SinglePointMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<size_t>&)> _callback);
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
 
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
 
-        size_t size() const;
+		static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<Tensor>&)> _callback);
 
-        size_t degree() const;
+		///@brief Ensures that each measurment vector has 2-norm of one.
+		void normalize();
+		
+		virtual void check_consitency() override;
+		
+	protected:
+		virtual void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions) override;
+		
+		virtual void check_position(const std::vector<Tensor>& _position) override;
+		
+		virtual void get_values(std::vector<value_t>& _values, const Tensor& _solution) const override;
 
-        value_t frob_norm() const;
+		virtual void get_values(std::vector<value_t>& _values, const TensorNetwork& _solution) const override;
 
-        void add(std::vector<size_t> _position, const value_t _measuredValue);
+		virtual void get_values(std::vector<value_t>& _values, std::function<value_t(const std::vector<Tensor>&)> _callback) const override;
+	};
 
-        void sort(const bool _positionsOnly = false);
-
-        void add_noise(const double _epsilon);
-
-        void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
-
-//      void measure(std::vector<value_t>& _values, const TTTensor& _solution) const; NICE: Minor speedup
-
-        void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
-
-        void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<size_t>&)> _callback) const;
-
-        void measure(const Tensor& _solution);
-
-        void measure(const TTTensor& _solution);
-
-        void measure(const TensorNetwork& _solution);
-
-        void measure(std::function<value_t(const std::vector<size_t>&)> _callback);
-
-        double test(const Tensor& _solution) const;
-
-        double test(const TTTensor& _solution) const;
-
-        double test(const TensorNetwork& _solution) const;
-
-        double test(std::function<value_t(const std::vector<size_t>&)> _callback) const;
-
-
-    private:
-        void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
-
-        void create_slice_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
-    };
-
-
-    class RankOneMeasurementSet {
-    public:
-        std::vector<std::vector<Tensor>> positions;
-        std::vector<value_t> measuredValues;
-        std::vector<value_t> weights;
-
-        RankOneMeasurementSet() = default;
-        RankOneMeasurementSet(const RankOneMeasurementSet&  _other) = default;
-        RankOneMeasurementSet(      RankOneMeasurementSet&& _other) = default;
-
-        RankOneMeasurementSet(const SinglePointMeasurementSet&  _other, const std::vector<size_t> &_dimensions);
-
-        RankOneMeasurementSet& operator=(const RankOneMeasurementSet&  _other) = default;
-        RankOneMeasurementSet& operator=(      RankOneMeasurementSet&& _other) = default;
-
-        static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
-
-        static RankOneMeasurementSet random(const size_t _numMeasurements, const Tensor& _solution);
-
-        static RankOneMeasurementSet random(const size_t _numMeasurements, const TTTensor& _solution);
-
-        static RankOneMeasurementSet random(const size_t _numMeasurements, const TensorNetwork& _solution);
-
-        static RankOneMeasurementSet random(const size_t _numMeasurements, const std::vector<size_t>& _dimensions, std::function<value_t(const std::vector<Tensor>&)> _callback);
-
-
-        size_t size() const;
-
-        size_t degree() const;
-
-        value_t frob_norm() const;
-
-        void add(const std::vector<Tensor>& _position, const value_t _measuredValue);
-        void add(const std::vector<Tensor>& _position, const value_t _measuredValue, const value_t _weight);
-
-        void sort(const bool _positionsOnly);
-
-        void normalize();
-
-        void add_noise(const double _epsilon);
-
-
-        void measure(std::vector<value_t>& _values, const Tensor& _solution) const;
-
-        void measure(std::vector<value_t>& _values, const TTTensor& _solution) const;
-
-        void measure(std::vector<value_t>& _values, const TensorNetwork& _solution) const;
-
-        void measure(std::vector<value_t>& _values, std::function<value_t(const std::vector<Tensor>&)> _callback) const;
-
-        void measure(const Tensor& _solution);
-
-        void measure(const TTTensor& _solution);
-
-        void measure(const TensorNetwork& _solution);
-
-        void measure(std::function<value_t(const std::vector<Tensor>&)> _callback);
-
-        double test(const Tensor& _solution) const;
-
-        double test(const TTTensor& _solution) const;
-
-        double test(const TensorNetwork& _solution) const;
-
-        double test(std::function<value_t(const std::vector<Tensor>&)> _callback) const;
-
-
-    private:
-        void create_random_positions(const size_t _numMeasurements, const std::vector<size_t>& _dimensions);
-    };
-
-    namespace internal {
-        int comp(const Tensor& _a, const Tensor& _b);
-    }
+	namespace internal {
+		int compare(const size_t _a, const size_t _b);
+		int compare(const Tensor& _a, const Tensor& _b);
+	}
 }

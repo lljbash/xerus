@@ -7,6 +7,9 @@ Potentially breaking changes are marked with an exclamation point '!' at the beg
  * ! Changed the truncated SVD, TensorNetwork::round_edge and TT:round with epsilon to limit their respective relative errors to epsilon.
  * ! Removed support for the replacement allocator.
  * ! Changed some Makefile configs for more flexibility. See the new config.mk.default file and update your own config.
+ * ! Major rewrite of MeasurmentSets.
+ * Fixed minor rank reduction bug in TensorNetwork soft thresholding.
+ 
 
 * 2017-05-31 v3.0.1
  * Added TTNetwork::use_dense_representations() to convert all components to dense representation.

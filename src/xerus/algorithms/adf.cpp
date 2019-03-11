@@ -24,9 +24,11 @@
 
 #include <xerus/algorithms/adf.h>
 
-#include <xerus/indexedTensorMoveable.h>
+#include <xerus/misc/math.h>
 #include <xerus/misc/basicArraySupport.h>
 #include <xerus/misc/internal.h>
+
+#include <xerus/indexedTensorMoveable.h>
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -61,7 +63,7 @@ namespace xerus {
     };
 
     template<>
-    MeasurmentComparator<SinglePointMeasurementSet>::MeasurmentComparator(const SinglePointMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.degree()), measurments(_measurments) { }
+    MeasurmentComparator<SinglePointMeasurementSet>::MeasurmentComparator(const SinglePointMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.order()), measurments(_measurments) { }
 
     template<>
     bool MeasurmentComparator<SinglePointMeasurementSet>::operator()(const size_t _a, const size_t _b) const {
@@ -82,19 +84,19 @@ namespace xerus {
 
 
     template<>
-    MeasurmentComparator<RankOneMeasurementSet>::MeasurmentComparator(const RankOneMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.degree()), measurments(_measurments) { }
+    MeasurmentComparator<RankOneMeasurementSet>::MeasurmentComparator(const RankOneMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.order()), measurments(_measurments) { }
 
     template<>
     bool MeasurmentComparator<RankOneMeasurementSet>::operator()(const size_t _a, const size_t _b) const {
         if(forward) {
             for (size_t j = 0; j < degree; ++j) {
-                const int res = internal::comp(measurments.positions[_a][j], measurments.positions[_b][j]);
+                const int res = internal::compare(measurments.positions[_a][j], measurments.positions[_b][j]);
                 if(res == -1) { return true; }
                 if(res == 1) { return false; }
             }
         } else {
             for (size_t j = degree; j > 0; --j) {
-                const int res = internal::comp(measurments.positions[_a][j-1], measurments.positions[_b][j-1]);
+                const int res = internal::compare(measurments.positions[_a][j-1], measurments.positions[_b][j-1]);
                 if(res == -1) { return true; }
                 if(res == 1) { return false; }
             }
@@ -578,7 +580,7 @@ namespace xerus {
     inline void calc_measurment_norm<RankOneMeasurementSet>(double* _norms, const RankOneMeasurementSet& _measurments) {
         for(size_t i = 0; i < _measurments.size(); ++i) {
             _norms[i] = 1.0;
-            for(size_t j = 0; j < _measurments.degree(); ++j) {
+            for(size_t j = 0; j < _measurments.order(); ++j) {
                 _norms[i] *= _measurments.positions[i][j].frob_norm();
             }
         }
