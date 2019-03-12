@@ -29,25 +29,33 @@
 #include <fstream>
 
 namespace xerus { namespace misc {
-    
-    void create_folder_for_file(const std::string& _path);
-    
-    std::set<std::string> get_files(const std::string& _path);
+	
+	///@brief Creates all directories in the @a _path of the file, if needed.
+	void create_directories_for_file(const std::string& _path);
+	
+	///@brief Returns a set containing all regular files at the given @a _path.
+	std::set<std::string> get_files(const std::string& _path);
 
+	///@brief Checks whether a file at the given @a _path exists.
 	bool file_exists(const std::string& _path);
 	
-    bool file_is_empty(const std::string& _filename);
-
-    std::string read_file(const std::string& _path);
-    
+	///@brief Checks whether a file at the given @a _path is empty.
+	bool file_is_empty(const std::string& _path);
+	
+	///@brief Reads the complete content of the file at the given @a _path into a string.
+	std::string read_file(const std::string& _path);
+	
 	
 	#if __cplusplus >= 201402L
 
+	///@brief Opens a reading filestream for the given @a _path.
 	std::ifstream open_file_read(const std::string& _path);
 
+	///@brief Opens a writing filestream for the given @a _path, deleting any preexisting content.
 	std::ofstream open_file_truncate(const std::string& _path);
 
+	///@brief Opens a writing filestream for the given @a _path, appending to any preexisting content.
 	std::ofstream open_file_append(const std::string& _path);
-    
-    #endif
+	
+	#endif
 } }

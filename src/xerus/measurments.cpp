@@ -48,7 +48,7 @@ namespace xerus {
 				error += misc::sqr(_reference[i] - _test[i]);
 				norm += misc::sqr(_reference[i]);
 			}
-		} else { // TODO how to use the weights?
+		} else {
 			for(size_t i = 0; i < cSize; ++i) {
 				error += _weights[i]*misc::sqr(_reference[i] - _test[i]);
 				norm += _weights[i]*misc::sqr(_reference[i]);
@@ -87,7 +87,7 @@ namespace xerus {
 			}
 		} else {
 			for(size_t i = 0; i < cSize; ++i) {
-				norm += weights[i]*misc::sqr(measuredValues[i]); // TODO How to use weights
+				norm += weights[i]*misc::sqr(measuredValues[i]);
 			}
 		}
 		return std::sqrt(norm);
