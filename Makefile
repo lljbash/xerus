@@ -151,7 +151,7 @@ build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
 
 build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
+	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include -I 3rdParty/eigen $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
 
 python2: build/python2/xerus.so
@@ -266,7 +266,7 @@ build/.miscObjects/%.o: %.cpp $(MINIMAL_DEPS)
 # Build rule for normal lib objects
 build/.libObjects/%.o: %.cpp $(MINIMAL_DEPS)
 	mkdir -p $(dir $@)
-	$(CXX) -I include $< -c $(FLAGS) -MMD -o $@
+	$(CXX) -I include -I 3rdParty/eigen $< -c $(FLAGS) -MMD -o $@
 
 
 # Build rule for test lib objects

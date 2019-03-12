@@ -47,6 +47,14 @@ extern "C"
 	#include <lapacke.h>
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#include <Eigen/Eigen>
+#pragma GCC diagnostic pop
 
 #include <memory>
 #include <xerus/misc/standard.h>
@@ -65,12 +73,6 @@ extern "C"
 
 namespace xerus {
 	namespace blasWrapper {
-		// the following routines use a work array as temporary storage
-		// to avoid the overhead of repeated reallocation for many small calls, every thread pre-allocates a small scratch-space
-// 		const size_t DEFAULT_WORKSPACE_SIZE = 1024*1024;
-// 		thread_local value_t defaultWorkspace[DEFAULT_WORKSPACE_SIZE]; // NOTE recheck compatibility with eigen (dolfin) when reinserting this!
-		
-		
 		//----------------------------------------------- LEVEL I BLAS ----------------------------------------------------------
 		
 		double one_norm(const double* const _x, const size_t _n) {
@@ -198,11 +200,21 @@ namespace xerus {
 		//----------------------------------------------- LAPACK ----------------------------------------------------------------
 		
 		void svd( double* const _U, double* const _S, double* const _Vt, const double* const _A, const size_t _m, const size_t _n) {
-			//Create copy of A
-			const std::unique_ptr<double[]> tmpA(new double[_m*_n]);
-			misc::copy(tmpA.get(), _A, _m*_n);
+			using namespace Eigen;
 			
-			svd_destructive(_U, _S, _Vt, tmpA.get(), _m, _n);
+			XERUS_PA_START;
+			auto A = Map<const Matrix<double,Dynamic,Dynamic,RowMajor> >(_A, _m, _n);
+			BDCSVD<Matrix<double,Dynamic,Dynamic,RowMajor>> svd(A, ComputeThinU | ComputeThinV);
+			Matrix<double,Dynamic,Dynamic,RowMajor> U = svd.matrixU().transpose();
+			Matrix<double,Dynamic,Dynamic,RowMajor> S = svd.singularValues();
+			Matrix<double,Dynamic,Dynamic,RowMajor> Vt = svd.matrixV();
+			
+			auto min = std::min(_m, _n);
+			memcpy(U.data(), _U, _m*min*sizeof(double));
+			memcpy(Vt.data(), _Vt, min*_n*sizeof(double));
+			memcpy(S.data(), _S, min*sizeof(double));
+			
+			XERUS_PA_END("Dense LAPACK", "Singular Value Decomposition", misc::to_string(_m)+"x"+misc::to_string(_n));
 		}
 		
 		
@@ -211,20 +223,12 @@ namespace xerus {
 			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
 			
 			XERUS_PA_START;
-			std::unique_ptr<double[]> tmpA(new double[_m*_n]);
-			misc::copy(tmpA.get(), _A, _m*_n);
-			
 			int lapackAnswer = LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'S', static_cast<int>(_m), static_cast<int>(_n), _A, static_cast<int>(_n), _S, _U, static_cast<int>(std::min(_m, _n)), _Vt, static_cast<int>(_n));
 			CHECK(lapackAnswer == 0, warning, "Lapack failed to compute SVD. Answer is: " << lapackAnswer);
 			CHECK(lapackAnswer == 0, warning, "Call was: LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'S', " << static_cast<int>(_m) << ", " << static_cast<int>(_n) << ", " << _A << ", " << static_cast<int>(_n) <<", " 
 			<< _S <<", " << _U << ", " << static_cast<int>(std::min(_m, _n)) << ", " << _Vt << ", " << static_cast<int>(_n) << ");");
 			if(lapackAnswer != 0) {
 				LOG(warning, "SVD failed ");
-// 				for(size_t i=0; i < _m; ++i) {
-// 					for(size_t j=0; j < _n; ++j) {
-// 						LOG(warning, tmpA[i*_n+j]);
-// 					}
-// 				}
 			}
 			
 			XERUS_PA_END("Dense LAPACK", "Singular Value Decomposition", misc::to_string(_m)+"x"+misc::to_string(_n));
@@ -679,7 +683,7 @@ namespace xerus {
 				static_cast<int>(_n) 		// LDVR TODO check size of _x
 			);
 			CHECK(lapackAnswer == 0, error, "Unable to solve Ax = lambda*x (DGEEV solver). Lapacke says: " << lapackAnswer);
-			XERUS_PA_END("Dense LAPACK", "Solve (DGEEV)", misc::to_string(_n)+"x"+misc::to_string(_n)+"x"+misc::to_string(_nrhs));
+			XERUS_PA_END("Dense LAPACK", "Solve (DGEEV)", misc::to_string(_n)+"x"+misc::to_string(_n));
 
 			return;
 		}
