@@ -31,6 +31,8 @@
 #include <xerus/misc/internal.h>
 
 #include <xerus/blockTT.h>
+#include <xerus/measurments.h>
+#include <xerus/performanceData.h>
 
 #ifdef _OPENMP
 	#include <omp.h>

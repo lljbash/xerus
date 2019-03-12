@@ -24,7 +24,12 @@
 
 #pragma once
 
-#include "../performanceData.h"
+#include "../basic.h"
+#include "../forwardDeclarations.h"
+
+#include <boost/circular_buffer.hpp>
+
+
 
 namespace xerus {
 
@@ -36,7 +41,7 @@ namespace xerus {
 		///@brief Minimal number of iterations.
 		size_t minIterations;
 		
-		///@brief Maximal allowed number of iterations.
+		///@brief Maximal allowed number of iterations. Zero for infinite.
 		size_t maxIterations;
 		
 		///@brief The target residual norm at which the algorithm shall stop.
@@ -48,11 +53,64 @@ namespace xerus {
 		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
 		size_t tracking = 10;
 		
-		///@brief PerformanceData object used to record the performance of the algorithm.
-		PerformanceData perfData;
-		
 		
 	protected:
 		OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease);
 	};
-} // namespace xerus
+	
+	
+	namespace internal {
+		class OptimizationSolver {
+		protected:
+			///@brief Minimal number of iterations.
+			const size_t minIterations;
+			
+			///@brief Maximal allowed number of iterations. Zero for infinite.
+			const size_t maxIterations;
+			
+			///@brief The target residual norm at which the algorithm shall stop.
+			const double targetRelativeResidual;
+			
+			///@brief Minimal decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
+			const double minimalResidualNormDecrease;
+			
+			///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
+			const size_t tracking;
+			
+			///@brief Defined as pow(minimalResidualNormDecrease, tracking).
+			const double convergenceFactor;
+			
+		private:
+			///@brief The current iteration.
+			size_t iteration = 0;
+			
+			///@brief The last (tracking) residuals.
+			boost::circular_buffer<double> lastResiduals;
+			
+		protected:
+			///@brief: Reference to the performanceData object (external ownership)
+			PerformanceData& perfData;
+			
+		
+			OptimizationSolver(const OptimizationAlgorithm& _optiAlgorithm, PerformanceData& _perfData);
+			
+			
+			///@brief Increased iteration by one and adds the residual to the circular buffer.
+			void make_step(const double _residual);
+			
+			size_t current_iteration() const;
+			
+			double current_residual() const;
+			
+			///@brief True if either the maxIterations are reached or the targetRelativeResidual is reached.
+			bool reached_stopping_criteria() const;
+			
+			///@brief True if either the minInterations are reached and convegence is reached (i.e. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) ).
+			bool reached_convergence_criteria() const;
+			
+			///@brief Resets the convergence buffer with max doubles. In particular at least tracking iterations are then nessecary the reach convergence.
+			void reset_convergence_buffer();
+		};
+	
+	} // End namespace internal
+} // End namespace xerus

@@ -31,5 +31,10 @@ namespace xerus {
     template<bool isOperator> class TTNetwork;
     typedef TTNetwork<false> TTTensor;
     typedef TTNetwork<true> TTOperator;
+	
+	class SinglePointMeasurementSet;
+	class RankOneMeasurementSet;
+	
+	class PerformanceData;
 
 } // End xerus namespace
