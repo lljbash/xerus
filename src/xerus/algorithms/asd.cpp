@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -23,11 +23,16 @@
  */
 
 #include <xerus/algorithms/asd.h>
-#include <xerus/blockTT.h>
+
+#include <boost/circular_buffer.hpp>
+
+#include <xerus/misc/math.h>
 #include <xerus/misc/basicArraySupport.h>
 #include <xerus/misc/internal.h>
 
-#include <boost/circular_buffer.hpp>
+#include <xerus/blockTT.h>
+#include <xerus/measurments.h>
+#include <xerus/performanceData.h>
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -155,7 +160,7 @@ namespace xerus { namespace impl_TrASD {
 			minIterations(_optiSettings.minIterations),
 			maxIterations(_optiSettings.maxIterations),
 			targetRelativeResidual(_optiSettings.targetRelativeResidual),
-			minimalResidualNormDecrease(_optiSettings.minimalResidualNormDecrease),
+			minimalResidualNormDecrease(_optiSettings.minimalResidualDecrease),
 			tracking(_optiSettings.tracking),
 			
 			maxRanks(TTTensor::reduce_to_maximal_ranks(_maxRanks, _x.dimensions)),
@@ -183,7 +188,7 @@ namespace xerus { namespace impl_TrASD {
 			{
 				_x.require_correct_format();
 				XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
-				XERUS_REQUIRE(measurments.degree() == degree, "Measurment degree must coincide with x degree.");
+				XERUS_REQUIRE(measurments.order() == degree, "Measurment degree must coincide with x degree.");
 				
 				// Create test set
 				std::uniform_real_distribution<double> stochDist(0.0, 1.0);

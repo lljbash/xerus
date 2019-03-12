@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -32,6 +32,27 @@
 #include <xerus/misc/internal.h>
 
 namespace xerus { namespace internal {
+	
+	
+		
+	///@brief Wrapper object for the cholmod_common struct to automatically call the constructor and destructor (cholmod MAY use its own allocator)
+	/// @note any CholmodSparse object stored outside (eg in Tensor) needs the corresponding deleter function defined here to be able to free it (regardles of the thread freeing it)
+	struct CholmodCommon final {
+		struct RestrictedAccess final {
+			cholmod_common* const c;
+			std::mutex &lock;
+			RestrictedAccess(cholmod_common* const _c, std::mutex &_lock);
+			operator cholmod_common*() const;
+			~RestrictedAccess();
+		};
+		
+		std::unique_ptr<cholmod_common> c;
+		std::mutex lock;
+		CholmodCommon();
+		~CholmodCommon();
+		RestrictedAccess get();
+		std::function<void(cholmod_sparse*)> get_deleter();
+	};
 	
 	CholmodCommon::RestrictedAccess::RestrictedAccess(cholmod_common* const _c, std::mutex& _lock) 
 		: c(_c), lock(_lock)
@@ -73,7 +94,7 @@ namespace xerus { namespace internal {
 	}
 
 	std::function<void(cholmod_sparse*)> CholmodCommon::get_deleter() {
-		return [&](cholmod_sparse* _toDelete) {
+		return [this](cholmod_sparse* _toDelete) {
 			cholmod_l_free_sparse(&_toDelete, this->get());
 		};
 	}

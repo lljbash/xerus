@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -46,6 +46,7 @@ namespace xerus {
 		
 		
 		///@brief: Calculates _base^_exp by binary exponentiation
+		///@note @a _exp is assumed to be a built-in integral type and thus taken by value, while @a _base may be a matrix, rational number etc. and is thus taken as reference
 		template<class T, class I, typename std::enable_if<std::is_integral<I>::value && std::is_unsigned<I>::value, bool>::type = true> 
 		constexpr T pow(const T &_base, const I _exp) noexcept {
 			return _exp==0 ? T(1) : (_exp%2==0 ? pow(T(_base*_base), _exp/2) : T(_base*pow(_base, _exp-1)));
@@ -55,11 +56,11 @@ namespace xerus {
 		///@brief: Calculates _base^_exp by binary exponentiation
 		template<class T, class I, typename std::enable_if<std::is_integral<I>::value && !std::is_unsigned<I>::value, bool>::type = true> 
 		constexpr T pow(const T &_base, const I _exp) noexcept {
-			return _exp==0 ? 
+			return _exp==0 ?
 						T(1) :
 						(
 							_exp<0 ? 
-								T( 1/pow(_base, -_exp)) 
+								T( 1/pow(_base, -_exp))
 							: 
 								( _exp%2==0 ? pow(T(_base*_base), _exp/2) : T(_base*pow(_base, _exp-1)) )
 						);
@@ -69,7 +70,7 @@ namespace xerus {
 		///@brief: Checks whether the relative difference between @a _a and @a _b (i.e. |a-b|/(|a|/2+|b|/2)) is smaller than @a _eps.
 		template<class T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type = true>
 		bool approx_equal(T _a, T _b, T _eps = 4*std::numeric_limits<T>::epsilon()) noexcept {
-			return std::abs(_a-_b) <= _eps*0.5*(std::abs(_a)+std::abs(_b));
+			return std::abs(_a-_b) <= _eps*0.5*(std::abs(_a+_b)) || std::abs(_a-_b) < std::numeric_limits<T>::min();
 		}
 		
 		

@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -164,6 +164,19 @@ namespace xerus { namespace uq {
 	}
 	
 	
+	Tensor sample_mean(const std::vector<Tensor>& _samples) {
+		REQUIRE(_samples.size() > 0, "Need at least one measurment.");
+		
+		// Calc mean
+		Tensor mean(_samples.front().dimensions);
+		for(const auto& samp : _samples) {
+			mean += samp;
+		}
+		mean /= double(_samples.size());
+		return mean;
+	}
+	
+	
     void UQMeasurementSet::add(const std::vector<double>& _paramVec, const Tensor& _solution) {
 		parameterVectors.push_back(_paramVec);
 		solutions.push_back(_solution);
@@ -181,23 +194,11 @@ namespace xerus { namespace uq {
 	}
 	
 	
-	Tensor sample_mean(const std::vector<Tensor>& _samples) {
-		REQUIRE(_samples.size() > 0, "Need at least one measurment.");
-		
-		// Calc mean
-		Tensor mean({_samples.front().size});
-		for(const auto& samp : _samples) {
-			mean += samp;
-		}
-		mean /= double(_samples.size());
-		return mean;
-	}
-	
-    
-    TTTensor initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions) {
-		REQUIRE(_measurments.parameterVectors.size() > 0, "Need at least one measurment.");
-		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments.");
-		REQUIRE(_dimensions.front() == _measurments.solutions.front().dimensions.front(), "Inconsitend measurments and dimensions.");
+// 				initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions)
+    TTTensor 	initial_guess(const Tensor& _mean, const std::vector<std::vector<double>>& _parameterVectors, const std::vector<Tensor>& _solutions, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions){
+		REQUIRE(_parameterVectors.size() > 0, "Need at least one measurment.");
+		REQUIRE(_parameterVectors.size() == _solutions.size(), "Invalid measurments.");
+		REQUIRE(_dimensions.front() == _solutions.front().dimensions.front(), "Inconsitend measurments and dimensions.");
 		
 		TTTensor initalGuess(_dimensions);
 		Tensor mean = _mean;
@@ -214,9 +215,9 @@ namespace xerus { namespace uq {
 
 		// Calc linear terms
 		std::set<size_t> usedParams;
-		for(size_t m = 0; m < _measurments.parameterVectors.size(); ++m) {
-			const auto& paramVec = _measurments.parameterVectors[m];
-			const auto& sol = _measurments.solutions[m];
+		for(size_t m = 0; m < _parameterVectors.size(); ++m) {
+			const auto& paramVec = _parameterVectors[m];
+			const auto& sol = _solutions[m];
 			
 			REQUIRE(paramVec.size()+1 == initalGuess.degree(), "Invalid parameter vector");
 			
@@ -226,12 +227,12 @@ namespace xerus { namespace uq {
 			for(size_t i = 0; i < paramVec.size(); ++i) {
 				if(std::abs(paramVec[i]) > 0.0) {
 					if(misc::contains(usedParams, i)) {
-						LOG(info, "Skipping douplicate parameter " << i);
+						LOG(info, "Skipping duplicate parameter " << i);
 						skip = true;
 						continue; 
 					}
 					REQUIRE(p == initalGuess.degree(), "Parameters contains several non-zero entries: " << paramVec);
-					REQUIRE(!misc::contains(usedParams, i), "Parameters " << i << " appears twice!" << _measurments.parameterVectors);
+					REQUIRE(!misc::contains(usedParams, i), "Parameters " << i << " appears twice!" << _parameterVectors);
 					usedParams.emplace(i);
 					p = i;
 				}
@@ -256,7 +257,7 @@ namespace xerus { namespace uq {
 		}
 		
 		initalGuess.round(1e-4);
-		LOG(UQ_Inital_Guess, "Found linear terms for " << usedParams << ". Post roundign ranks: " << initalGuess.ranks());
+		LOG(UQ_Inital_Guess, "Found linear terms for " << usedParams << ". Post rounding ranks: " << initalGuess.ranks());
 		return initalGuess;
 	}
 	

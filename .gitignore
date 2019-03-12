@@ -20,6 +20,7 @@
 
 !*.rb
 !*.py
+!.config.mk.*
 
 !*.md
 !*.xml

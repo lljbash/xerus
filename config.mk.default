@@ -68,13 +68,6 @@ COMPILE_THREADS = 8                     # Number of threads to use during link t
 # DEBUG += -D XERUS_TEST_COVERAGE           # Enable coverage tests
 
 
-# Xerus uses many small objects (Indices, vectors of dimensions etc.) for which the standard allocator
-# is not very efficient. With the following option, an experimental replacement allocator will be
-# included in the library, which will _globally_ replace the 'new' and 'delete' operators in your program.
-# Note also, that the replacement allocator is not (yet) thread safe!
-# DEBUG += -D XERUS_REPLACE_ALLOCATOR
-
-
 # You can add all kind of debuging options. In the following are some examples
 DEBUG += -g                            # Adds debug symbols
 # DEBUG += -D _GLIBCXX_ASSERTIONS        # Activate GLIBCXX assertions

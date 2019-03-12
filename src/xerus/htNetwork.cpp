@@ -391,11 +391,14 @@ namespace xerus {
 		for (size_t i = numLeaves - 1; i < 2*numLeaves-1; ++i, ++dim_counter) {
 			if (dim_counter == numLeaves)
 				dim_counter = 0;
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			if(isOperator) {
 				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter], result.dimensions[numLeaves+dim_counter]}, _position[dim_counter]*result.dimensions[numLeaves+dim_counter] + _position[numLeaves+dim_counter]));
 			} else {
 				result.set_component(i, Tensor::dirac({1, result.dimensions[dim_counter]}, _position[dim_counter]));
 			}
+			#pragma GCC diagnostic pop
 		}
 		return result;
 	}
@@ -713,7 +716,8 @@ namespace xerus {
 		require_correct_format();
 		const size_t numOfLeaves = degree()/N;
 		const size_t numIntComp = numOfLeaves - 1;
-		const size_t numComponents = numIntComp + numOfLeaves;		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
+		const size_t numComponents = numIntComp + numOfLeaves;
+		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
 		REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0) ,"There must be exactly degree/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
 
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Trying to round a HTTensor to rank 0 is not possible.");
@@ -724,7 +728,7 @@ namespace xerus {
 		canonicalize_root();
 
 		for (size_t n = numComponents - 1; n > 0; --n) {
-			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n], _eps, 0.0);
+			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n - 1], _eps, 0.0);
 		}
 
 		assume_core_position(0);
@@ -1091,7 +1095,10 @@ namespace xerus {
 		internal::HTStack<isOperator>* stackOther;
 		if(moveOther && (stackOther = dynamic_cast<internal::HTStack<isOperator>*>(moveOther->tensorObject))) {
 			htOther = HTNetwork(*stackOther);
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 			INTERNAL_CHECK(htOther.dimensions == stackOther->dimensions, "Ie");
+			#pragma GCC diagnostic pop
 		} else { // Other is normal
 			INTERNAL_CHECK(dynamic_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly),"Non-moveable HTStack (or other error) detected.");
 			htOther = *static_cast<const HTNetwork<isOperator>*>(_other.tensorObjectReadOnly);
