@@ -95,6 +95,14 @@ namespace xerus {
 	
 	
 	template<class PositionType>
+	void MeasurementSet<PositionType>::clear() {
+		positions.clear();
+		measuredValues.clear();
+		weights.clear();
+	}
+	
+	
+	template<class PositionType>
 	void MeasurementSet<PositionType>::add(const std::vector<PositionType>& _position, const value_t _measuredValue) {
 		XERUS_REQUIRE_TEST;
 		check_position(_position);

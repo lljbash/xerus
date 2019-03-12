@@ -34,13 +34,13 @@
 namespace xerus {
 	template<class PositionType> class MeasurementSet {
 	public:
-		///@brief Vector containing the positions of the measurments.
+		///@brief Vector containing the positions of the measurements.
 		std::vector<std::vector<PositionType>> positions;
 		
 		///@brief Vector containing the measured values.
 		std::vector<value_t> measuredValues;
 		
-		///@brief If empty no weights are considered, otherwise a vector containign the weights for the measurments.
+		///@brief If empty no weights are considered, otherwise a vector containign the weights for the measurements.
 		std::vector<value_t> weights;
 		
 		
@@ -60,8 +60,11 @@ namespace xerus {
 		///@brief Returns the order of the tensor that is measured.
 		size_t order() const;
 		
-		///@brief Returns the 2-norm of the measurments, with weights considered if appropriate.
+		///@brief Returns the 2-norm of the measurements, with weights considered if appropriate.
 		value_t norm_2() const;
+		
+		///@brief Removes all measurements from the set.
+		void clear();
 
 		///@brief Add a measurment at @a _position with @a _value to the set.
 		void add(const std::vector<PositionType>& _position, const value_t _measuredValue);
@@ -69,10 +72,10 @@ namespace xerus {
 		///@brief Add a measurment at @a _position with @a _value and @a _weight to the set.
 		void add(const std::vector<PositionType>& _position, const value_t _measuredValue, const value_t _weight);
 		
-		///@brief Sort the measurments.
+		///@brief Sort the measurements.
 		void sort();
 
-		///@brief Add noise with relative 2-norm @a _epsilon to the measurments.
+		///@brief Add noise with relative 2-norm @a _epsilon to the measurements.
 		void add_noise(const double _epsilon);
 		
 		///@brief Set the measuredValues equal to the ones measured from @a _solution. 
@@ -111,7 +114,7 @@ namespace xerus {
 	};
 	
 	/**
-	* @brief Class used to represent a set of single point measurments.
+	* @brief Class used to represent a set of single point measurements.
 	*/
 	class SinglePointMeasurementSet : public MeasurementSet<size_t> {
 	public:
@@ -145,7 +148,7 @@ namespace xerus {
 	};
 
 	/**
-	* @brief Class used to represent a set of rank-one measurments.
+	* @brief Class used to represent a set of rank-one measurements.
 	*/
 	class RankOneMeasurementSet : public MeasurementSet<Tensor> {
 	public:

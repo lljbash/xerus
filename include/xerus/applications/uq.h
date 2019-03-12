@@ -56,6 +56,9 @@ namespace xerus {namespace uq {
 	
 	///@brief Evaluates the solution for the specified parameters
 	Tensor evaluate(const TTTensor& _x, const std::vector<double>& _parameters, const PolynomBasis _basisType);
+	
+	///@brief Calculates the mean of all given samples.
+	Tensor sample_mean(const std::vector<Tensor>& _samples);
 
 
 	class UQMeasurementSet {
@@ -74,11 +77,16 @@ namespace xerus {namespace uq {
 		void clear();
 	};
 
-
-	Tensor sample_mean(const std::vector<Tensor>& _samples);
 	
-    
-	TTTensor initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions);
+	/**
+	 * @brief: Calculates an inital guess for the UQ solution using the mean an linear distortions.
+	 * @param _mean An approximation for the mean (expectation value) of the solution, e.g. by calculating the mean of all samples (see sample_mean).
+	 * @param _parameterVectors The parameterVectors for measurements corresponding to linear distortions, i.e. only one parameter should be non-zero (and small) for each measurement.
+	 * @param _solutions The solutions corresponding to the @a _parameterVectors
+	 * @param _polyBasis The PolynomBasis to use for the UQ formulation.
+	 * @param _dimensions The dimensions of the solutions tensor.
+	 */
+	TTTensor initial_guess(const Tensor& _mean, const std::vector<std::vector<double>>& _parameterVectors, const std::vector<Tensor>& _solutions, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions);
 }}
 
 

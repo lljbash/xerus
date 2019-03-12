@@ -26,5 +26,11 @@
 
 
 namespace xerus {
-	OptimizationAlgorithm::OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease) : minIterations(_minIterations), maxIterations(_maxIterations), targetRelativeResidual(_targetRelativeResidual), minimalResidualNormDecrease(_minimalResidualNormDecrease) {}
+	OptimizationAlgorithm::OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease) : 
+	minIterations(_minIterations), 
+	maxIterations(_maxIterations), 
+	targetRelativeResidual(_targetRelativeResidual), 
+	minimalResidualNormDecrease(_minimalResidualNormDecrease),
+	perfData(false, false)
+	{}
 } // namespace xerus

@@ -29,7 +29,7 @@
 namespace xerus {
 
 	/**
-	* @brief Base class for all xerus optimization algorithms, allowing a uniform set of settings
+	* @brief Base class for (in future) all xerus optimization algorithms, allowing a uniform set of settings.
 	*/
 	class OptimizationAlgorithm {
 	public:
@@ -42,11 +42,14 @@ namespace xerus {
 		///@brief The target residual norm at which the algorithm shall stop.
 		double targetRelativeResidual;
 		
-		///@brief Minimal relative decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
+		///@brief Minimal decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
 		double minimalResidualNormDecrease;
 		
 		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
 		size_t tracking = 10;
+		
+		///@brief PerformanceData object used to record the performance of the algorithm.
+		PerformanceData perfData;
 		
 		
 	protected:

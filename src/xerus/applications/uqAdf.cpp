@@ -541,18 +541,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
     }
 
 
-    TTTensor uq_adf(const UQMeasurementSet& _initalMeasurments, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
-        REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
-        REQUIRE(_dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
-
-        TTTensor x = initial_guess(sample_mean(_measurments.solutions), _initalMeasurments, _basisType, _dimensions);
-        impl_uqRaAdf::InternalSolver<1> solver(x, _measurments, _basisType, _maxItr, _targetEps, 0.0);
-        solver.solve();
-        return x;
-    }
-
-
-
     void uq_ra_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr, const double _initalRankEps) {
         REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
         REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
@@ -584,6 +572,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         solver.solve();
         return x;
     }
+    
 
     TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
         REQUIRE(_positions.size() == _solutions.size(), "Invalid measurments");
@@ -607,6 +596,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         solver.solve();
         return x;
     }
+    
 
     TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
         REQUIRE(_positions.size() == _solutions.size(), "Invalid measurments");
@@ -630,6 +620,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         solver.solve();
         return x;
     }
+    
 
     TTTensor uq_ra_adf_iv(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
         REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
