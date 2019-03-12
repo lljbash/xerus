@@ -205,15 +205,11 @@ namespace xerus {
 			XERUS_PA_START;
 			auto A = Map<const Matrix<double,Dynamic,Dynamic,RowMajor> >(_A, _m, _n);
 			BDCSVD<Matrix<double,Dynamic,Dynamic,RowMajor>> svd(A, ComputeThinU | ComputeThinV);
-			Matrix<double,Dynamic,Dynamic,RowMajor> U = svd.matrixU().transpose();
-			Matrix<double,Dynamic,Dynamic,RowMajor> S = svd.singularValues();
-			Matrix<double,Dynamic,Dynamic,RowMajor> Vt = svd.matrixV();
-			
 			auto min = std::min(_m, _n);
-			memcpy(U.data(), _U, _m*min*sizeof(double));
-			memcpy(Vt.data(), _Vt, min*_n*sizeof(double));
-			memcpy(S.data(), _S, min*sizeof(double));
-			
+			Map<Matrix<double,Dynamic,Dynamic,RowMajor>>(_U, _m, min) = svd.matrixU();
+			Map<Matrix<double,Dynamic,Dynamic,RowMajor>>(_S, min, 1) = svd.singularValues();
+			Map<Matrix<double,Dynamic,Dynamic,RowMajor>>(_Vt, min, _n) = svd.matrixV().transpose();
+
 			XERUS_PA_END("Dense LAPACK", "Singular Value Decomposition", misc::to_string(_m)+"x"+misc::to_string(_n));
 		}
 		
