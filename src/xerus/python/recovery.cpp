@@ -149,8 +149,8 @@ void expose_recoveryAlgorithms() {
     class_<ADFVariant>("ADFVariant", init<size_t, double, double>())
         .def(init<ADFVariant>())
         .def_readwrite("maxIterations", &ADFVariant::maxIterations)
-        .def_readwrite("targetResidualNorm", &ADFVariant::targetResidualNorm)
-        .def_readwrite("minimalResidualNormDecrease", &ADFVariant::minimalResidualNormDecrease)
+        .def_readwrite("targetResidualNorm", &ADFVariant::targetRelativeResidual)
+        .def_readwrite("minimalResidualDecrease", &ADFVariant::minimalResidualDecrease)
 
         .def("__call__", +[](ADFVariant &_this, TTTensor& _x, const SinglePointMeasurementSet& _meas, PerformanceData& _pd){
             return _this(_x, _meas, _pd);

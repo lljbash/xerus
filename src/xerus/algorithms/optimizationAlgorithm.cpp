@@ -29,11 +29,11 @@
 #include <xerus/performanceData.h>
 
 namespace xerus {
-	OptimizationAlgorithm::OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease) : 
+	OptimizationAlgorithm::OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualDecrease) : 
 	minIterations(_minIterations), 
 	maxIterations(_maxIterations), 
 	targetRelativeResidual(_targetRelativeResidual), 
-	minimalResidualNormDecrease(_minimalResidualNormDecrease)
+	minimalResidualDecrease(_minimalResidualDecrease)
 	{}
 	
 	
@@ -41,9 +41,9 @@ namespace xerus {
 	minIterations(_optiAlgorithm.minIterations), 
 	maxIterations(_optiAlgorithm.maxIterations), 
 	targetRelativeResidual(_optiAlgorithm.targetRelativeResidual), 
-	minimalResidualNormDecrease(_optiAlgorithm.minimalResidualNormDecrease),
+	minimalResidualDecrease(_optiAlgorithm.minimalResidualDecrease),
 	tracking(_optiAlgorithm.tracking),
-	convergenceFactor(misc::pow(minimalResidualNormDecrease, tracking)),
+	convergenceFactor(misc::pow(minimalResidualDecrease, tracking)),
 	lastResiduals(tracking, std::numeric_limits<double>::max()),
 	perfData(_perfData)
 	{ }

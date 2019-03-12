@@ -48,14 +48,14 @@ namespace xerus {
 		double targetRelativeResidual;
 		
 		///@brief Minimal decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
-		double minimalResidualNormDecrease;
+		double minimalResidualDecrease;
 		
-		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
+		///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualDecrease, tracking) )
 		size_t tracking = 10;
 		
 		
 	protected:
-		OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease);
+		OptimizationAlgorithm(const size_t _minIterations, const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualDecrease);
 	};
 	
 	
@@ -72,12 +72,12 @@ namespace xerus {
 			const double targetRelativeResidual;
 			
 			///@brief Minimal decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
-			const double minimalResidualNormDecrease;
+			const double minimalResidualDecrease;
 			
-			///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) )
+			///@brief Number of iterations used to check for stopping criteria (e.g. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualDecrease, tracking) )
 			const size_t tracking;
 			
-			///@brief Defined as pow(minimalResidualNormDecrease, tracking).
+			///@brief Defined as pow(minimalResidualDecrease, tracking).
 			const double convergenceFactor;
 			
 		private:
@@ -105,7 +105,7 @@ namespace xerus {
 			///@brief True if either the maxIterations are reached or the targetRelativeResidual is reached.
 			bool reached_stopping_criteria() const;
 			
-			///@brief True if either the minInterations are reached and convegence is reached (i.e. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualNormDecrease, tracking) ).
+			///@brief True if either the minInterations are reached and convegence is reached (i.e. residual[iterations] <= residual[iteration-tracking]*pow(minimalResidualDecrease, tracking) ).
 			bool reached_convergence_criteria() const;
 			
 			///@brief Resets the convergence buffer with max doubles. In particular at least tracking iterations are then nessecary the reach convergence.

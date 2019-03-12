@@ -160,7 +160,7 @@ namespace xerus { namespace impl_TrASD {
 			minIterations(_optiSettings.minIterations),
 			maxIterations(_optiSettings.maxIterations),
 			targetRelativeResidual(_optiSettings.targetRelativeResidual),
-			minimalResidualNormDecrease(_optiSettings.minimalResidualNormDecrease),
+			minimalResidualNormDecrease(_optiSettings.minimalResidualDecrease),
 			tracking(_optiSettings.tracking),
 			
 			maxRanks(TTTensor::reduce_to_maximal_ranks(_maxRanks, _x.dimensions)),
