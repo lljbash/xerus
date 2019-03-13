@@ -65,12 +65,6 @@ extern "C"
 
 namespace xerus {
 	namespace blasWrapper {
-		// the following routines use a work array as temporary storage
-		// to avoid the overhead of repeated reallocation for many small calls, every thread pre-allocates a small scratch-space
-// 		const size_t DEFAULT_WORKSPACE_SIZE = 1024*1024;
-// 		thread_local value_t defaultWorkspace[DEFAULT_WORKSPACE_SIZE]; // NOTE recheck compatibility with eigen (dolfin) when reinserting this!
-		
-		
 		/// @brief stores in @a _out the transpose of the @a _m x @a _n matrix @a _in
 		void low_level_transpose(double * _out, double * _in, size_t _m, size_t _n) {
 			for (size_t i=0; i<_m; ++i) {
@@ -241,8 +235,7 @@ namespace xerus {
 			// Transpose input matrices
 			low_level_transpose(a_t.get(), a, m, n);
 			
-			LAPACK_dgesdd( &job, &m, &n, a_t.get(), &m, s, u_t.get(), &m, vt_t.get(),
-							&min, work, &lwork, iwork, &info );
+			LAPACK_dgesdd( &job, &m, &n, a_t.get(), &m, s, u_t.get(), &m, vt_t.get(), &min, work, &lwork, iwork, &info );
 			REQUIRE(info == 0, "dgesdd failed with info " << info);
 			// Transpose output matrices
 			// low_level_transpose(a, a_t.get(), n, m);
@@ -257,9 +250,8 @@ namespace xerus {
 			XERUS_PA_START;
 			lapack_int m = lapack_int(_m);
 			lapack_int n = lapack_int(_n);
-			lapack_int lwork = -1;
 			std::unique_ptr<lapack_int[]> iwork(new lapack_int[std::max(1,8*std::min(m,n))]);
-			lwork = dgesdd_get_workarray_size(m, n);
+			lapack_int lwork = dgesdd_get_workarray_size(m, n);
 			std::unique_ptr<double[]> work(new double[lwork]);
 			
 			dgesdd_work( m, n, _A, _S, _U, _Vt, work.get(), lwork, iwork.get());
