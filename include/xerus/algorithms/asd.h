@@ -33,11 +33,13 @@ namespace xerus {
 	public:
 		double minRankEps = 1e-4;
 		
+		double maxRankEps = 0.32;
+		
 		double epsDecay = 1.1;
 		
 		double controlSetFraction = 0.1;
 		
-		double initialRankEps = 5e-3;
+		double initialRankEps = 4e-3;
 		
 		/// Basic constructor
         ASDVariant(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease)
@@ -52,7 +54,7 @@ namespace xerus {
 		* @param _perfData optinal performanceData object to be used.
 		* @returns nothing
 		*/
-		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData) const;
+		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData = NoPerfData) const;
 		
 		/**
 		* @brief Tries to reconstruct the (low rank) tensor @a _x from the given measurments. 
@@ -62,7 +64,7 @@ namespace xerus {
 		* @param _perfData optinal performanceData object to be used.
 		* @returns nothing
 		*/
-		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData) const;
+		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData = NoPerfData) const;
 	};
 	
 	/// @brief Default variant of the ASD algorithm

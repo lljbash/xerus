@@ -277,13 +277,13 @@ build/.testObjects/%.o: %.cpp $(MINIMAL_DEPS)
 
 # Build rule for unit test objects
 ifdef USE_GCC
-build/.unitTestObjects/%.o: %.cxx $(MINIMAL_DEPS) build/.preCompileHeaders/xerus.h.gch
+build/.unitTestObjects/%.o: %.cxx $(MINIMAL_DEPS) build/.preCompileHeaders/xerus.h.gch build/.preCompileHeaders/common.hxx.gch
 	mkdir -p $(dir $@)
 	$(CXX) -D XERUS_UNITTEST -I build/.preCompileHeaders $< -c $(FLAGS) -MMD -o $@
 else
 build/.unitTestObjects/%.o: %.cxx $(MINIMAL_DEPS)
 	mkdir -p $(dir $@)
-	$(CXX) -D XERUS_UNITTEST -I include $< -c $(FLAGS) -MMD -o $@
+	$(CXX) -D XERUS_UNITTEST -I include -I src/unitTests $< -c $(FLAGS) -MMD -o $@
 endif
 
 
@@ -295,6 +295,12 @@ build/.tutorialObjects/%: %.cpp $(MINIMAL_DEPS) build/libxerus.a build/libxerus_
 
 # Build rule for the preCompileHeader
 build/.preCompileHeaders/xerus.h.gch: include/xerus.h $(MINIMAL_DEPS) .git/ORIG_HEAD
+	mkdir -p $(dir $@)
+	$(CXX) -D XERUS_UNITTEST $< -c $(FLAGS) -MMD -o $@
+
+
+# Build rule for the other preCompileHeader
+build/.preCompileHeaders/common.hxx.gch: src/unitTests/common.hxx $(MINIMAL_DEPS) .git/ORIG_HEAD
 	mkdir -p $(dir $@)
 	$(CXX) -D XERUS_UNITTEST $< -c $(FLAGS) -MMD -o $@
 

@@ -42,7 +42,7 @@ namespace xerus { namespace impl_TrASD {
 
 	
 	template <size_t P>
-	class InternalSolver {
+	class InternalSolver : internal::OptimizationSolver {
 	private:
 		///@brief Reference to the external solution (external ownership).
 		TTTensor& outX;
@@ -59,33 +59,16 @@ namespace xerus { namespace impl_TrASD {
 		///@brief Number of measurments (i.e. measurments.size())
 		const size_t numMeasurments;
 		
-		///@brief Minimal number of iterations (one iteration = one sweep)
-		const size_t minIterations;
-		
-		///@brief Maximal allowed number of iterations (one iteration = one sweep)
-		const size_t maxIterations;
-		
-		///@brief The target residual norm at which the algorithm shall stop.
-		const double targetRelativeResidual;
-		
-		///@brief Minimal relative decrease of the residual norm ( newRes/oldRes ) until either the ranks are increased (if allowed) or the algorithm stops.
-		const double minimalResidualNormDecrease;
-		
-		const size_t tracking;
-		
 		///@brief Maximally allowed ranks.
 		const std::vector<size_t> maxRanks;
 		
 		const double minRankEps;
 		
+		const double maxRankEps;
+		
 		const double epsDecay;
 		
 		const double controlSetFraction;
-		
-		
-		
-		///@brief: Reference to the performanceData object (external ownership)
-		PerformanceData& perfData;
 		
 		
 		///@brief Vector of measurment IDs for each set (0 to P-1). The set P is the control set.
@@ -97,7 +80,6 @@ namespace xerus { namespace impl_TrASD {
 		///@brief L2 Norm of the optimizing sets (0-P-1).
 		double optNorm;
 		
-		
 		///@brief Current rankEps
 		double rankEps;
 		
@@ -108,8 +90,6 @@ namespace xerus { namespace impl_TrASD {
 		internal::BlockTT bestX;
 		
 		boost::circular_buffer<std::vector<size_t>> prevRanks;
-		
-		boost::circular_buffer<double> residuals;
 		
 		///@brief Stack of pre calculated components from corePosition 0 to d-1
 		std::vector<std::vector<Tensor>> leftStack;
@@ -144,12 +124,13 @@ namespace xerus { namespace impl_TrASD {
 			}
 		}
 		
-		InternalSolver(	TTTensor& _x,
+		InternalSolver(	const ASDVariant& _optiAlgorithm,
+						TTTensor& _x,
 						const RankOneMeasurementSet& _measurments,
-						const ASDVariant& _optiSettings,
 						const double _initalRankEps,
 						const std::vector<size_t>& _maxRanks,
 						PerformanceData& _perfData ) :
+			OptimizationSolver(_optiAlgorithm, _perfData),
 			outX(_x),
 			x(_x, 0, P),
 			degree(_x.degree()),
@@ -157,21 +138,13 @@ namespace xerus { namespace impl_TrASD {
 			measurments(_measurments),
 			numMeasurments(_measurments.size()),
 			
-			minIterations(_optiSettings.minIterations),
-			maxIterations(_optiSettings.maxIterations),
-			targetRelativeResidual(_optiSettings.targetRelativeResidual),
-			minimalResidualNormDecrease(_optiSettings.minimalResidualDecrease),
-			tracking(_optiSettings.tracking),
-			
 			maxRanks(TTTensor::reduce_to_maximal_ranks(_maxRanks, _x.dimensions)),
 			
-			minRankEps(_optiSettings.minRankEps),
-			epsDecay(_optiSettings.epsDecay),
+			minRankEps(_optiAlgorithm.minRankEps),
+			maxRankEps(_optiAlgorithm.maxRankEps),
+			epsDecay(_optiAlgorithm.epsDecay),
 			
-			controlSetFraction(P == 1 ? 0.0 : _optiSettings.controlSetFraction),
-			
-			perfData(_perfData),
-			
+			controlSetFraction(P == 1 ? 0.0 : _optiAlgorithm.controlSetFraction),
 			
 			sets(P+1),
 			setNorms(P+1),
@@ -180,7 +153,6 @@ namespace xerus { namespace impl_TrASD {
 			
 			bestTestResidual(std::numeric_limits<double>::max()),
 			prevRanks(tracking, outX.ranks()),
-			residuals(tracking, std::numeric_limits<double>::max()),
 			
 			leftStack(degree, std::vector<Tensor>(numMeasurments)),
 			rightStack(degree, std::vector<Tensor>(numMeasurments))
@@ -390,7 +362,7 @@ namespace xerus { namespace impl_TrASD {
 		}
 		
 		
-		void finish(const size_t _iteration) {
+		void finish() {
 			for(size_t i = 0; i < bestX.degree(); i++) {
 				if(i == bestX.corePosition) {
 					outX.set_component(i, bestX.get_average_core());
@@ -399,7 +371,7 @@ namespace xerus { namespace impl_TrASD {
 				}
 			}
 			
-			LOG(ADF, "Residual decrease from " << std::scientific << 0.0 /* TODO */ << " to " << std::scientific << residuals.back() << " in " << _iteration << " iterations.");
+			LOG(ASD, "Residual decrease from " << std::scientific << 0.0 /* TODO */ << " to " << std::scientific << current_residual() << " in " << current_iteration() << " iterations.");
 		}
 		
 		
@@ -422,19 +394,17 @@ namespace xerus { namespace impl_TrASD {
 					contract(tmp, setCore, rightStack[corePosition+1][i], 1);
 					contract(tmp2, measurments.positions[i][corePosition], tmp, 1);
 					setResiduals[p] += misc::sqr(tmp2[0] - measurments.measuredValues[i]);
-// 					const double test = tmp2[0];
 					
 					contract(tmp, avgCore, rightStack[corePosition+1][i], 1);
 					contract(tmp2, measurments.positions[i][corePosition], tmp, 1);
 					optResidual += misc::sqr(tmp2[0] - measurments.measuredValues[i]);
-// 					LOG(bla, (test-tmp2[0])/test);
 					REQUIRE(tmp2.size == 1, "IE");
 				}
 				setResiduals[p] = std::sqrt(setResiduals[p])/setNorms[p];
 			}
 			optResidual = std::sqrt(optResidual)/optNorm;
 			
-			double testResidual = 0.0;		
+			double testResidual = 0.0;
 			for(const auto i : sets[P]) {
 				contract(tmp, avgCore, rightStack[corePosition+1][i], 1);
 				contract(tmp2, measurments.positions[i][corePosition], tmp, 1);
@@ -450,7 +420,6 @@ namespace xerus { namespace impl_TrASD {
 		
 		void solve() {
 			perfData.start();
-			size_t nonImprovementCounter = 0;
 			
 			// Build inital right stack
 			REQUIRE(x.corePosition == 0, "Expecting core position to be 0.");
@@ -458,46 +427,42 @@ namespace xerus { namespace impl_TrASD {
 				update_right_stack(corePosition);
 			}
 			
-			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
+			while(!reached_stopping_criteria()) {
 				double optResidual, testResidual;
 				std::vector<double> setResiduals;
 				std::tie(optResidual, testResidual, setResiduals) = calc_residuals();
 				
-				residuals.push_back(optResidual);
+				if(P == 1) {
+					bestX = x;
+					bestTestResidual = optResidual;
+				} else if(testResidual < bestTestResidual) {
+					bestX = x;
+					bestTestResidual = testResidual;
+				}
+				
+				make_step(bestTestResidual);
 				
 // 				prevRanks.push_back(x.ranks());
 				
-				if(P == 1 || testResidual < 0.99*bestTestResidual) {
-					bestX = x;
-					bestTestResidual = testResidual;
-					nonImprovementCounter = 0;
-				} else {
-					nonImprovementCounter++;
-				}
-				
-				
-// 				LOG(ADFx, "Residual " << std::scientific << residuals.back() << " " << /*setResiduals*/ -1 << ". NonImpCnt: " << nonImprovementCounter << ", Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs() << ". Norm: " << frob_norm(x.get_average_core()));
+// 				LOG(ASD, "Residual " << std::scientific << optResidual << " " << /*setResiduals*/ -1 << ". Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs() << ". Norm: " << frob_norm(x.get_average_core()));
 				
 // 				bool maxRankReached = true;
 // 				for(size_t k = 0; k+1 < x.degree(); ++k ) {
 // 					maxRankReached = maxRankReached && (x.rank(k) == maxRanks[k]);
 // 				}
 				
-				if(P > 1 && nonImprovementCounter > 2) {
-					rankEps = std::min(0.32, 2*rankEps);
+				if(reached_convergence_criteria()) {
+					if(misc::hard_equal(rankEps, maxRankEps)) { break; }
+					
+					reset_convergence_buffer();
+					rankEps = std::min(maxRankEps, 2*rankEps);
 					perfData << rankEps;
 				}
 				
-				if(optResidual < targetRelativeResidual || nonImprovementCounter >= 25 || ( P == 1 && residuals.back() > std::pow(minimalResidualNormDecrease, tracking)*residuals[0])) {
-					finish(iteration);
-					return; // We are done!
-				}
-
-				
-				perfData.add(iteration, std::vector<double>{optResidual, testResidual} | setResiduals, x.get_average_tt(), 0);
+				perfData.add(current_iteration(), std::vector<double>{optResidual, testResidual} | setResiduals, x.get_average_tt(), 0);
 				
 				if(P>1) { shuffle_sets(); }
-					
+				
 				// Forward sweep
 				for(size_t corePosition = 0; corePosition+1 < degree; ++corePosition) {
 					update_core(corePosition);
@@ -508,7 +473,6 @@ namespace xerus { namespace impl_TrASD {
 				}
 				
 				update_core(degree-1);
-				
 				
 				// Backward sweep
 				for(size_t corePosition = degree-1; corePosition > 0; --corePosition) {
@@ -521,7 +485,7 @@ namespace xerus { namespace impl_TrASD {
 				update_core(0);
 			}
 			
-			finish(maxIterations);
+			finish();
 		}	
 	};
 	
@@ -529,15 +493,17 @@ namespace xerus { namespace impl_TrASD {
 
 
 	void ASDVariant::operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData) const {
-		impl_TrASD::InternalSolver<1> solver(_x, _measurments, *this, initialRankEps, _x.ranks(), _perfData);
+		XERUS_REQUIRE_TEST;
+		impl_TrASD::InternalSolver<1> solver(*this, _x, _measurments, initialRankEps, _x.ranks(), _perfData);
 		solver.solve();
 	}
 	
 
 	void ASDVariant::operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData) const {
-		impl_TrASD::InternalSolver<2> solver(_x, _measurments, *this, initialRankEps, _maxRanks, _perfData);
+		XERUS_REQUIRE_TEST;
+		impl_TrASD::InternalSolver<2> solver(*this, _x, _measurments, initialRankEps, _maxRanks, _perfData);
 		solver.solve();
 	}
 	
-	const ASDVariant TRASD(1000, 1e-10, 0.9995);
+	const ASDVariant TRASD(1000, 1e-10, 0.9999);
 } // namespace xerus

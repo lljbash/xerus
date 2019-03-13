@@ -47,7 +47,7 @@ namespace xerus {
 		* @returns the residual @f$|P_\Omega(x-b)|_2@f$ of the final @a _x.
 		*/
 		template<class MeasurmentSet>
-		double operator()(TTTensor& _x, const MeasurmentSet& _measurments, PerformanceData& _perfData) const;
+		double operator()(TTTensor& _x, const MeasurmentSet& _measurments, PerformanceData& _perfData = NoPerfData) const;
 		
 		
 		/**
@@ -59,7 +59,7 @@ namespace xerus {
 		* @returns the residual @f$|P_\Omega(x-b)|_2@f$ of the final @a _x.
 		*/
 		template<class MeasurmentSet>
-		double operator()(TTTensor& _x, const MeasurmentSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData) const;
+		double operator()(TTTensor& _x, const MeasurmentSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData = NoPerfData) const;
 	};
 	
 	/// @brief Default variant of the ADF algorithm

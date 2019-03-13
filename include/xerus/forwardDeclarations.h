@@ -36,5 +36,6 @@ namespace xerus {
 	class RankOneMeasurementSet;
 	
 	class PerformanceData;
+	extern PerformanceData NoPerfData;
 
 } // End xerus namespace
