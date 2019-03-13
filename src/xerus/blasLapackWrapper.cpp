@@ -221,26 +221,16 @@ namespace xerus {
 		}
 		
 		
-		void dgesdd_work(lapack_int m, lapack_int n, double* a, 
-								  double* s, double* u, double* vt, double* work,
-								  lapack_int lwork, lapack_int* iwork )
-		{
+		void dgesdd_work(lapack_int m, lapack_int n, double* a, double* s, double* u, double* vt, double* work, lapack_int lwork, lapack_int* iwork ) {
 			REQUIRE(lwork > 0, "");
 			lapack_int info = 0;
 			char job = 'S';
 			lapack_int min = std::min(m,n);
-			std::unique_ptr<double[]> a_t(new double[size_t(m*n)]);
-			std::unique_ptr<double[]>  u_t(new double[size_t(m*min)]);
-			std::unique_ptr<double[]>  vt_t(new double[size_t(min*n)]);
-			// Transpose input matrices
-			low_level_transpose(a_t.get(), a, size_t(m), size_t(n));
 			
-			LAPACK_dgesdd( &job, &m, &n, a_t.get(), &m, s, u_t.get(), &m, vt_t.get(), &min, work, &lwork, iwork, &info );
+			// if A = U*S*V^T, then A^T = V^T*S*U^T, so we can simply call lapack without transposing our matrices
+			// by simply changing the order of U and Vt
+			LAPACK_dgesdd( &job, &n, &m, a, &n, s, vt, &n, u, &min, work, &lwork, iwork, &info );
 			REQUIRE(info == 0, "dgesdd failed with info " << info);
-			// Transpose output matrices
-			// low_level_transpose(a, a_t.get(), n, m);
- 			low_level_transpose(u, u_t.get(), size_t(min), size_t(m));
-			low_level_transpose(vt, vt_t.get(), size_t(n), size_t(min));
 		}
 		
 		void svd_destructive( double* const _U, double* const _S, double* const _Vt, double* const _A, const size_t _m, const size_t _n) {
