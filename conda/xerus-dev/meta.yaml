@@ -8,6 +8,8 @@ source:
 
 requirements:
   build:
+    - make
+    - {{ compiler('cxx') }}
     - openblas
     - suitesparse
     - lapack
@@ -31,3 +33,4 @@ build:
 about:
   home: https://git.hemio.de/xerus/xerus.git
   license: AGPL v3.0
+
