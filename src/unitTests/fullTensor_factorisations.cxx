@@ -90,7 +90,7 @@ static misc::UnitTest tensor_svd_rnd512("Tensor", "SVD_Random_512x512", [](){
     
     (res1(i,j,k,o), res2(o,p), res3(p,l,m,n)) = SVD(A(l,i,m,k,j,n));
     res4(k,i,m,l,j,n) =  res1(i,j,l,o)*res2(o,p)*res3(p,k,m,n);
-    TEST(approx_equal(res4, A, 1e-14));
+    MTEST(approx_equal(res4, A, 1e-14), frob_norm(res4-A));
 	MTEST(frob_norm(res1(i^3, m)*res1(i^3, n) - Tensor::identity(res2.dimensions)(m, n)) < 1e-12, " U not orthogonal");
 	MTEST(frob_norm(res3(m, i^3)*res3(n, i^3) - Tensor::identity(res2.dimensions)(m, n)) < 1e-12, " Vt not orthogonal");
 	
