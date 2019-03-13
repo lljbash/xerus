@@ -229,18 +229,18 @@ namespace xerus {
 			lapack_int info = 0;
 			char job = 'S';
 			lapack_int min = std::min(m,n);
-			std::unique_ptr<double[]> a_t(new double[m*n]);
-			std::unique_ptr<double[]>  u_t(new double[m*min]);
-			std::unique_ptr<double[]>  vt_t(new double[min*n]);
+			std::unique_ptr<double[]> a_t(new double[size_t(m*n)]);
+			std::unique_ptr<double[]>  u_t(new double[size_t(m*min)]);
+			std::unique_ptr<double[]>  vt_t(new double[size_t(min*n)]);
 			// Transpose input matrices
-			low_level_transpose(a_t.get(), a, m, n);
+			low_level_transpose(a_t.get(), a, size_t(m), size_t(n));
 			
 			LAPACK_dgesdd( &job, &m, &n, a_t.get(), &m, s, u_t.get(), &m, vt_t.get(), &min, work, &lwork, iwork, &info );
 			REQUIRE(info == 0, "dgesdd failed with info " << info);
 			// Transpose output matrices
 			// low_level_transpose(a, a_t.get(), n, m);
- 			low_level_transpose(u, u_t.get(), min, m);
-			low_level_transpose(vt, vt_t.get(), n, min);
+ 			low_level_transpose(u, u_t.get(), size_t(min), size_t(m));
+			low_level_transpose(vt, vt_t.get(), size_t(n), size_t(min));
 		}
 		
 		void svd_destructive( double* const _U, double* const _S, double* const _Vt, double* const _A, const size_t _m, const size_t _n) {
@@ -250,9 +250,9 @@ namespace xerus {
 			XERUS_PA_START;
 			lapack_int m = lapack_int(_m);
 			lapack_int n = lapack_int(_n);
-			std::unique_ptr<lapack_int[]> iwork(new lapack_int[std::max(1,8*std::min(m,n))]);
+			std::unique_ptr<lapack_int[]> iwork(new lapack_int[std::max(1ul,8u*std::min(_m,_n))]);
 			lapack_int lwork = dgesdd_get_workarray_size(m, n);
-			std::unique_ptr<double[]> work(new double[lwork]);
+			std::unique_ptr<double[]> work(new double[size_t(lwork)]);
 			
 			dgesdd_work( m, n, _A, _S, _U, _Vt, work.get(), lwork, iwork.get());
 			
