@@ -13,7 +13,8 @@ requirements:
     - openblas
     - suitesparse
     - lapack
-    - boost
+    - boost=1.69.0
+    - python=3.7
     - binutils
     - openmp
 
@@ -21,7 +22,8 @@ requirements:
     - openblas
     - suitesparse
     - lapack
-    - boost
+    - boost=1.69.0
+    - python=3.7
     - binutils
     - openmp
 
@@ -33,4 +35,3 @@ build:
 about:
   home: https://git.hemio.de/xerus/xerus.git
   license: AGPL v3.0
-
