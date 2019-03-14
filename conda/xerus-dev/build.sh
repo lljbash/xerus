@@ -34,10 +34,7 @@ export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/
 export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/site-packages/numpy/core/include/
 export LIBRARY_PATH=${BUILD_PREFIX}/lib
 
-mkdir -p ${BUILD_PREFIX}/include/suitesparse/
-
-cp ${BUILD_PREFIX}/include/*.h ${BUILD_PREFIX}/include/suitesparse/
-cp ${BUILD_PREFIX}/include/*.hpp ${BUILD_PREFIX}/include/suitesparse/
+ln -s ${BUILD_PREFIX}/include/ ${BUILD_PREFIX}/include/suitesparse/
 
 mkdir -p ${PREFIX}/lib/python${PY_VER}
 
