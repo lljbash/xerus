@@ -26,7 +26,7 @@ BOOST_LIBS = -lboost_filesystem
 
 BOOST_PYTHON3 = -lboost_python37
 
-OTHER+= -L${PREFIX}/../_build_env/lib
+OTHER+= -L${BUILD_PREFIX}/lib
 EOF
 
 export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/site-packages/numpy/core/include/
