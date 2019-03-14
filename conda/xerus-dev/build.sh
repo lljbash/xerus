@@ -29,9 +29,9 @@ BOOST_PYTHON3 = -lboost_python37
 OTHER+= -L${BUILD_PREFIX}/lib
 EOF
 
-export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/site-packages/numpy/core/include/
-export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/site-packages/numpy/core/include/
-export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python3.7/site-packages/numpy/core/include/
+export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
+export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
+export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
 export LIBRARY_PATH=${BUILD_PREFIX}/lib
 
 ln -s ${BUILD_PREFIX}/include/ ${BUILD_PREFIX}/include/suitesparse/
