@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -390,7 +390,7 @@ namespace xerus {
 			}
 			//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - Sparse => Sparse  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			else if(_base.tensorObjectReadOnly->is_sparse()) {
-				#define VLA(T, name) auto name##_store = xerus::misc::make_unique_array(new T); const auto & (name) = name##_store.get();
+				#define VLA(T, name) auto name##_store = xerus::misc::make_unique_array(new T); const auto & name = name##_store.get();
 				VLA(bool[_base.indices.size()]  , fixedFlags); // Flag for each index indicating whether the index is fixed
 				VLA(bool[_base.indices.size()]  , traceFlags); // Flag for each index indicating whether the index is part of a trace
 				VLA(size_t[_base.indices.size()], attributes);  // Either the factor in _out, the value of an fixed index or the position of the other part of a trace

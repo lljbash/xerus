@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -25,47 +25,46 @@
 #pragma once
 
 #include "optimizationAlgorithm.h"
-#include "../ttNetwork.h"
-#include "../performanceData.h"
-#include "../measurments.h"
+#include "../forwardDeclarations.h"
 
 namespace xerus {
 	
 	class ASDVariant : public OptimizationAlgorithm {
 	public:
-
 		double minRankEps = 1e-4;
 		
-// 		double maxRankEps = 1e-1;
+		double maxRankEps = 0.32;
 		
 		double epsDecay = 1.1;
 		
 		double controlSetFraction = 0.1;
 		
-		double initialRankEps = 5e-3;
+		double initialRankEps = 4e-3;
 		
 		/// Basic constructor
         ASDVariant(const size_t _maxIterations, const double _targetRelativeResidual, const double _minimalResidualNormDecrease)
                 : OptimizationAlgorithm(0, _maxIterations, _targetRelativeResidual, _minimalResidualNormDecrease) { }
         
+        //TODO: Use OptimizationSolver for internal solver!
+        
         /**
-		* @brief Tries to reconstruct the (low rank) tensor _x from the given measurments. 
+		* @brief Tries to reconstruct the (low rank) tensor @a _x from the given measurments. 
 		* @param[in,out] _x On input: an initial guess of the solution, also defining the ranks. On output: The reconstruction found by the algorithm.
 		* @param _measurments the available measurments, can be either a SinglePointMeasurementSet or RankOneMeasurementSet.
 		* @param _perfData optinal performanceData object to be used.
 		* @returns nothing
 		*/
-		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData) const;
+		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, PerformanceData& _perfData = NoPerfData) const;
 		
 		/**
-		* @brief Tries to reconstruct the (low rank) tensor _x from the given measurments. 
+		* @brief Tries to reconstruct the (low rank) tensor @a _x from the given measurments. 
 		* @param[in,out] _x On input: an initial guess of the solution, may be of smaller rank. On output: The reconstruction found by the algorithm.
 		* @param _measurments the available measurments, can be either a SinglePointMeasurementSet or RankOneMeasurementSet.
 		* @param _maxRanks the maximal ranks the algorithm may use to decrease the resdiual.
 		* @param _perfData optinal performanceData object to be used.
 		* @returns nothing
 		*/
-		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData) const;
+		void operator()(TTTensor& _x, const RankOneMeasurementSet& _measurments, const std::vector<size_t>& _maxRanks, PerformanceData& _perfData = NoPerfData) const;
 	};
 	
 	/// @brief Default variant of the ASD algorithm

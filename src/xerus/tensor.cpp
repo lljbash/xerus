@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf. 
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf. 
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -1422,20 +1422,21 @@ namespace xerus {
 		_rhs.reset(std::move(newDim), std::move(_rhsData));
 	}
 	
-	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, const size_t _maxRank, const value_t _eps) {
+	value_t calculate_svd(Tensor& _U, Tensor& _S, Tensor& _Vt, Tensor _input, const size_t _splitPos, size_t _maxRank, const value_t _eps) {
 		REQUIRE(0 <= _eps && _eps < 1, "Epsilon must be fullfill 0 <= _eps < 1.");
 		
-		size_t lhsSize, rhsSize, rank;
-		std::tie(lhsSize, rhsSize, rank) = calculate_factorization_sizes(_input, _splitPos);
+		size_t lhsSize, rhsSize, full_rank;
+		std::tie(lhsSize, rhsSize, full_rank) = calculate_factorization_sizes(_input, _splitPos);
+        _maxRank = _maxRank == 0 ? full_rank : _maxRank;
 		
-		std::unique_ptr<value_t[]> tmpS(new value_t[rank]);
+		std::unique_ptr<value_t[]> tmpS(new value_t[full_rank]);
 		
 		// sparse SVD becomes inefficient when the matrix is not sparse enough
 		// sparse SVD is about equally fast to dense SVD when there are about N = 1.55*(min(m,n)+(max-min)/5) entries set
 		// will calculate with 2 instead of 1.55 to make sure that we will certainly be slower with sparse
 		// (note that the algorithm is quadratic in the sparsity)
-		size_t min = std::min(lhsSize, rhsSize);
-		size_t max = std::max(lhsSize, rhsSize);
+		const size_t min = std::min(lhsSize, rhsSize);
+		const size_t max = std::max(lhsSize, rhsSize);
 		if (_input.is_sparse() && _input.sparsity() > 2*(min+(max-min)/5)) {
 			_input.use_dense_representation();
 		}
@@ -1449,32 +1450,29 @@ namespace xerus {
 			
 			// then calculate SVD only of remaining (hopefully small) core
 			Tensor UPrime, VPrime;
-			std::tie(lhsSize, rhsSize, rank) = calculate_factorization_sizes(_input, 1);
-			prepare_factorization_output(UPrime, VPrime, _input, 1, rank, Tensor::Representation::Dense);
+			std::tie(lhsSize, rhsSize, full_rank) = calculate_factorization_sizes(_input, 1);
+			prepare_factorization_output(UPrime, VPrime, _input, 1, full_rank, Tensor::Representation::Dense);
 			blasWrapper::svd(UPrime.override_dense_data(), tmpS.get(), VPrime.override_dense_data(), _input.get_unsanitized_dense_data(), lhsSize, rhsSize);
 			
 			// contract U*UPrime and VPrime*V to obtain SVD (UU', S, V'V) from orthogonal U and V as wel as the SVD (U', S, V')
 			contract(_U, _U, UPrime, 1);
 			contract(_Vt, VPrime, _Vt, 1);
 		} else {
-			prepare_factorization_output(_U, _Vt, _input, _splitPos, rank, Tensor::Representation::Dense);
+			prepare_factorization_output(_U, _Vt, _input, _splitPos, full_rank, Tensor::Representation::Dense);
 			blasWrapper::svd(_U.override_dense_data(), tmpS.get(), _Vt.override_dense_data(), _input.get_unsanitized_dense_data(), lhsSize, rhsSize);
 		}
 		
-        size_t full_rank = rank;
+        size_t rank = full_rank;
 
-		// Account for hard threshold
-		if(_maxRank != 0) {
-			rank = std::min(rank, _maxRank);
+		// Find rank due to the Epsilon (NOTE the scaling factor can be ignored, as it does not change the ratios).
+		// For the total error to be < _eps, the sum of discarded singular value squares must be smaller than _eps times the norm, squared
+		const value_t maxErrorSqr = misc::sqr(blasWrapper::two_norm(tmpS.get(), rank) * _eps);
+		value_t error = 0;
+		while (rank > 1 && (rank > _maxRank || error + misc::sqr(tmpS[rank-1]) <= maxErrorSqr)) {
+			error += misc::sqr(tmpS[rank-1]);
+			rank -= 1;
 		}
 		
-		// Find rank due to the Epsilon (NOTE the scaling factor can be ignored, as it does not change the ratios).
-		for(size_t j = 1; j < rank; ++j) {
-			if (tmpS[j] <= _eps*tmpS[0]) {
-				rank = j;
-				break;
-			}
-		}
 		
 		// Create tensor from diagonal values
 		_S.reset(Tensor::DimensionTuple(2, rank), Tensor::Representation::Sparse);
@@ -1490,8 +1488,7 @@ namespace xerus {
 		_U.resize_mode(_U.degree()-1, rank);
 		_Vt.resize_mode(0, rank);
 
-        if (rank < full_rank) { return std::abs(_input.factor)*tmpS[rank]; }
-        else { return 0; }
+        return std::sqrt(error);
 	}
 	
 	
@@ -1715,7 +1712,7 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
-	double get_smallest_eigenvalue(Tensor& _X, const Tensor& _A) {
+	double get_smallest_eigenpair(Tensor& _X, const Tensor& _A) {
 			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 			REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
@@ -1766,14 +1763,16 @@ namespace xerus {
 		}
 	
 #ifdef ARPACK_LIBRARIES
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const Tensor& _A, double* const _ev, int _info, const size_t _miter, const double _eps) {
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize, const size_t _miter, const double _eps) {
 		REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 		REQUIRE(&_X != &_A, "Not supportet yet");
 		REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
 		REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
 
 		const size_t degN = _A.degree() / 2;
-		int info = _info;
+		int info = _initialize ? 0 : 1;
+		std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
+
 		// Calculate multDimensions
 		const size_t m = misc::product(_A.dimensions, 0, degN);
 		const size_t n = misc::product(_A.dimensions, degN, 2*degN);
@@ -1798,7 +1797,7 @@ namespace xerus {
 		arpackWrapper::solve_ev_smallest(
 			rev.get(), // right ritz vectors
 			_A.get_unsanitized_dense_data(),
-			_ev, 1, n,
+			ev.get(), 1, n,
 			res.get(),
 			_miter,
 			_eps, info
@@ -1808,26 +1807,27 @@ namespace xerus {
 		auto tmpX = _X.override_dense_data();
 		for (size_t i = 0; i < n; ++i)
 			tmpX[i] = rev[i];
-		return;
+		return ev[0];
 	}
 
-	void get_smallest_eigenvalue_iterative(Tensor& _X, const TensorNetwork& _op, double* const _ev, int _info, const size_t _miter, const double _eps) {
+	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize, const size_t _miter, const double _eps) {
 			//REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
-			REQUIRE(_op.degree() % 2 == 0, "operator degree must be positive");
+			REQUIRE(_A.degree() % 2 == 0, "operator degree must be positive");
 
-			const size_t degN = _op.degree() / 2;
-			int info = _info;
+			const size_t degN = _A.degree() / 2;
+			int info = _initialize ? 0 : 1;
+			std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
 			// Calculate multDimensions
-			const size_t m = misc::product(_op.dimensions, 0, degN);
-			const size_t n =  misc::product(_op.dimensions, degN, 2*degN);
+			const size_t m = misc::product(_A.dimensions, 0, degN);
+			const size_t n =  misc::product(_A.dimensions, degN, 2*degN);
 			XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
 
 			// Make sure X has right dimensions
-			if(	_X.degree() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _op.dimensions.begin() + degN))
+			if(	_X.degree() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
 			{
 				Tensor::DimensionTuple newDimX;
-				newDimX.insert(newDimX.end(), _op.dimensions.begin()+degN, _op.dimensions.end());
+				newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
 				_X.reset(std::move(newDimX), Tensor::Representation::Dense, Tensor::Initialisation::None);
 				info = 0; // info must be 0 if X is not random
 			}
@@ -1840,8 +1840,8 @@ namespace xerus {
 			// Note that A is dense here
 			arpackWrapper::solve_ev_smallest_special(
 				rev.get(), // right ritz vectors
-				_op,
-				_ev, 1, n,
+				_A,
+				ev.get(), 1, n,
 				res.get(),
 				_miter,
 				_eps, info
@@ -1851,7 +1851,7 @@ namespace xerus {
 			auto tmpX = _X.override_dense_data();
 			for (size_t i = 0; i < n; ++i)
 				tmpX[i] = rev[i];
-			return;
+			return ev[0];
 		}
 #endif
 

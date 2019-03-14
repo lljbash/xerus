@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber, Sebastian Wolf, Michael Götte.
+// Copyright (C) 2014-2019 Benjamin Huber, Sebastian Wolf, Michael Götte.
 // 
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -298,7 +298,7 @@ namespace xerus {
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	public:
 
-		/** 
+		/*
 		 * @brief Reduces the given ranks to the maximal possible.
 		 * @details If a given rank is already smaller or equal it is left unchanged.
 		 * @param _ranks the inital ranks to be reduced.
@@ -343,7 +343,6 @@ namespace xerus {
 		* change.
 		* @param _idx index of the component to set.
 		* @param _T Tensor to use as the new component tensor.
-		* @param i_isleave true if the component set is a leave false if it is an inner component
 		*/
 		void set_component(const size_t _idx, Tensor _T);
 		
@@ -566,6 +565,7 @@ namespace xerus {
 	/**
 	* @brief Calculates the entrywise divison of this HTNetwork by a constant @a _divisor.
 	* @details Internally this only results in a change in the global factor.
+	* @param _network the HTNetwork
 	* @param _divisor the divisor,
 	* @return the resulting scaled HTNetwork.
 	*/

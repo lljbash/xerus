@@ -1,5 +1,5 @@
 // Xerus - A General Purpose Tensor Library
-// Copyright (C) 2014-2018 Benjamin Huber and Sebastian Wolf.
+// Copyright (C) 2014-2019 Benjamin Huber and Sebastian Wolf.
 //
 // Xerus is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -108,7 +108,7 @@ namespace xerus {
         explicit TTNetwork(const Tensor& _tensor, const double _eps, const RankTuple& _maxRanks);
 
 
-        /**
+        /*
         * @brief Transforms a given TensorNetwork to a TTNetwork.
         * @details This is not yet implemented different from casting to Tensor and then using a HOSVD.
         * @param _network The network to transform.
@@ -352,9 +352,9 @@ namespace xerus {
         /**
         * @brief Reduce all ranks up to a given accuracy and maximal number.
         * @param _maxRanks maximal allowed ranks. All current ranks that are larger than the given ones are reduced by truncation.
-        * @param _eps the accuracy to use for truncation in the individual SVDs.
+        * @param _eps the maximal relative L2 error of the rounding, unless the @a _maxRanks determine a higher error.
         */
-        void round(const std::vector<size_t>& _maxRanks, const double _eps = EPSILON);
+        void round(const std::vector<size_t>& _maxRanks, const double _eps = 0.0);
 
 
         /**
@@ -373,7 +373,7 @@ namespace xerus {
 
         /**
         * @brief Reduce all ranks up to a given accuracy.
-        * @param _eps the accuracy to use for truncation in the individual SVDs.
+        * @param _eps the maximal relative L2 error.
         */
         void round(const value_t _eps);
 
@@ -382,14 +382,14 @@ namespace xerus {
         * @brief Applies the soft threshholding operation to all ranks.
         * @param _tau the soft threshholding parameter to be applied. I.e. all singular values are reduced to max(0, Lambda_ui - _tau).
         */
-        void soft_threshold(const double _tau, const bool _preventZero = false);
+        void soft_threshold(const double _tau);
 
 
         /**
         * @brief Applies soft threshholding operations to all ranks.
         * @param _taus the soft threshholding parameters to be applied. I.e. all singular values of the j-th matrification are reduced to max(0, Lambda_ui - _tau[j]).
         */
-        void soft_threshold(const std::vector<double>& _taus, const bool _preventZero = false);
+        void soft_threshold(const std::vector<double>& _taus);
 
 
         /**
@@ -573,6 +573,7 @@ namespace xerus {
     /**
     * @brief Calculates the entrywise divison of this TTNetwork by a constant @a _divisor.
     * @details Internally this only results in a change in the global factor.
+    * @param _network the TTNetwork
     * @param _divisor the divisor,
     * @return the resulting scaled TTNetwork.
     */
