@@ -15,6 +15,7 @@ requirements:
     - lapack
     - boost=1.69.0
     - python=3.7
+    - numpy>=1.16
     - binutils
     - openmp
 
@@ -24,6 +25,7 @@ requirements:
     - lapack
     - boost=1.69.0
     - python=3.7
+    - numpy>=1.16
     - binutils
     - openmp
 

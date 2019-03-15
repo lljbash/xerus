@@ -29,13 +29,13 @@ BOOST_PYTHON3 = -lboost_python37
 OTHER+= -L${BUILD_PREFIX}/lib
 EOF
 
-export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
-export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
-export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${SP_DIR}/numpy/core/include/
+
+export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/pythonR${PY_VER}/site-packages/numpy/core/include/
+export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python${PY_VER}/site-packages/numpy/core/include/
+export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python${PY_VER}/site-packages/numpy/core/include/
 export LIBRARY_PATH=${BUILD_PREFIX}/lib
 
-ln -s ${BUILD_PREFIX}/include/ ${BUILD_PREFIX}/include/suitesparse/
-
+ln -s ${BUILD_PREFIX}/include/ ${BUILD_PREFIX}/include/suitesparse
 mkdir -p ${PREFIX}/lib/python${PY_VER}
 
 make test -j4
