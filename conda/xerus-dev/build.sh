@@ -30,7 +30,7 @@ OTHER+= -L${BUILD_PREFIX}/lib
 EOF
 
 
-export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/pythonR${PY_VER}/site-packages/numpy/core/include/
+export CPP_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python${PY_VER}/site-packages/numpy/core/include/
 export CPLUS_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python${PY_VER}/site-packages/numpy/core/include/
 export CXX_INCLUDE_PATH=${BUILD_PREFIX}/include:${BUILD_PREFIX}/lib/python${PY_VER}/site-packages/numpy/core/include/
 export LIBRARY_PATH=${BUILD_PREFIX}/lib
