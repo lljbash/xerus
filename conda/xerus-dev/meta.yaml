@@ -30,12 +30,18 @@ requirements:
     - openmp
 
 test:
+  files:
+    - Makefile
+
   source_files:
+    - makeIncludes
     - src/xerus/test
     - src/unitTests
     - src/pyTests
 
   requires:
+    - make
+    - {{ compiler('cxx') }}
     - pytest
 
 build:
