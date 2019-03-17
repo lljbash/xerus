@@ -29,6 +29,15 @@ requirements:
     - binutils
     - openmp
 
+test:
+  source_files:
+    - src/xerus/test
+    - src/unitTests
+    - src/pyTests
+
+  requires:
+    - pytest
+
 build:
   # already linked relative to $ORIGIN, so we need to turn
   # off conda's relocation mechanism because it screws it up
