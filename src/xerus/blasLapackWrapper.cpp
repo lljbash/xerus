@@ -489,7 +489,7 @@ namespace xerus {
 			const std::unique_ptr<double[]> tau(new double[rank]);
 			
 			IF_CHECK( int lapackAnswer = ) LAPACKE_dgerqf(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(_n), _A, static_cast<int>(_n), tau.get());
-			CHECK(lapackAnswer == 0, error, "Unable to perform QR factorisaton. Lapacke says: " << lapackAnswer << ". Call was: LAPACKE_dgerqf(LAPACK_ROW_MAJOR, "<<static_cast<int>(_m)<<", "<<static_cast<int>(_n)<<", "<<_A<<", "<<static_cast<int>(_n)<<", "<<tau.get()<<");" );
+			CHECK(lapackAnswer == 0, error, "Unable to perform RQ factorisaton. Lapacke says: " << lapackAnswer << ". Call was: LAPACKE_dgerqf(LAPACK_ROW_MAJOR, "<<static_cast<int>(_m)<<", "<<static_cast<int>(_n)<<", "<<_A<<", "<<static_cast<int>(_n)<<", "<<tau.get()<<");" );
 			
 			
 			// Copy the upper triangular Matrix R (_m x rank) into position.

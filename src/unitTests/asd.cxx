@@ -36,8 +36,6 @@ static misc::UnitTest trasd_frr("TRASD", "Fixed_Rank_Recovery", [](){
 		for(size_t i = 0; i < runs; ++i) {
 			const auto dimensions = random_dimensions(d, 1, 8);
 			
-			if(misc::product(dimensions) == 1) {continue;} // TODO Check why this doesn't work.
-			
 			const auto ranks = random_low_tt_ranks(dimensions, 1, 6);
 
 			const auto target = TTTensor::random(dimensions, ranks);
@@ -79,8 +77,6 @@ static misc::UnitTest trasd_rar("TRASD", "Rank Adaptive_Recovery", [](){
 		
 		for(size_t i = 0; i < runs; ++i) {
 			const auto dimensions = random_dimensions(d, 1, 7);
-			
-			if(misc::product(dimensions) == 1) {continue;} // TODO Check why this doesn't work.
 			
 			const auto ranks = random_low_tt_ranks(dimensions, 1, 5);
 
