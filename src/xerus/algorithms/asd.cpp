@@ -353,6 +353,8 @@ namespace xerus { namespace impl_TrASD {
 			
 			for(size_t setId = 0; setId < P; ++setId) {
 				const auto delta = calculate_delta(_corePosition, setId);
+				if(misc::hard_equal(frob_norm(delta), 0.0)) { continue; }
+				
 				const value_t normSqrPyR = misc::sqr(frob_norm(delta));
 				const auto normSqrAProjGrad = calculate_normSqr_A_projGrad(_corePosition, setId, delta);
 				

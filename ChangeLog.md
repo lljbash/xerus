@@ -8,6 +8,7 @@ Potentially breaking changes are marked with an exclamation point '!' at the beg
  * ! Removed support for the replacement allocator.
  * ! Changed some Makefile configs for more flexibility. See the new config.mk.default file and update your own config.
  * ! Major rewrite of MeasurmentSets.
+ * (optional) support for arpack https://github.com/opencollab/arpack-ng
  * Fixed minor rank reduction bug in TensorNetwork soft thresholding.
  
 
