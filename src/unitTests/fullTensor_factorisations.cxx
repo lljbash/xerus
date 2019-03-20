@@ -236,8 +236,8 @@ static misc::UnitTest tensor_qr_rq_rnd6("Tensor", "QR_AND_RQ_Random_Order_Six", 
 
 
 static misc::UnitTest tensor_qc("Tensor", "QC", [](){
-    Tensor A = Tensor::random({2,2,2,2,2,2});
-	Tensor B({2,3}, [](size_t i){return double(i);});
+    Tensor A = Tensor(TTTensor::random({2,2,2,2,2,2}, {2,3,3,3,2}));//::random({2,2,2,2,2,2});
+// 	Tensor B({2,3}, [](size_t i){return double(i);});
     Tensor Q;
     Tensor R;
     Tensor Q2;
@@ -249,12 +249,13 @@ static misc::UnitTest tensor_qc("Tensor", "QC", [](){
     
     Index i, j, k, l, m, n, o, p, q, r;
 	
-	(Q(i,j), R(j,k)) = QC(B(i,k));
+// 	(Q(i,j), R(j,k)) = QC(B(i,k));
     
     (Q(i,j,k,l), R(l,m,n,r)) = QC(A(i,j,k,m,n,r));
     res4(i,j,k,m,n,r) = Q(i,j,k,o)*R(o,m,n,r);
-    TEST(approx_equal(res4, A, 1e-15));
+	TEST(approx_equal(res4, A, 1e-15));
 	MTEST(frob_norm(Q(i,j,k,l)*Q(i,j,k,m) - Tensor::identity({R.dimensions[0], R.dimensions[0]})(l, m)) < 1e-12, " Q not orthogonal");
+	TEST(frob_norm(Q(i,j,k,l)*Q(m,n,o,l)*A(m,n,o,p,q,r) - A(i,j,k,p,q,r)) < 1e-12);
     
     (Q(i,j,k,l), R(l,m,n,r)) = QC(A(i,n,k,m,j,r));
     res4(i,n,k,m,j,r) = Q(i,j,k,o)*R(o,m,n,r);

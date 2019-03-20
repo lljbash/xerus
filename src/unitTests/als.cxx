@@ -97,7 +97,7 @@ static misc::UnitTest als_proj("ALS", "projectionALS", [](){
 		ALS_SPD(X,B,1e-4);
 		value_t projNorm = frob_norm(X-B);
 		LOG(unit_test, r << " : " << roundNorm << " > " << projNorm);
-		TEST(projNorm < roundNorm);
+		MTEST(projNorm < roundNorm, projNorm << " vs " << roundNorm << " at rank " << r);
 	}
 	TEST(misc::approx_equal(frob_norm(B), normB, 0.));
 });

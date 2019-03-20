@@ -97,6 +97,7 @@ namespace xerus {
 		std::tuple<std::unique_ptr<double[]>, std::unique_ptr<double[]>, size_t> qc(const double* const _A, const size_t _m, const size_t _n);
 		
 		///@brief: splits A = Q*C, with @a _C an rxn matrix (where r is the rank of @a _A) and @a _Q orthogonal. Destroys A.
+		[[deprecated("without lapacke the called QC factorization is not destructive anymore. call qc(...) instead of this function to call it directly. this function will be removed in xerus v5")]]
 		std::tuple<std::unique_ptr<double[]>, std::unique_ptr<double[]>, size_t> qc_destructive(double* const _A, const size_t _m, const size_t _n);
 		
 		
