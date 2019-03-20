@@ -71,7 +71,7 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     TEST((x2[{1,1}]) < 1e-14);
 });
 
-static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalue of Matrix (direct)", [](){
+static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get_smallest_eigenvalue_of_Matrix_direct", [](){
     Index i,j,k,l,m,n,o,p;
 
     Tensor A1 = Tensor::random({4,3,4,3});
@@ -86,7 +86,7 @@ static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalu
 });
 
 #ifdef ARPACK_LIBRARIES
-static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest eigenvalue of Matrix (iterative)", [](){
+static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get_smallest_eigenvalue_of_Matrix_iterative", [](){
     Index i,j,k,l,m,n,o,p;
     TensorNetwork A11,A22,A33;
     Tensor A1 = Tensor::random({4,3,4,3}) + (-1)*Tensor::identity({4,3,4,3});
@@ -124,7 +124,7 @@ static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest
 });
 #endif
 
-static misc::UnitTest solve_vs_lsqr("Tensor", "solve vs least squares", [](){
+static misc::UnitTest solve_vs_lsqr("Tensor", "solve_vs_least_squares", [](){
 	const size_t N = 500;
 	Tensor A({N, N});
 	for (size_t i=0; i<N; ++i) {
@@ -307,7 +307,7 @@ static misc::UnitTest tensor_solve_matrix("Tensor", "solve_matrix", [](){
 	}
 });
 
-static misc::UnitTest tensor_solve_w_extra_degree("Tensor", "solve with extra degrees", [](){
+static misc::UnitTest tensor_solve_w_extra_degree("Tensor", "solve_with_extra_degrees", [](){
     Index ii,jj,kk,ll,mm,nn;
   	Tensor A = xerus::Tensor::random({2,2});
   	Tensor B = xerus::Tensor::random({2,2});

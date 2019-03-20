@@ -55,7 +55,7 @@ static misc::UnitTest tt_soft("TT", "soft_thresholding", [](){
 });
 
 
-static misc::UnitTest tt_pseudo_inv("TT", "Non-operator Pseudo Inverse", [](){
+static misc::UnitTest tt_pseudo_inv("TT", "Non-operator_Pseudo_Inverse", [](){
 	Index i,j,k,r1,r2,r3,r4;
 	
 	const size_t d = 2;
