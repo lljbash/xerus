@@ -62,7 +62,7 @@ static misc::UnitTest trasd_frr("TRASD", "Fixed_Rank_Recovery", [](){
 });
 
 
-static misc::UnitTest trasd_rar("TRASD", "Rank Adaptive_Recovery", [](){
+static misc::UnitTest trasd_rar("TRASD", "Rank_Adaptive_Recovery", [](){
 	const std::vector<size_t> orders{2, 3, 4};
 	const size_t runs = 6;
 	const size_t successThreshold = 4;
