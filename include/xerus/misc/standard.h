@@ -76,11 +76,11 @@ namespace xerus {
 
 /** 
  * @def XERUS_deprecated
- * @brief Attribute to mark deprecated functions if supported by currently used c++ standard.
+ * @brief Attribute to mark deprecated functions if supported by currently used c++ version.
  */
 #if __cplusplus > 201400L
 	#define XERUS_deprecated(msg) [[deprecated(msg)]]
-#elif defined(GCC_VERSION) && GCC_VERSION > 40900
+#elif defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ * 100 + __GNUC_MINOR__) > 409
 	#define XERUS_deprecated(msg) [[gnu::deprecated(msg)]]
 #else
 	#define XERUS_deprecated(msg)

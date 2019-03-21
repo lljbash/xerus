@@ -146,14 +146,17 @@ namespace xerus {
         remains.reinterpret_dimensions(extDimensions);
 
 
-        Tensor singularValues, newNode;
-        for(size_t position = numComponents-1; position > 0; --position) {
-            calculate_svd(remains, singularValues, newNode, remains, 1+position*N, _maxRanks[position-1], _eps);
-
-            set_component(position, std::move(newNode));
-            newNode.reset();
-            xerus::contract(remains, remains, false, singularValues, false, 1);
-        }
+		if (numComponents > 1) {
+			Tensor singularValues, newNode;
+			auto epsPerSite = misc::hard_equal(_eps, 0.0) ? EPSILON : _eps / std::sqrt(double(numComponents-1));
+			for(size_t position = numComponents-1; position > 0; --position) {
+				calculate_svd(remains, singularValues, newNode, remains, 1+position*N, _maxRanks[position-1], epsPerSite);
+				
+				set_component(position, std::move(newNode));
+				newNode.reset();
+				xerus::contract(remains, remains, false, singularValues, false, 1);
+			}
+		}
 
         set_component(0, remains);
         assume_core_position(0);
