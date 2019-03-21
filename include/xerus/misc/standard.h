@@ -64,7 +64,6 @@ namespace xerus {
 
 }
 
-// all of these can be writen like [[gnu::unused]] but kdevelop will not recognize them then
 /** 
  * @def XERUS_force_inline 
  * @brief Collection of attributes to force gcc to inline a specific function.
@@ -73,6 +72,16 @@ namespace xerus {
 	#define XERUS_force_inline  inline
 #else
 	#define XERUS_force_inline  inline __attribute__((always_inline, gnu_inline))
+#endif
+
+/** 
+ * @def XERUS_deprecated
+ * @brief Attribute to mark deprecated functions if supported by currently used c++ standard.
+ */
+#if __cplusplus > 201400L
+	#define XERUS_deprecated(msg) [[deprecated(msg)]]
+#else
+	#define XERUS_deprecated(msg)
 #endif
 
 #define XERUS_warn_unused	__attribute__((warn_unused_result))

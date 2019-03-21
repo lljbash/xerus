@@ -458,7 +458,6 @@ namespace xerus {
 			const std::unique_ptr<double[]> tau(new double[rank]);
 			
 			// Calculate QR factorisations
-//             LOG(Lapacke, "Call to dorgqr with parameters: " << LAPACK_ROW_MAJOR << ", " << static_cast<int>(_m)  << ", " << static_cast<int>(_n)  << ", " << _A << ", " << static_cast<int>(_n)  << ", " << tau.get());
 			IF_CHECK( int lapackAnswer = ) LAPACKE_dgeqrf(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(_n), _A, static_cast<int>(_n), tau.get());
 			CHECK(lapackAnswer == 0, error, "Unable to perform QR factorisaton. Lapacke says: " << lapackAnswer );
 			
@@ -469,7 +468,6 @@ namespace xerus {
 			}
 			
 			// Create orthogonal matrix Q (in tmpA)
-	//         LOG(Lapacke, "Call to dorgqr with parameters: " << LAPACK_ROW_MAJOR << ", " << static_cast<int>(_m)  << ", " << static_cast<int>(rank)  << ", " << static_cast<int>(rank) << ", " << _A << ", " << static_cast<int>(_n)  << ", " << tau.get());
 			IF_CHECK( lapackAnswer = ) LAPACKE_dorgqr(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(rank), static_cast<int>(rank), _A, static_cast<int>(_n), tau.get());
 			CHECK(lapackAnswer == 0, error, "Unable to reconstruct Q from the QR factorisation. Lapacke says: " << lapackAnswer);
 			
