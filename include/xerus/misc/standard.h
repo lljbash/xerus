@@ -80,6 +80,8 @@ namespace xerus {
  */
 #if __cplusplus > 201400L
 	#define XERUS_deprecated(msg) [[deprecated(msg)]]
+#elif defined(GCC_VERSION) && GCC_VERSION > 40900
+	#define XERUS_deprecated(msg) [[gnu::deprecated(msg)]]
 #else
 	#define XERUS_deprecated(msg)
 #endif
