@@ -1712,7 +1712,7 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
-	double get_smallest_eigenpair(Tensor& _X, const Tensor& _A) {
+	double get_smallest_eigenpair(Tensor& _X, Tensor& _A) {
 			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 			REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
@@ -1742,7 +1742,7 @@ namespace xerus {
 				rev.get(), // right eigenvectors
 				re.get(),  // real eigenvalues
 				im.get(),  // imaginary eigenvalues
-				_A.get_unsanitized_dense_data(),  n);
+				_A.get_dense_data(),  n);
 
 			//get eigenvalue with minimal real part
 			double ev = re[0];
@@ -1763,7 +1763,7 @@ namespace xerus {
 		}
 	
 #ifdef ARPACK_LIBRARIES
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize, const size_t _miter, const double _eps) {
+	value_t get_eigenpair_iterative(Tensor& _X, Tensor& _A, bool _smallest, bool _initialize, const size_t _miter, const double _eps) {
 		REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 		REQUIRE(&_X != &_A, "Not supportet yet");
 		REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
@@ -1791,17 +1791,28 @@ namespace xerus {
 		std::unique_ptr<double[]> rev(new double[n]); // right eigenvectors
 		std::unique_ptr<double[]> res(new double[n]); // residual
 		if (info > 0)
-			misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
+			misc::copy(res.get(), _X.get_dense_data(), n);
 
 		// Note that A is dense here
-		arpackWrapper::solve_ev_smallest(
-			rev.get(), // right ritz vectors
-			_A.get_unsanitized_dense_data(),
-			ev.get(), 1, n,
-			res.get(),
-			_miter,
-			_eps, info
-		);
+		if (_smallest){
+			arpackWrapper::solve_ev_smallest(
+				rev.get(), // right ritz vectors
+				_A.get_dense_data(),
+				ev.get(), 1, n,
+				res.get(),
+				_miter,
+				_eps, info
+			);
+		} else {
+			arpackWrapper::solve_ev_largest(
+				rev.get(), // right ritz vectors
+				_A.get_dense_data(),
+				ev.get(), 1, n,
+				res.get(),
+				_miter,
+				_eps, info
+			);
+		}
 
 		// eigenvector of smallest eigenvalue
 		auto tmpX = _X.override_dense_data();
@@ -1810,7 +1821,7 @@ namespace xerus {
 		return ev[0];
 	}
 
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize, const size_t _miter, const double _eps) {
+	value_t get_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _smallest, bool _initialize, const size_t _miter, const double _eps) {
 			//REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
 			REQUIRE(_A.degree() % 2 == 0, "operator degree must be positive");
@@ -1838,16 +1849,27 @@ namespace xerus {
 				misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
 
 			// Note that A is dense here
-			arpackWrapper::solve_ev_smallest_special(
-				rev.get(), // right ritz vectors
-				_A,
-				ev.get(), 1, n,
-				res.get(),
-				_miter,
-				_eps, info
-			);
+			if (_smallest){
+				arpackWrapper::solve_ev_smallest_special(
+					rev.get(), // right ritz vectors
+					_A,
+					ev.get(), 1, n,
+					res.get(),
+					_miter,
+					_eps, info
+				);
+			} else {
+				arpackWrapper::solve_ev_largest_special(
+					rev.get(), // right ritz vectors
+					_A,
+					ev.get(), 1, n,
+					res.get(),
+					_miter,
+					_eps, info
+				);
+			}
 
-			// eigenvector of smallest eigenvalue
+			// eigenvector of eigenvalue
 			auto tmpX = _X.override_dense_data();
 			for (size_t i = 0; i < n; ++i)
 				tmpX[i] = rev[i];

@@ -1024,7 +1024,7 @@ namespace xerus {
 	 * @param _A input Operator A symmetric with respect to matrification
 	 * @return the smallest eigenvalue
 	 */
-	value_t get_smallest_eigenpair(Tensor &_X, const Tensor &_A);
+	value_t get_smallest_eigenpair(Tensor &_X, Tensor &_A);
 
 
 #ifdef ARPACK_LIBRARIES
@@ -1032,23 +1032,25 @@ namespace xerus {
 	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
 	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
 	 * @param _A input Operator A in Tensor Format, symmetric with respect to matrification
+	 * @param _smallest if true algorithm searches for smallest eigenvalue else algorithm searches for largest eigenvalue
 	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
 	 * @param _miter maximal number of iterations of algorithm
 	 * @param _eps tolerance for iterative algorithm
 	 * @return smallest eigenvalue
 	 */
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
+	value_t get_eigenpair_iterative(Tensor& _X, Tensor& _A, bool _smallest=false, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
 
 	/**
 	 * @brief Solves the equation A*x = lambda*x for x and lambda and A symmetric. It calls the ARPACK routine dsaupd. It calculates the smallest algebraic values.
 	 * @param _X Output Tensor for the result, the eigenvector of the smallest eigenvalue
 	 * @param _A input Operator A in Tensor Network Format, symmetric with respect to matrification
+	 * @param _smallest if true algorithm searches for smallest eigenvalue else algorithm searches for largest eigenvalue
 	 * @param _initialize if true algorithm is randomly initialized, if false it takes _X as starting point for the lanczos iteration
 	 * @param _miter maximal number of iterations of algorithm
 	 * @param _eps tolerance for iterative algorithm
 	 * @return smallest eigenvalue
 	 */
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
+	value_t get_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _smallest=false, bool _initialize=true, const size_t _miter=1000, const double _eps=EPSILON);
 
 #endif
 

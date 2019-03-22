@@ -292,12 +292,15 @@ namespace xerus {
 			solve_ev (_x, _A, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::smallest_algebraic, _info);
 		}
 
-		void solve_ev_biggest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
+		void solve_ev_largest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
 			solve_ev (_x, _A, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::largest_algebraic, _info);
 		}
 
 		void solve_ev_smallest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
 			solve_ev_special (_x, _op, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::smallest_algebraic, _info);
+		}
+		void solve_ev_largest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info) {
+			solve_ev_special (_x, _op, _ev, _k, _n, _resid, _maxiter, _eps, arpack::which::largest_algebraic, _info);
 		}
 
 	} // namespace arpackWrapper

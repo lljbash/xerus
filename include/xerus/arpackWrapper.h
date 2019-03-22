@@ -60,15 +60,18 @@ namespace xerus {
 		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
 		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
 		void solve_ev_smallest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
-		///@brief: Solves Ax = lambda*x for x, for the biggest _k eigenvalues
-		void solve_ev_biggest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+		///@brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues
+		void solve_ev_largest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
 
 
 		//TODO check if this can be simplified!!
 		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
 		void solve_ev_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
-		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
+		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues, takes Tensor Network as Operator
 		void solve_ev_smallest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+		//@brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues, takes Tensor Network as Operator
+		void solve_ev_largest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
+
 
 
 
