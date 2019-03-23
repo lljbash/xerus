@@ -39,7 +39,7 @@ size_t tt_dofs(const std::vector<size_t>& _dimensions, const std::vector<size_t>
 		dofs += _ranks[mu-1]*_dimensions[mu]*_ranks[mu];
 	}
 	
-	dofs += _ranks[order-1]*_dimensions[order-1];
+	dofs += _ranks[order-2]*_dimensions[order-1];
 	
 	for(size_t mu = 0; mu+2 < order; ++mu) {
 		dofs -= misc::sqr(_ranks[mu]);
