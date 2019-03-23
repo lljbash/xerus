@@ -48,10 +48,10 @@ extern "C"
 
 using namespace xerus;
 
-static Tensor::DimensionTuple random_dimensions(const size_t _degree, const size_t _maxDim, std::mt19937_64 _rnd) {
+static Tensor::DimensionTuple random_dimensions(const size_t _order, const size_t _maxDim, std::mt19937_64 _rnd) {
 	std::uniform_int_distribution<size_t> dist(1, _maxDim);
 	Tensor::DimensionTuple dims;
-	for(size_t i = 0; i < _degree; ++i) { dims.emplace_back(dist(_rnd)); }
+	for(size_t i = 0; i < _order; ++i) { dims.emplace_back(dist(_rnd)); }
 	return dims;
 }
 
@@ -158,15 +158,15 @@ static misc::UnitTest tensor_constructors("Tensor", "Constructors", [](){
 	
 	
 	for(size_t i = 0; i < tensors.size(); ++i) {
-		// Test defaults being degree zero
+		// Test defaults being order zero
 		if(i < 4) {
-			MTEST(tensors[i].degree() == 0, i);
+			MTEST(tensors[i].order() == 0, i);
 		} else {
-			MTEST(tensors[i].degree() == 10, i);
+			MTEST(tensors[i].order() == 10, i);
 		}
 		
-		// Test degree calculation
-		MTEST(tensors[i].degree() == tensors[i].dimensions.size(), i);
+		// Test order calculation
+		MTEST(tensors[i].order() == tensors[i].dimensions.size(), i);
 		
 		// Test size calcualtion
 		MTEST(tensors[i].size == misc::product(tensors[i].dimensions), i);

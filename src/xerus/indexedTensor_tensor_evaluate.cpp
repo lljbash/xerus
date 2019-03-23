@@ -54,9 +54,9 @@ namespace xerus {
 	 */
 	void reshuffle(Tensor& _out, const Tensor& _base, const std::vector<size_t>& _shuffle) {
 		IF_CHECK(
-			INTERNAL_CHECK(_shuffle.size() == _base.degree(), "IE");
-			for(size_t x = 0; x < _base.degree(); ++x) {
-				REQUIRE(_shuffle[x] < _base.degree(), _shuffle[x] << " is no valid new position!");
+			INTERNAL_CHECK(_shuffle.size() == _base.order(), "IE");
+			for(size_t x = 0; x < _base.order(); ++x) {
+				REQUIRE(_shuffle[x] < _base.order(), _shuffle[x] << " is no valid new position!");
 				REQUIRE(misc::count(_shuffle, x) == 1, x << " illegally appeared twice.");
 			}
 		)
@@ -76,8 +76,8 @@ namespace xerus {
 			return;
 		}
 		
-		std::vector<size_t> outDimensions(_base.degree());
-		for( size_t i = 0; i < _base.degree(); ++i ) {
+		std::vector<size_t> outDimensions(_base.order());
+		for( size_t i = 0; i < _base.order(); ++i ) {
 			outDimensions[_shuffle[i]] = _base.dimensions[i];
 		}
 		

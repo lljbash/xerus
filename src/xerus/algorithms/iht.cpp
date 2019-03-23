@@ -28,7 +28,7 @@
 namespace xerus {
 	double IHT(TTTensor& _x, const SinglePointMeasurementSet& _measurments, PerformanceData& _perfData) {
 		const size_t numMeasurments = _measurments.size();
-		const size_t degree = _x.degree();
+		const size_t order = _x.order();
 		const size_t USER_MEASUREMENTS_PER_ITR = numMeasurments;
 		const value_t ALPHA_CHG = 1.1;
 		
@@ -72,9 +72,9 @@ namespace xerus {
 			
 			for (value_t beta = 1/ALPHA_CHG; beta < ALPHA_CHG*1.5; beta *= ALPHA_CHG) {
 				// Build the largeX
-				for(size_t d = 0; d < degree; ++d) {
+				for(size_t d = 0; d < order; ++d) {
 					Tensor& currComp = _x.component(d);
-					Tensor newComp({d == 0 ? 1 : (currComp.dimensions[0]+USER_MEASUREMENTS_PER_ITR), currComp.dimensions[1], d == degree-1 ? 1 : (currComp.dimensions[2]+USER_MEASUREMENTS_PER_ITR)});
+					Tensor newComp({d == 0 ? 1 : (currComp.dimensions[0]+USER_MEASUREMENTS_PER_ITR), currComp.dimensions[1], d == order-1 ? 1 : (currComp.dimensions[2]+USER_MEASUREMENTS_PER_ITR)});
 					
 					// Copy dense part
 					for(size_t r1 = 0; r1 < currComp.dimensions[0]; ++r1) {
@@ -90,12 +90,12 @@ namespace xerus {
 						for(size_t i = 0; i < USER_MEASUREMENTS_PER_ITR; ++i) {
 							newComp[{0, _measurments.positions[measurementOrder[i]][d], i+currComp.dimensions[2]}] = beta*alpha*(_measurments.measuredValues[measurementOrder[i]] - currentValues[measurementOrder[i]]);
 						}
-					} else if (d!=degree-1) {
+					} else if (d!=order-1) {
 						for(size_t i = 0; i < USER_MEASUREMENTS_PER_ITR; ++i) {
 							newComp[{i + currComp.dimensions[0], _measurments.positions[measurementOrder[i]][d], i+currComp.dimensions[2]}] = 1.0;
 						}
 					} else {
-						// d == degree-1
+						// d == order-1
 						for(size_t i = 0; i < USER_MEASUREMENTS_PER_ITR; ++i) {
 							newComp[{i + currComp.dimensions[0], _measurments.positions[measurementOrder[i]][d], 0}] = 1.0;
 						}
@@ -111,16 +111,16 @@ namespace xerus {
 					// build stack from right to left
 					std::vector<Tensor> stack;
 					stack.emplace_back(Tensor::ones({1,1}));
-					for (size_t i=degree-1; i>0; --i) {
+					for (size_t i=order-1; i>0; --i) {
 						Tensor next;
 						next(i1,i2) = newX.get_component(i)(i1,i5,i3) * largeX.get_component(i)(i2,i5,i4) * stack.back()(i3,i4);
 						stack.emplace_back(next);
 					}
 					Tensor left = Tensor::ones({1,1});
 					// sweep left to right
-					for (size_t i=0; i<degree; ++i) {
+					for (size_t i=0; i<order; ++i) {
 						newX.component(i)(i1,i2,i3) = left(i1,i4) * largeX.get_component(i)(i4,i2,i5) * stack.back()(i3,i5);
-						if (i+1<degree) {
+						if (i+1<order) {
 							newX.move_core(i+1, true);
 							left(i1,i2) = left(i3,i4) * newX.get_component(i)(i3,i5,i1) * largeX.get_component(i)(i4,i5,i2);
 							stack.pop_back();

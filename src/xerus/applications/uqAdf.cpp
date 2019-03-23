@@ -82,9 +82,9 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
     public:
         static std::vector<std::vector<Tensor>> create_positions(const TTTensor& _x, const PolynomBasis _basisType, const std::vector<std::vector<double>>& _randomVariables) {
-            std::vector<std::vector<Tensor>> positions(_x.degree());
+            std::vector<std::vector<Tensor>> positions(_x.order());
 
-            for(size_t corePosition = 1; corePosition < _x.degree(); ++corePosition) {
+            for(size_t corePosition = 1; corePosition < _x.order(); ++corePosition) {
                 positions[corePosition].reserve(_randomVariables.size());
                 for(size_t j = 0; j < _randomVariables.size(); ++j) {
                     positions[corePosition].push_back(polynomial_basis_evaluation(_randomVariables[j][corePosition-1], _basisType, _x.dimensions[corePosition]));
@@ -98,11 +98,11 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         static std::vector<std::vector<Tensor>> transpose_positions(const TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions) {
             REQUIRE(_positions.size() == _solutions.size(), "Incompatible positions and solutions vector");
             for(size_t sample=0; sample < _positions.size(); ++sample) {
-                REQUIRE(_positions[sample].size() == _x.degree()-1, "Invalid measurement");
+                REQUIRE(_positions[sample].size() == _x.order()-1, "Invalid measurement");
             }
 
-            std::vector<std::vector<Tensor>> positions(_x.degree());
-            for(size_t corePosition=1; corePosition < _x.degree(); ++corePosition) {
+            std::vector<std::vector<Tensor>> positions(_x.order());
+            for(size_t corePosition=1; corePosition < _x.order(); ++corePosition) {
                 positions[corePosition].reserve(_positions.size());
                 for(size_t sample=0; sample < _positions.size(); ++sample) {
                     REQUIRE(_positions[sample][corePosition-1].dimensions.size() == 1, "Invalid measurement component");
@@ -158,7 +158,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
         InternalSolver(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const size_t _maxItr, const double _targetEps, const double _initalRankEps) :
             N(_measurments.size()),
-            d(_x.degree()),
+            d(_x.order()),
             targetResidual(_targetEps),
             maxIterations(_maxItr),
             positions(create_positions(_x, _basisType, _measurments.parameterVectors)),
@@ -180,7 +180,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
         InternalSolver(TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const size_t _maxItr, const double _targetEps, const double _initalRankEps) :
             N(_solutions.size()),
-            d(_x.degree()),
+            d(_x.order()),
             targetResidual(_targetEps),
             maxIterations(_maxItr),
             positions(transpose_positions(_x, _positions, _solutions)),
@@ -201,7 +201,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
         InternalSolver(TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const size_t _maxItr, const double _targetEps, const double _initalRankEps) :
             N(_solutions.size()),
-            d(_x.degree()),
+            d(_x.order()),
             targetResidual(_targetEps),
             maxIterations(_maxItr),
             positions(transpose_positions(_x, _positions, _solutions)),
@@ -443,7 +443,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 
         void finish(const size_t _iteration) {
-            for(size_t i = 0; i < bestX.degree(); i++) {
+            for(size_t i = 0; i < bestX.order(); i++) {
                 if(i == bestX.corePosition) {
                     outX.set_component(i, bestX.get_average_core());
                 } else {
@@ -490,7 +490,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                 if(residuals.back() > convergenceFactor*residuals[0]) {
                     bool maxRankReached = false;
                     bool rankMaxed = false;
-                    for(size_t i = 0; i < x.degree()-1; ++i) {
+                    for(size_t i = 0; i < x.order()-1; ++i) {
                         maxRankReached = maxRankReached || (x.rank(i) == maxRank);
                         rankMaxed = rankMaxed || (x.rank(i) == prevRanks[0][i]+1);
                     }
@@ -563,7 +563,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         // Set mean
         mean.reinterpret_dimensions({1, x.dimensions[0], 1});
         x.set_component(0, mean);
-        for(size_t k = 1; k < x.degree(); ++k) {
+        for(size_t k = 1; k < x.order(); ++k) {
             x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
         }
         x.assume_core_position(0);
@@ -587,7 +587,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         // Set mean
         mean.reinterpret_dimensions({1, x.dimensions[0], 1});
         x.set_component(0, mean);
-        for(size_t k = 1; k < x.degree(); ++k) {
+        for(size_t k = 1; k < x.order(); ++k) {
             x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
         }
         x.assume_core_position(0);
@@ -611,7 +611,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         // Set mean
         mean.reinterpret_dimensions({1, x.dimensions[0], 1});
         x.set_component(0, mean);
-        for(size_t k = 1; k < x.degree(); ++k) {
+        for(size_t k = 1; k < x.order(); ++k) {
             x.set_component(k, Tensor::dirac({1, x.dimensions[k], 1}, 0));
         }
         x.assume_core_position(0);
@@ -627,7 +627,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 
         for(size_t i=0; i < _measurments.parameterVectors.size(); ++i) {
-          REQUIRE(_x.degree() <= _measurments.parameterVectors[i].size(), "Parameter vector for sample " << i << " to short: " << _measurments.parameterVectors[i]);
+          REQUIRE(_x.order() <= _measurments.parameterVectors[i].size(), "Parameter vector for sample " << i << " to short: " << _measurments.parameterVectors[i]);
           for(size_t j=0; j < _measurments.parameterVectors[i].size(); ++j) {
             if(_measurments.parameterVectors[i][j] > 1 || _measurments.parameterVectors[i][j] < -1) {
               std::cout << "i=" << i << ", sample=" << _measurments.parameterVectors[i] << std::endl;

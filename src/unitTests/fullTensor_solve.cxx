@@ -344,7 +344,7 @@ static misc::UnitTest tensor_solve_matrix("Tensor", "solve_matrix", [](){
 	}
 });
 
-static misc::UnitTest tensor_solve_w_extra_degree("Tensor", "solve_with_extra_degrees", [](){
+static misc::UnitTest tensor_solve_w_extra_order("Tensor", "solve_with_extra_orders", [](){
     Index ii,jj,kk,ll,mm,nn;
   	Tensor A = xerus::Tensor::random({2,2});
   	Tensor B = xerus::Tensor::random({2,2});

@@ -24,7 +24,7 @@
 #include "../../include/xerus/misc/internal.h"
 using namespace xerus;
 
-static misc::UnitTest tn_contr40("TensorNetwork", "contractions_of_4_to_degree_0", [](){
+static misc::UnitTest tn_contr40("TensorNetwork", "contractions_of_4_to_order_0", [](){
     Tensor A = Tensor::random({100,1});
 	Tensor B = Tensor::random({100,1});
 	Tensor C = Tensor::random({100,1});
@@ -45,7 +45,7 @@ static misc::UnitTest tn_contr40("TensorNetwork", "contractions_of_4_to_degree_0
 	TEST(misc::approx_equal(E[{}], a1 * a2, 1e-20));
 });
 
-static misc::UnitTest tn_contr30("TensorNetwork", "contractions_of_3_to_degree_0", [](){
+static misc::UnitTest tn_contr30("TensorNetwork", "contractions_of_3_to_order_0", [](){
     Tensor A = Tensor::random({1,10});
 	Tensor B = Tensor::random({10,100});
 	Tensor C = Tensor::random({100,1});

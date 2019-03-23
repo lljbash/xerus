@@ -109,10 +109,10 @@ void expose_tensor() {
                 #pragma GCC diagnostic ignored "-Wpedantic"
                 PyObject *pyObj;
                 if (_this.is_dense()) {
-                    pyObj = PyArray_SimpleNewFromData(int(_this.degree()), &dimensions[0], NPY_DOUBLE, _this.get_dense_data());
+                    pyObj = PyArray_SimpleNewFromData(int(_this.order()), &dimensions[0], NPY_DOUBLE, _this.get_dense_data());
                 } else {
                     std::cerr << "RuntimeWarning: converting sparse tensor to dense ndarray" << std::endl;
-                    int nd = int(_this.degree());
+                    int nd = int(_this.order());
                     npy_intp* dims = &dimensions[0];
                     int typenum = NPY_DOUBLE;
                     void* data = calloc(_this.size, sizeof(double));
@@ -131,7 +131,8 @@ void expose_tensor() {
             .add_property("dimensions", +[](Tensor &_A) {
                 return _A.dimensions;
             })
-            .def("degree", &Tensor::degree)
+            .def("degree", &Tensor::order) // TODO Deprecated, should print some kind of warning.
+            .def("order", &Tensor::order)
             .def_readonly("factor", &Tensor::factor)
             .def_readonly("size", &Tensor::size)
             .def("one_norm", &Tensor::one_norm)

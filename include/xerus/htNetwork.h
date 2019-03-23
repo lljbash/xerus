@@ -80,16 +80,16 @@ namespace xerus {
 		
 		
 		/** 
-		* @brief Constructs an zero initialized HTNetwork with the given degree and ranks all equal to one.
-		* @details Naturally for HTOperators the degree must be even.
-		* @param _degree number of physical indices
+		* @brief Constructs an zero initialized HTNetwork with the given order and ranks all equal to one.
+		* @details Naturally for HTOperators the order must be even.
+		* @param _order number of physical indices
 		*/
-		explicit HTNetwork(const size_t _degree);
+		explicit HTNetwork(const size_t _order);
 		
 		
 		/** 
 		* @brief Constructs an zero initialized HTNetwork with the given dimensions and ranks all equal to one.
-		* @details Naturally for HTOperators the degree must be even.
+		* @details Naturally for HTOperators the order must be even.
 		* @params _dimensions Tuple of the dimensions of the physical indices
 		*/
 		explicit HTNetwork(Tensor::DimensionTuple _dimensions);
@@ -234,7 +234,7 @@ namespace xerus {
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	protected:
 		/**
-		 * @brief Return the number of ranks, i.e. 0 for degree zero and number of components -1 otherwise.
+		 * @brief Return the number of ranks, i.e. 0 for order zero and number of components -1 otherwise.
 		 * @return number of ranks
 		 */
 		size_t num_ranks() const;
@@ -439,7 +439,7 @@ namespace xerus {
 			const std::vector<size_t> shuffle({0,2,1});
 			size_t numComp = get_number_of_components();
 			//only leaves
-			for (size_t n = numComp - 1; n >= numComp - degree()/N; --n) {
+			for (size_t n = numComp - 1; n >= numComp - order()/N; --n) {
 				xerus::reshuffle(component(n), component(n), shuffle);
 			}
 		}

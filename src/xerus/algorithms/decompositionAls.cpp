@@ -41,7 +41,7 @@ namespace xerus {
 		
 		for(size_t iteration = 0; iteration < _numHalfSweeps; iteration += 2) {
 			// Move right
-			for(size_t pos = 0; pos < _x.degree(); ++pos) { XERUS_REQUIRE_TEST;
+			for(size_t pos = 0; pos < _x.order(); ++pos) { XERUS_REQUIRE_TEST;
 				_x.move_core(pos);
 				std::pair<TensorNetwork, TensorNetwork> split = _x.chop(pos);
 				_x.component(pos)(rU, iX, rL) = split.first(iU&1, rU)*split.second(rL, iL&1)*_b(iU^pos, iX, iL&(pos+1));
@@ -49,7 +49,7 @@ namespace xerus {
 			
 			// Move left
 			if(iteration+1 < _numHalfSweeps) {
-				for(size_t pos = _x.degree()-2; pos > 0; --pos) { XERUS_REQUIRE_TEST;
+				for(size_t pos = _x.order()-2; pos > 0; --pos) { XERUS_REQUIRE_TEST;
 					_x.move_core(pos);
 					std::pair<TensorNetwork, TensorNetwork> split = _x.chop(pos);
 					_x.component(pos)(rU, iX, rL) = split.first(iU&1, rU)*split.second(rL, iL&1)*_b(iU^pos, iX, iL&(pos+1));

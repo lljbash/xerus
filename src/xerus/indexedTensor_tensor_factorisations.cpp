@@ -63,7 +63,7 @@ namespace xerus {
 		_rhsPreliminaryIndices.reserve(_rhs.indices.size());
 		
 		std::vector<size_t> reorderedBaseDimensions, lhsDims, rhsDims;
-		reorderedBaseDimensions.reserve(_base.degree());
+		reorderedBaseDimensions.reserve(_base.order());
 		lhsDims.reserve(_lhs.indices.size());
 		rhsDims.reserve(_rhs.indices.size());
 		
@@ -178,7 +178,7 @@ namespace xerus {
 				}
 				*S.tensorObject = newS;
 				
-				U.tensorObject->resize_mode(U.degree()-1, rank);
+				U.tensorObject->resize_mode(U.order()-1, rank);
 				Vt.tensorObject->resize_mode(0, rank);
 			}
 		}

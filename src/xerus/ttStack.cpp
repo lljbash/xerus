@@ -48,7 +48,7 @@ namespace xerus {
 		TTStack<isOperator>::operator TTNetwork<isOperator>() {
 			require_valid_network();
 			
-			if(degree() == 0) {
+			if(order() == 0) {
 				std::set<size_t> toContract;
 				for(size_t i = 0; i < nodes.size(); ++i) {
 					toContract.insert(i);
@@ -57,8 +57,8 @@ namespace xerus {
 				}
 			}
 			
-			const size_t numComponents = degree()/N;
-			const size_t numNodes = degree()/N+2;
+			const size_t numComponents = order()/N;
+			const size_t numNodes = order()/N+2;
 			const size_t stackSize = nodes.size()/numNodes;
 			
 			INTERNAL_CHECK(nodes.size()%numNodes == 0, "IE");
@@ -110,7 +110,7 @@ namespace xerus {
 						if(link.indexPosition < numComponents) {
 							shuffle[k] = stackSize;
 						} else {
-							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numComponents << " vs " << degree());
+							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numComponents << " vs " << order());
 							shuffle[k] = stackSize+1;
 						}
 					} else {
@@ -178,7 +178,7 @@ namespace xerus {
 			
 			if(cannonicalization_required) {
 				*nodes[futureCorePosition+1].tensorObject *= _factor;
-			} else if(degree() > 0) {
+			} else if(order() > 0) {
 				*nodes[1].tensorObject *= _factor;
 			} else {
 				*nodes[0].tensorObject *= _factor;
@@ -197,7 +197,7 @@ namespace xerus {
 		void TTStack<isOperator>::contract_stack(IndexedTensorWritable<TensorNetwork>&& _me) {
 			_me.tensorObject->require_valid_network();
 			
-			if(_me.tensorObject->degree() == 0) {
+			if(_me.tensorObject->order() == 0) {
 				std::set<size_t> toContract;
 				for(size_t i = 0; i < _me.tensorObject->nodes.size(); ++i) {
 					toContract.insert(i);
@@ -207,8 +207,8 @@ namespace xerus {
 				}
 			}
 			
-			const size_t numComponents = _me.tensorObject->degree()/N;
-			const size_t numNodes = _me.tensorObject->degree()/N+2;
+			const size_t numComponents = _me.tensorObject->order()/N;
+			const size_t numNodes = _me.tensorObject->order()/N+2;
 			const size_t stackSize = _me.tensorObject->nodes.size()/numNodes;
 			
 			INTERNAL_CHECK(_me.tensorObject->nodes.size()%numNodes == 0, "IE");
@@ -260,7 +260,7 @@ namespace xerus {
 						if(link.indexPosition < numComponents) {
 							shuffle[k] = stackSize;
 						} else {
-							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numComponents << " vs " << _me.tensorObject->degree());
+							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numComponents << " vs " << _me.tensorObject->order());
 							shuffle[k] = stackSize+1;
 						}
 					} else {

@@ -51,7 +51,7 @@ namespace xerus { namespace impl_TrASD {
 		internal::BlockTT x;
 		
 		///@brief Degree of the solution.
-		const size_t degree;
+		const size_t order;
 		
 		///@brief Reference to the measurment set (external ownership)
 		const RankOneMeasurementSet& measurments;
@@ -133,7 +133,7 @@ namespace xerus { namespace impl_TrASD {
 			OptimizationSolver(_optiAlgorithm, _perfData),
 			outX(_x),
 			x(_x, 0, P),
-			degree(_x.degree()),
+			order(_x.order()),
 			
 			measurments(_measurments),
 			numMeasurments(_measurments.size()),
@@ -154,13 +154,13 @@ namespace xerus { namespace impl_TrASD {
 			bestTestResidual(std::numeric_limits<double>::max()),
 			prevRanks(tracking, outX.ranks()),
 			
-			leftStack(degree, std::vector<Tensor>(numMeasurments)),
-			rightStack(degree, std::vector<Tensor>(numMeasurments))
+			leftStack(order, std::vector<Tensor>(numMeasurments)),
+			rightStack(order, std::vector<Tensor>(numMeasurments))
 			
 			{
 				_x.require_correct_format();
 				XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
-				XERUS_REQUIRE(measurments.order() == degree, "Measurment degree must coincide with x degree.");
+				XERUS_REQUIRE(measurments.order() == order, "Measurment order must coincide with x order.");
 				
 				// Create test set
 				std::uniform_real_distribution<double> stochDist(0.0, 1.0);
@@ -187,10 +187,10 @@ namespace xerus { namespace impl_TrASD {
 		/// and the given component contracted with the component of the measurment operator. For _corePosition == corePosition and _currentComponent == x.components(corePosition)
 		/// this really updates the stack, otherwise it uses the stack as scratch space.
 		void update_left_stack(const size_t _position) {
-			REQUIRE(_position+1 < degree, "Invalid position");
+			REQUIRE(_position+1 < order, "Invalid position");
 			Tensor measCmp;
 			
-			if(_position > 0 && _position+1 < degree) {
+			if(_position > 0 && _position+1 < order) {
 				const Tensor shuffledX = reshuffle(x.get_component(_position), {1, 0, 2});
 				for(size_t i = 0; i < numMeasurments; ++i ) {
 					contract(measCmp, measurments.positions[i][_position], shuffledX, 1);
@@ -209,11 +209,11 @@ namespace xerus { namespace impl_TrASD {
 		/// and the given component contracted with the component of the measurment operator. For _corePosition == corePosition and _currentComponent == x.components(corePosition)
 		/// this really updates the stack, otherwise it uses the stack as scratch space.
 		void update_right_stack(const size_t _position) {
-			REQUIRE(_position > 0 && _position < degree, "Invalid position");
+			REQUIRE(_position > 0 && _position < order, "Invalid position");
 			Tensor measCmp;
 			
 			
-			if(_position > 0 && _position+1 < degree) {
+			if(_position > 0 && _position+1 < order) {
 				const Tensor shuffledX = reshuffle(x.get_component(_position), {1, 0, 2});
 				for(size_t i = 0; i < numMeasurments; ++i ) {
 					contract(measCmp, measurments.positions[i][_position], shuffledX, 1);
@@ -232,7 +232,7 @@ namespace xerus { namespace impl_TrASD {
 		///@brief: Calculates the component at _corePosition of the projected gradient from the residual, i.e. E(A^T(b-Ax)).
 		Tensor calculate_delta(const size_t _corePosition, const size_t _setId) {
 			const size_t localLeftRank = _corePosition == 0 ? 1 : x.rank(_corePosition-1);
-			const size_t localRightRank = _corePosition+1 == degree ? 1 : x.rank(_corePosition);
+			const size_t localRightRank = _corePosition+1 == order ? 1 : x.rank(_corePosition);
 			const size_t dyadDim = localLeftRank*localRightRank;
 			
 			Tensor delta({x.dimensions[_corePosition], localLeftRank, localRightRank}, Tensor::Representation::Dense);
@@ -240,7 +240,7 @@ namespace xerus { namespace impl_TrASD {
 			
 			const Tensor core = x.get_core(_setId);
 			Tensor leftCore, leftCorePos, leftCorePosRight;
-			if( _corePosition > 0 && _corePosition+1 < degree) {
+			if( _corePosition > 0 && _corePosition+1 < order) {
 				for(size_t idx = 0; idx < sets[_setId].size(); ++idx) {
 					const size_t i = sets[_setId][idx];
 					contract(leftCore, leftStack[_corePosition-1][i], core, 1);
@@ -316,7 +316,7 @@ namespace xerus { namespace impl_TrASD {
 			Tensor leftCore, leftCorePos, leftCorePosRight;
 			value_t normSqrAProjGrad = 0.0;
 			
-			if( _corePosition > 0 && _corePosition+1 < degree) {
+			if( _corePosition > 0 && _corePosition+1 < order) {
 				for(size_t idx = 0; idx < sets[_setId].size(); ++idx) {
 					const size_t i = sets[_setId][idx];
 					contract(leftCore, leftStack[_corePosition-1][i], _delta, 1);
@@ -365,7 +365,7 @@ namespace xerus { namespace impl_TrASD {
 		
 		
 		void finish() {
-			for(size_t i = 0; i < bestX.degree(); i++) {
+			for(size_t i = 0; i < bestX.order(); i++) {
 				if(i == bestX.corePosition) {
 					outX.set_component(i, bestX.get_average_core());
 				} else {
@@ -425,7 +425,7 @@ namespace xerus { namespace impl_TrASD {
 			
 			// Build inital right stack
 			REQUIRE(x.corePosition == 0, "Expecting core position to be 0.");
-			for(size_t corePosition = degree-1; corePosition > 0; --corePosition) {
+			for(size_t corePosition = order-1; corePosition > 0; --corePosition) {
 				update_right_stack(corePosition);
 			}
 			
@@ -449,7 +449,7 @@ namespace xerus { namespace impl_TrASD {
 // 				LOG(ASD, "Residual " << std::scientific << optResidual << " " << /*setResiduals*/ -1 << ". Controlset: " << testResidual << ". Ranks: " << x.ranks() << ". DOFs: " << x.dofs() << ". Norm: " << frob_norm(x.get_average_core()));
 				
 // 				bool maxRankReached = true;
-// 				for(size_t k = 0; k+1 < x.degree(); ++k ) {
+// 				for(size_t k = 0; k+1 < x.order(); ++k ) {
 // 					maxRankReached = maxRankReached && (x.rank(k) == maxRanks[k]);
 // 				}
 				
@@ -466,7 +466,7 @@ namespace xerus { namespace impl_TrASD {
 				if(P>1) { shuffle_sets(); }
 				
 				// Forward sweep
-				for(size_t corePosition = 0; corePosition+1 < degree; ++corePosition) {
+				for(size_t corePosition = 0; corePosition+1 < order; ++corePosition) {
 					update_core(corePosition);
 					
 					
@@ -474,10 +474,10 @@ namespace xerus { namespace impl_TrASD {
 					update_left_stack(corePosition);
 				}
 				
-				update_core(degree-1);
+				update_core(order-1);
 				
 				// Backward sweep
-				for(size_t corePosition = degree-1; corePosition > 0; --corePosition) {
+				for(size_t corePosition = order-1; corePosition > 0; --corePosition) {
 					update_core(corePosition);
 					
 					x.move_core_left(rankEps, /*std::min(*/maxRanks[corePosition-1]/*, prevRanks[0][corePosition-1]+1)*/);

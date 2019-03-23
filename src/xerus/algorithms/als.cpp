@@ -61,7 +61,7 @@ namespace xerus {
 			// direction: decreasing index
 			for (size_t p = _data.ALS.sites-1; p>0; --p) {
 				Tensor S, Vt;
-// 				calculate_svd(x, S, Vt, x, x.degree()-1, _data.targetRank[_data.currIndex+p-1], EPSILON); TODO
+// 				calculate_svd(x, S, Vt, x, x.order()-1, _data.targetRank[_data.currIndex+p-1], EPSILON); TODO
 				(x(i&1,j), S(j,k), Vt(k,l&1)) = SVD(x(i&2,l^2), _data.targetRank[_data.currIndex+p-1]);
 				_x[p] = std::move(Vt);
 				x(i&1,k) = x(i&1,j) * S(j,k);
@@ -103,7 +103,7 @@ namespace xerus {
 	 * modifies x
 	 */
 	void ALSVariant::ALSAlgorithmicData::prepare_x_for_als() {
-		const size_t d = x.degree();
+		const size_t d = x.order();
 		Index r1,r2,n1,cr1;
 		
 		size_t firstOptimizedIndex = 0;
@@ -215,7 +215,7 @@ namespace xerus {
 	}
 	
 	void ALSVariant::ALSAlgorithmicData::prepare_stacks() {
-		const size_t d = x.degree();
+		const size_t d = x.order();
 		Index r1,r2;
 		
 		Tensor tmpA;
@@ -485,7 +485,7 @@ namespace xerus {
 		#ifndef XERUS_DISABLE_RUNTIME_CHECKS
 			_x.require_correct_format();
 			_b.require_correct_format();
-			REQUIRE(_x.degree() > 0, "");
+			REQUIRE(_x.order() > 0, "");
 			REQUIRE(_x.dimensions == _b.dimensions, "");
 			
 			if (_Ap != nullptr) {
@@ -493,7 +493,7 @@ namespace xerus {
 				REQUIRE(_Ap->dimensions.size() == _b.dimensions.size()*2, "");
 				for (size_t i=0; i<_x.dimensions.size(); ++i) {
 					REQUIRE(_Ap->dimensions[i] == _x.dimensions[i], "");
-					REQUIRE(_Ap->dimensions[i+_Ap->degree()/2] == _x.dimensions[i], "");
+					REQUIRE(_Ap->dimensions[i+_Ap->order()/2] == _x.dimensions[i], "");
 				}
 			}
 		#endif

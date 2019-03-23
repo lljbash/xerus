@@ -124,7 +124,7 @@ namespace xerus {
 	template<class PositionType>
 	void MeasurementSet<PositionType>::sort() {
 		const auto comperator = [](const std::vector<PositionType>& _lhs, const std::vector<PositionType>& _rhs) {
-			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions.");
+			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent orders in measurment positions.");
 			for (size_t i = 0; i < _lhs.size(); ++i) {
 				const auto res = internal::compare(_lhs[i], _rhs[i]);
 				if(res == -1) { return true; }
@@ -260,7 +260,7 @@ namespace xerus {
 	
 	struct vec_compare final {
 		bool operator() (const std::vector<size_t>& _lhs, const std::vector<size_t>& _rhs) const {
-			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent degrees in measurment positions.");
+			REQUIRE(_lhs.size() == _rhs.size(), "Inconsistent orders in measurment positions.");
 			for (size_t i = 0; i < _lhs.size(); ++i) {
 				if (_lhs[i] < _rhs[i]) { return true; }
 				if (_lhs[i] > _rhs[i]) { return false; }
@@ -297,7 +297,7 @@ namespace xerus {
 	
 	
 	void SinglePointMeasurementSet::check_position(const std::vector<size_t>& _position) {
-		REQUIRE(positions.empty() || _position.size() == positions.back().size(), "Given _position has incorrect degree " << _position.size() << ". Expected " << positions.back().size() << ".");
+		REQUIRE(positions.empty() || _position.size() == positions.back().size(), "Given _position has incorrect order " << _position.size() << ". Expected " << positions.back().size() << ".");
 	}
 	
 	
@@ -311,7 +311,7 @@ namespace xerus {
 
 	
 	void SinglePointMeasurementSet::get_values(std::vector<value_t>& _values, const TensorNetwork& _solution) const {
-		REQUIRE(_solution.degree() == order(), "Degrees of solution and measurements must match!");
+		REQUIRE(_solution.order() == order(), "Degrees of solution and measurements must match!");
 		std::vector<TensorNetwork> stack(order()+1);
 		stack[0] = _solution;
 		stack[0].reduce_representation();
@@ -356,7 +356,7 @@ namespace xerus {
 	// --------------------- RankOneMeasurementSet -----------------
 
 	RankOneMeasurementSet::RankOneMeasurementSet(const SinglePointMeasurementSet&  _other, const std::vector<size_t>& _dimensions) {
-		REQUIRE(_other.order() == _dimensions.size(), "Inconsistent degrees.");
+		REQUIRE(_other.order() == _dimensions.size(), "Inconsistent orders.");
 		std::vector<Tensor> zeroPosition; zeroPosition.reserve(_dimensions.size());
 		for(size_t j = 0; j < _dimensions.size(); ++j) {
 			zeroPosition.emplace_back(Tensor({_dimensions[j]}));
@@ -427,7 +427,7 @@ namespace xerus {
 				}
 			}
 			for(size_t k = 0; k < ord; ++k) {
-				REQUIRE(positions.back()[k].degree() == 1, "Illegal measurement.");
+				REQUIRE(positions.back()[k].order() == 1, "Illegal measurement.");
 			}
 		);
 	}
@@ -460,14 +460,14 @@ namespace xerus {
 				}
 			}
 			for (const Tensor& t : _position) {
-				REQUIRE(t.degree() == 1, "Illegal measurement.");
+				REQUIRE(t.order() == 1, "Illegal measurement.");
 			}
 		);
 	}
 	
 	
 	void RankOneMeasurementSet::get_values(std::vector<value_t>& _values, const Tensor& _solution) const {
-		REQUIRE(_solution.degree() == order(), "Degrees of solution and measurements must match!");
+		REQUIRE(_solution.order() == order(), "Degrees of solution and measurements must match!");
 		std::vector<Tensor> stack(order()+1);
 		stack[0] = _solution;
 
@@ -477,34 +477,34 @@ namespace xerus {
 				contract(stack[i+1], positions[j][i], stack[i], 1);
 			}
 
-			REQUIRE(stack.back().degree() == 0, "IE");
+			REQUIRE(stack.back().order() == 0, "IE");
 			_values[j] = stack.back()[0];
 		}
 	}
 
 
 //     void RankOneMeasurementSet::get_values(std::vector<value_t>& _values, const TTTensor& _solution) const {
-//         REQUIRE(_solution.degree() == degree(), "Degrees of solution and measurements must match!");
-//         std::vector<Tensor> stack(degree()+1);
+//         REQUIRE(_solution.order() == order(), "Degrees of solution and measurements must match!");
+//         std::vector<Tensor> stack(order()+1);
 //         stack[0] = Tensor::ones({1});
 // 
 //         Tensor tmp;
 //         const auto cSize = size();
 //         for(size_t j = 0; j < cSize; ++j) {
-//             for(size_t i = 0; i < degree(); ++i) {
+//             for(size_t i = 0; i < order(); ++i) {
 //                 contract(tmp, stack[i], _solution.get_component(i) , 1);
 //                 contract(stack[i+1], positions[j][i], tmp, 1);
 //             }
 // 
 //             stack.back().reinterpret_dimensions({});
-//             REQUIRE(stack.back().degree() == 0, "IE");
+//             REQUIRE(stack.back().order() == 0, "IE");
 //             _values[j] = stack.back()[0];
 //         }
 //     }
 
 
 	void RankOneMeasurementSet::get_values(std::vector<value_t>& _values, const TensorNetwork& _solution) const {
-		REQUIRE(_solution.degree() == order(), "Degrees of solution and measurements must match!");
+		REQUIRE(_solution.order() == order(), "Degrees of solution and measurements must match!");
 		std::vector<TensorNetwork> stack(order()+1);
 		stack[0] = _solution;
 		stack[0].reduce_representation();
@@ -520,7 +520,7 @@ namespace xerus {
 				stack[i+1].reduce_representation();
 			}
 
-			REQUIRE(stack.back().degree() == 0, "IE");
+			REQUIRE(stack.back().order() == 0, "IE");
 			_values[j] = stack.back()[0];
 		}
 	}

@@ -37,7 +37,8 @@ void expose_tensorNetwork() {
 			.add_property("dimensions", +[](TensorNetwork &_A) {
 				return _A.dimensions;
 			})
-			.def("degree", &TensorNetwork::degree)
+			.def("degree", &TensorNetwork::order) // TODO Deprecated, should print some kind of warning.
+			.def("order", &TensorNetwork::order)
 			.def("datasize", &TensorNetwork::datasize)
 			.add_property("nodes", +[](TensorNetwork &_this){
 				return _this.nodes;
@@ -98,7 +99,7 @@ void expose_tensorNetwork() {
 
 		class_<TensorNetwork::TensorNode>("TensorNode")
 			.def("size", &TensorNetwork::TensorNode::size)
-			.def("degree", &TensorNetwork::TensorNode::degree)
+			.def("order", &TensorNetwork::TensorNode::order)
 // 			.def_readonly("erased", &TensorNetwork::TensorNode::erased) // internal
 // 			.def("erase", &TensorNetwork::TensorNode::erase) // internal
 			.add_property("tensorObject", +[](TensorNetwork::TensorNode &_this)->object{

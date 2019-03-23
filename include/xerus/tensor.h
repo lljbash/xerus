@@ -387,11 +387,19 @@ namespace xerus {
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Information - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		
 		/** 
-		 * @brief Returns the degree of the tensor.
+		 * @brief [Deprecated] Returns the degree of the tensor.
 		 * @details The degree is always equals to dimensions.size()
 		 * @return the degree of the tensor
 		 */
+		XERUS_deprecated("Tensor::degree() is deprecated and will be removed in a future version. Use Tensor::order() instead.")
 		size_t degree() const;
+		
+		/** 
+		 * @brief Returns the order of the tensor.
+		 * @details The order is always equal to dimensions.size()
+		 * @return the order of the tensor
+		 */
+		size_t order() const;
 		
 		/** 
 		 * @brief Checks whether the tensor has a non-trivial global scaling factor.

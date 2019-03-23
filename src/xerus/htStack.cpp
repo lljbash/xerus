@@ -48,7 +48,7 @@ namespace xerus {
 		HTStack<isOperator>::operator HTNetwork<isOperator>() {
 		require_valid_network();
 
-		if(degree() == 0) {
+		if(order() == 0) {
 			std::set<size_t> toContract;
 			for(size_t i = 0; i < nodes.size(); ++i) {
 				toContract.insert(i);
@@ -56,7 +56,7 @@ namespace xerus {
 				return HTNetwork<isOperator>(*nodes[0].tensorObject);
 			}
 		}
-		const size_t numOfLeaves = degree()/N;
+		const size_t numOfLeaves = order()/N;
 		const size_t numOfFullLeaves = numOfLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
 		const size_t numIntComp = numOfLeaves - 1;
 		//const size_t numComponents = numIntComp + numOfLeaves;
@@ -179,7 +179,7 @@ namespace xerus {
 					if(link.indexPosition < numOfLeaves) {
 						shuffle_leaves[k] = stackSize;
 					} else {
-						INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numOfLeaves << " vs " << degree());
+						INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numOfLeaves << " vs " << order());
 						shuffle_leaves[k] = stackSize+1;
 					}
 				} else {
@@ -228,7 +228,7 @@ namespace xerus {
 			
 			if(cannonicalization_required) {
 				*nodes[futureCorePosition+1].tensorObject *= _factor;
-			} else if(degree() > 0) {
+			} else if(order() > 0) {
 				*nodes[1].tensorObject *= _factor;
 			} else {
 				*nodes[0].tensorObject *= _factor;
@@ -247,7 +247,7 @@ namespace xerus {
 		void HTStack<isOperator>::contract_stack(IndexedTensorWritable<TensorNetwork>&& _me) {
 			_me.tensorObject->require_valid_network();
 
-			if(_me.tensorObject->degree() == 0) { //TODO check this
+			if(_me.tensorObject->order() == 0) { //TODO check this
 				std::set<size_t> toContract;
 				for(size_t i = 0; i < _me.tensorObject->nodes.size(); ++i) {
 					toContract.insert(i);
@@ -256,7 +256,7 @@ namespace xerus {
 					return;
 				}
 			}
-			const size_t numOfLeaves = _me.tensorObject->degree()/N;
+			const size_t numOfLeaves = _me.tensorObject->order()/N;
 			const size_t numOfFullLeaves = numOfLeaves == 1 ? 2 : static_cast<size_t>(0.5+std::pow(2,std::ceil(std::log2(static_cast<double>(numOfLeaves)))));
 			const size_t numIntComp = numOfLeaves - 1;
 			//const size_t numComponents = numIntComp + numOfLeaves;
@@ -379,7 +379,7 @@ namespace xerus {
 						if(link.indexPosition < numOfLeaves) {
 							shuffle_leaves[k] = stackSize;
 						} else {
-							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numOfLeaves << " vs " << _me.tensorObject->degree());
+							INTERNAL_CHECK(isOperator, "IE " << link.indexPosition << " vs " << numOfLeaves << " vs " << _me.tensorObject->order());
 							shuffle_leaves[k] = stackSize+1;
 						}
 					} else {

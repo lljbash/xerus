@@ -48,17 +48,17 @@ namespace xerus {
 
     template<bool isOperator>
     TTNetwork<isOperator>::TTNetwork(const Tensor& _tensor, const double _eps, const size_t _maxRank) :
-        TTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.degree() == 0 ? 0 : _tensor.degree()/N-1, _maxRank)) {}
+        TTNetwork(_tensor, _eps, std::vector<size_t>(_tensor.order() == 0 ? 0 : _tensor.order()/N-1, _maxRank)) {}
 
 
     template<bool isOperator>
-    TTNetwork<isOperator>::TTNetwork(const size_t _degree) : TTNetwork(std::vector<size_t>(_degree, 1)) { }
+    TTNetwork<isOperator>::TTNetwork(const size_t _order) : TTNetwork(std::vector<size_t>(_order, 1)) { }
 
     template<bool isOperator>
     TTNetwork<isOperator>::TTNetwork(Tensor::DimensionTuple _dimensions) : TensorNetwork(ZeroNode::None), canonicalized(true), corePosition(0) {
         dimensions = std::move(_dimensions);
 
-        REQUIRE(dimensions.size()%N==0, "Illegal degree for TTOperator.");
+        REQUIRE(dimensions.size()%N==0, "Illegal order for TTOperator.");
         REQUIRE(!misc::contains(dimensions, size_t(0)), "Zero is no valid dimension.");
         const size_t numComponents = dimensions.size()/N;
 
@@ -109,15 +109,15 @@ namespace xerus {
 
 
     template<bool isOperator>
-    TTNetwork<isOperator>::TTNetwork(const Tensor& _tensor, const double _eps, const TensorNetwork::RankTuple& _maxRanks): TTNetwork(_tensor.degree()) {
-        REQUIRE(_tensor.degree()%N==0, "Number of indicis must be even for TTOperator");
+    TTNetwork<isOperator>::TTNetwork(const Tensor& _tensor, const double _eps, const TensorNetwork::RankTuple& _maxRanks): TTNetwork(_tensor.order()) {
+        REQUIRE(_tensor.order()%N==0, "Number of indicis must be even for TTOperator");
         REQUIRE(_eps >= 0 && _eps < 1, "_eps must be positive and smaller than one. " << _eps << " was given.");
         REQUIRE(_maxRanks.size() == num_ranks(), "We need " << num_ranks() <<" ranks but " << _maxRanks.size() << " where given");
         REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Maximal ranks must be strictly positive. Here: " << _maxRanks);
 
-        const size_t numComponents = degree()/N;
+        const size_t numComponents = order()/N;
 
-        if (_tensor.degree() == 0) {
+        if (_tensor.order() == 0) {
             *nodes[0].tensorObject = _tensor;
             return;
         }
@@ -126,7 +126,7 @@ namespace xerus {
 
         Tensor remains;
         if(isOperator) {
-            std::vector<size_t> shuffle(_tensor.degree());
+            std::vector<size_t> shuffle(_tensor.order());
             for(size_t i = 0; i < numComponents; ++i) {
                 shuffle[i] = 2*i;
                 shuffle[numComponents + i] = 2*i+1;
@@ -139,7 +139,7 @@ namespace xerus {
 
         // Add ghost dimensions used in the nodes
         std::vector<size_t> extDimensions;
-        extDimensions.reserve(remains.degree()+2);
+        extDimensions.reserve(remains.order()+2);
         extDimensions.emplace_back(1);
         extDimensions.insert(extDimensions.end(), remains.dimensions.begin(), remains.dimensions.end());
         extDimensions.emplace_back(1);
@@ -299,10 +299,10 @@ namespace xerus {
         void TTNetwork<isOperator>::require_correct_format() const {
             require_valid_network(); // Network must at least be valid.
 
-            const size_t numComponents = degree()/N;
-            const size_t numNodes = degree() == 0 ? 1 : degree()/N + 2;
+            const size_t numComponents = order()/N;
+            const size_t numNodes = order() == 0 ? 1 : order()/N + 2;
             REQUIRE(nodes.size() == numNodes, "Wrong number of nodes: " << nodes.size() << " expected " << numNodes << ".");
-            REQUIRE(!canonicalized || (degree() == 0 && corePosition == 0) || corePosition < numComponents, "Invalid corePosition: " << corePosition << " there are only " << numComponents << " components.");
+            REQUIRE(!canonicalized || (order() == 0 && corePosition == 0) || corePosition < numComponents, "Invalid corePosition: " << corePosition << " there are only " << numComponents << " components.");
 
             // Per external link
             for (size_t n = 0; n < externalLinks.size(); ++n) {
@@ -311,15 +311,15 @@ namespace xerus {
             }
 
             // Virtual nodes
-            if(degree() > 0) {
-                REQUIRE(nodes.front().degree() == 1, "The left virtual node must have degree 1, but has size " << nodes.front().degree());
+            if(order() > 0) {
+                REQUIRE(nodes.front().order() == 1, "The left virtual node must have order 1, but has size " << nodes.front().order());
                 REQUIRE(nodes.front().neighbors[0].dimension == 1, "The left virtual node's single dimension must be 1, but is " << nodes.front().neighbors[0].dimension);
                 REQUIRE(nodes.front().neighbors[0].other == 1, "The left virtual node's single link must be to node 1, but is towards node " << nodes.front().neighbors[0].other);
                 REQUIRE(nodes.front().neighbors[0].indexPosition == 0, "The left virtual node's single link must link at indexPosition 0, but link at " << nodes.front().neighbors[0].indexPosition);
                 REQUIRE(misc::hard_equal((*nodes.front().tensorObject)[0], 1.0), "The left virtual node's single entry must be 1.0, but it is " << (*nodes.front().tensorObject)[0]);
                 REQUIRE(!nodes.front().tensorObject->has_factor(), "The left virtual node must no carry a non-trivial factor.");
 
-                REQUIRE(nodes.back().degree() == 1, "The right virtual node must have degree 1, but has size " << nodes.back().degree());
+                REQUIRE(nodes.back().order() == 1, "The right virtual node must have order 1, but has size " << nodes.back().order());
                 REQUIRE(nodes.back().neighbors[0].dimension == 1, "The right virtual node's single dimension must be 1, but is " << nodes.back().neighbors[0].dimension);
                 REQUIRE(nodes.back().neighbors[0].other == numNodes-2, "The right virtual node's single link must be to node " << numNodes-2 << ", but is towards node " << nodes.back().neighbors[0].other);
                 REQUIRE(nodes.back().neighbors[0].indexPosition == N+1, "The right virtual node's single link must link at indexPosition " << N+1 << ", but link at " << nodes.back().neighbors[0].indexPosition);
@@ -333,7 +333,7 @@ namespace xerus {
 
                 REQUIRE(!canonicalized || n == corePosition || !node.tensorObject->has_factor(), "In canonicalized TTNetworks only the core may carry a non-trivial factor. Violated by component " << n << " factor: " << node.tensorObject->factor << " corepos: " << corePosition);
 
-                REQUIRE(node.degree() == N+2, "Every TT-Component must have degree " << N+2 << ", but component " << n << " has degree " << node.degree());
+                REQUIRE(node.order() == N+2, "Every TT-Component must have order " << N+2 << ", but component " << n << " has order " << node.order());
                 REQUIRE(!node.neighbors[0].external, "The first link of each TT-Component must not be external. Violated by component " << n);
                 REQUIRE(node.neighbors[0].other == n, "The first link of each TT-Component must link to the previous node. Violated by component " << n << ", which instead links to node " << node.neighbors[0].other << " (expected " << n << ").");
                 REQUIRE(node.neighbors[0].indexPosition == (n==0?0:N+1), "The first link of each TT-Component must link to the last last index of the previous node. Violated by component " << n << ", which instead links to index " << node.neighbors[0].indexPosition << " (expected " << (n==0?0:N+1) << ").");
@@ -370,13 +370,13 @@ namespace xerus {
 
     template<bool isOperator>
     size_t TTNetwork<isOperator>::num_components() const {
-        return degree()/N;
+        return order()/N;
     }
 
 
     template<bool isOperator>
     size_t TTNetwork<isOperator>::num_ranks() const {
-        return degree() == 0 ? 0 : degree()/N-1;
+        return order() == 0 ? 0 : order()/N-1;
     }
 
     /*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -455,7 +455,7 @@ namespace xerus {
         TensorNetwork::resize_mode(_mode, _newDim, _cutPos);
         if(canonicalized && _newDim != corePosition) {
             const size_t oldCorePosition = corePosition;
-            const size_t numComponents = degree()/N;
+            const size_t numComponents = order()/N;
             move_core(_mode%numComponents);
             move_core(oldCorePosition);
         }
@@ -464,34 +464,34 @@ namespace xerus {
 
     template<bool isOperator>
     void TTNetwork<isOperator>::use_dense_representations() {
-        for (size_t i = 0; i < degree(); ++i) {
+        for (size_t i = 0; i < order(); ++i) {
             component(i).use_dense_representation();
         }
     }
 
     template<bool isOperator>
     Tensor& TTNetwork<isOperator>::component(const size_t _idx) {
-        REQUIRE(_idx == 0 || _idx < degree()/N, "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree()/N << " components.");
-        return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
+        REQUIRE(_idx == 0 || _idx < order()/N, "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order()/N << " components.");
+        return *nodes[order() == 0 ? 0 : _idx+1].tensorObject;
     }
 
 
     template<bool isOperator>
     const Tensor& TTNetwork<isOperator>::get_component(const size_t _idx) const {
-        REQUIRE(_idx == 0 || _idx < degree()/N, "Illegal index " << _idx <<" in TTNetwork::get_component.");
-        return *nodes[degree() == 0 ? 0 : _idx+1].tensorObject;
+        REQUIRE(_idx == 0 || _idx < order()/N, "Illegal index " << _idx <<" in TTNetwork::get_component.");
+        return *nodes[order() == 0 ? 0 : _idx+1].tensorObject;
     }
 
 
     template<bool isOperator>
     void TTNetwork<isOperator>::set_component(const size_t _idx, Tensor _T) {
-        if(degree() == 0) {
+        if(order() == 0) {
             REQUIRE(_idx == 0, "Illegal index " << _idx <<" in TTNetwork::set_component");
-            REQUIRE(_T.degree() == 0, "Component of degree zero TTNetwork must have degree zero. Given: " << _T.degree());
+            REQUIRE(_T.order() == 0, "Component of order zero TTNetwork must have order zero. Given: " << _T.order());
             *nodes[0].tensorObject = std::move(_T);
         } else {
-            REQUIRE(_idx < degree()/N, "Illegal index " << _idx <<" in TTNetwork::set_component");
-            REQUIRE(_T.degree() == N+2, "Component " << _idx << " must have degree " << N+2 << ". Given: " << _T.degree());
+            REQUIRE(_idx < order()/N, "Illegal index " << _idx <<" in TTNetwork::set_component");
+            REQUIRE(_T.order() == N+2, "Component " << _idx << " must have order " << N+2 << ". Given: " << _T.order());
 
             TensorNode& currNode = nodes[_idx+1];
             *currNode.tensorObject = std::move(_T);
@@ -531,7 +531,7 @@ namespace xerus {
     std::pair<TensorNetwork, TensorNetwork> TTNetwork<isOperator>::chop(const size_t _position) const {
         require_correct_format();
 
-        const size_t numComponents = degree()/N;
+        const size_t numComponents = order()/N;
         REQUIRE(_position < numComponents, "Can't split a " << numComponents << " component TTNetwork at position " << _position);
 
         // Create the resulting TNs
@@ -596,8 +596,8 @@ namespace xerus {
 
     template<bool isOperator>
     void TTNetwork<isOperator>::move_core(const size_t _position, const bool _keepRank) {
-        const size_t numComponents = degree()/N;
-        REQUIRE(_position < numComponents || (_position == 0 && degree() == 0), "Illegal core-position " << _position << " chosen for TTNetwork with " << numComponents << " components");
+        const size_t numComponents = order()/N;
+        REQUIRE(_position < numComponents || (_position == 0 && order() == 0), "Illegal core-position " << _position << " chosen for TTNetwork with " << numComponents << " components");
         require_correct_format();
 
         if(canonicalized) {
@@ -652,16 +652,16 @@ namespace xerus {
 
     template<bool isOperator>
     void TTNetwork<isOperator>::canonicalize_right() {
-        move_core(degree() == 0 ? 0 : degree()/N-1);
+        move_core(order() == 0 ? 0 : order()/N-1);
     }
 
 
     template<bool isOperator>
     void TTNetwork<isOperator>::round(const std::vector<size_t>& _maxRanks, const double _eps) {
         require_correct_format();
-        const size_t numComponents = degree()/N;
+        const size_t numComponents = order()/N;
         REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
-        REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0), "There must be exactly degree/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
+        REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0), "There must be exactly order/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
         REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Trying to round a TTTensor to rank 0 is not possible.");
 
         const bool initialCanonicalization = canonicalized;
@@ -705,8 +705,8 @@ namespace xerus {
 
     template<bool isOperator>
     void TTNetwork<isOperator>::soft_threshold(const std::vector<double> &_taus) {
-        const size_t numComponents = degree()/N;
-        REQUIRE(_taus.size()+1 == numComponents || (_taus.empty() && numComponents == 0), "There must be exactly degree/N-1 taus. Here " << _taus.size() << " instead of " << numComponents-1 << " are given.");
+        const size_t numComponents = order()/N;
+        REQUIRE(_taus.size()+1 == numComponents || (_taus.empty() && numComponents == 0), "There must be exactly order/N-1 taus. Here " << _taus.size() << " instead of " << numComponents-1 << " are given.");
         require_correct_format();
 
         const bool initialCanonicalization = canonicalized;
@@ -745,14 +745,14 @@ namespace xerus {
 
     template<bool isOperator>
     size_t TTNetwork<isOperator>::rank(const size_t _i) const {
-        REQUIRE(_i+1 < degree()/N, "Requested illegal rank " << _i);
+        REQUIRE(_i+1 < order()/N, "Requested illegal rank " << _i);
         return nodes[_i+1].neighbors.back().dimension;
     }
 
 
     template<bool isOperator>
     void TTNetwork<isOperator>::assume_core_position(const size_t _pos) {
-        REQUIRE(_pos < degree()/N || (degree() == 0 && _pos == 0), "Invalid core position.");
+        REQUIRE(_pos < order()/N || (order() == 0 && _pos == 0), "Invalid core position.");
         corePosition = _pos;
         canonicalized = true;
     }
@@ -765,7 +765,7 @@ namespace xerus {
 
     template<bool isOperator>
     void TTNetwork<isOperator>::contract_unconnected_subnetworks() {
-        if(degree() == 0) {
+        if(order() == 0) {
             std::set<size_t> all;
             for(size_t i = 0; i < nodes.size(); ++i) { all.emplace_hint(all.end(), i); }
             contract(all);
@@ -775,7 +775,7 @@ namespace xerus {
             const size_t numComponents = nodes.size()-2;
 
             for(size_t i = 0; i+1 < numComponents; ++i) {
-                if(nodes[i+1].degree() == 2) {
+                if(nodes[i+1].order() == 2) {
                         // If we are the core, everything is fine, we contract ourself to the next node, then get removed and the corePositions stays. If the next Node is the core, we have to change the corePosition to ours, because we will be removed. In all other cases cannonicalization is destroyed.
                         if(corePosition == i+1) { corePosition = i; }
                         else if(corePosition != i) { canonicalized = false; }
@@ -784,14 +784,14 @@ namespace xerus {
             }
 
             // Extra treatment for last component to avoid contraction to the pseudo-node.
-            if(nodes[numComponents].degree() == 2) {
+            if(nodes[numComponents].order() == 2) {
                 if(corePosition == numComponents-1) { corePosition = numComponents-2; }
                 else if(corePosition != numComponents-2) { canonicalized = false; }
                 contract(numComponents-1, numComponents);
             }
         }
 
-        INTERNAL_CHECK(corePosition < degree() || !canonicalized, "Woot");
+        INTERNAL_CHECK(corePosition < order() || !canonicalized, "Woot");
 
         sanitize();
     }
@@ -817,7 +817,7 @@ namespace xerus {
         REQUIRE(dimensions == _other.dimensions, "The dimensions in TT sum must coincide. Given " << dimensions << " vs " << _other.dimensions);
         require_correct_format();
 
-        const size_t numComponents = degree()/N;
+        const size_t numComponents = order()/N;
 
         const bool initialCanonicalization = canonicalized;
         const size_t initialCorePosition = corePosition;
@@ -833,7 +833,7 @@ namespace xerus {
             const Tensor& myComponent = get_component(position);
             const Tensor& otherComponent = _other.get_component(position);
 
-            // Structure has to be (for degree 4)
+            // Structure has to be (for order 4)
             // (L1 R1) * ( L2 0  ) * ( L3 0  ) * ( L4 )
             //           ( 0  R2 )   ( 0  R3 )   ( R4 )
 
@@ -938,12 +938,12 @@ namespace xerus {
         // Determine my first half and second half of indices
         auto midIndexItr = _me.indices.begin();
         size_t spanSum = 0;
-        while (spanSum < _me.degree() / 2) {
+        while (spanSum < _me.order() / 2) {
             INTERNAL_CHECK(midIndexItr != _me.indices.end(), "Internal Error.");
             spanSum += midIndexItr->span;
             ++midIndexItr;
         }
-        if (spanSum > _me.degree() / 2) {
+        if (spanSum > _me.order() / 2) {
             return false; // an index spanned some links of the left and some of the right side
         }
 
@@ -961,12 +961,12 @@ namespace xerus {
             // determine other middle index
             auto otherMidIndexItr = _other.indices.begin();
             spanSum = 0;
-            while (spanSum < _other.degree() / 2) {
+            while (spanSum < _other.order() / 2) {
                 INTERNAL_CHECK(otherMidIndexItr != _other.indices.end(), "Internal Error.");
                 spanSum += otherMidIndexItr->span;
                 ++otherMidIndexItr;
             }
-            if (spanSum > _other.degree() / 2) {
+            if (spanSum > _other.order() / 2) {
                 return false; // an index spanned some links of the left and some of the right side
             }
             // or indices in fitting order to contract the TTOs
@@ -1015,14 +1015,14 @@ namespace xerus {
             // Find index mid-points to compare the halves separately
             auto myMidIndexItr = _me.indices.begin();
             size_t spanSum = 0;
-            while (spanSum < _me.degree() / 2) {
+            while (spanSum < _me.order() / 2) {
                 spanSum += myMidIndexItr->span;
                 ++myMidIndexItr;
             }
 
             auto otherMidIndexItr = _other.indices.begin();
             spanSum = 0;
-            while (spanSum < _other.degree() / 2) {
+            while (spanSum < _other.order() / 2) {
                 spanSum += otherMidIndexItr->span;
                 ++otherMidIndexItr;
             }
@@ -1086,9 +1086,9 @@ namespace xerus {
     void TTNetwork<isOperator>::specialized_evaluation(internal::IndexedTensorWritable<TensorNetwork>&& _me, internal::IndexedTensorReadOnly<TensorNetwork>&& _other) {
         INTERNAL_CHECK(_me.tensorObject == this, "Internal Error.");
 
-        _me.assign_indices(_other.degree());
+        _me.assign_indices(_other.order());
         _other.assign_indices();
-        const size_t numComponents = _other.degree()/N;
+        const size_t numComponents = _other.order()/N;
         TTNetwork& meTTN = static_cast<TTNetwork&>(*_me.tensorObject);
 
         // First check whether the other is a TTNetwork as well, otherwise we can skip to fallback
@@ -1297,14 +1297,14 @@ namespace xerus {
         static constexpr const size_t N = isOperator?2:1;
         REQUIRE(_A.dimensions == _B.dimensions, "Entrywise_product ill-defined for different external dimensions.");
 
-        if(_A.degree() == 0) {
+        if(_A.order() == 0) {
             TTNetwork<isOperator> result(_A);
             result *= _B[0];
             return result;
         }
 
-        TTNetwork<isOperator> result(_A.degree());
-        const size_t numComponents = _A.degree() / N;
+        TTNetwork<isOperator> result(_A.order());
+        const size_t numComponents = _A.order() / N;
 
         #pragma omp for schedule(static)
         for (size_t i = 0; i < numComponents; ++i) {
@@ -1343,20 +1343,20 @@ namespace xerus {
         _lhs.require_correct_format();
         _rhs.require_correct_format();
 
-        if (_lhs.degree() == 0) {
+        if (_lhs.order() == 0) {
             TTNetwork<isOperator> result(_rhs);
             result *= _lhs[0];
             return result;
         }
 
         TTNetwork<isOperator> result(_lhs);
-        if (_rhs.degree() == 0) {
+        if (_rhs.order() == 0) {
             result *= _rhs[0];
             return result;
         }
 
-        const size_t lhsNumComponents = _lhs.degree()/N;
-        const size_t rhsNumComponents = _rhs.degree()/N;
+        const size_t lhsNumComponents = _lhs.order()/N;
+        const size_t rhsNumComponents = _rhs.order()/N;
 
         // fix external links of lhs nodes
         for (size_t i=1; i<result.nodes.size(); ++i) {
@@ -1371,7 +1371,7 @@ namespace xerus {
 
         // Add all nodes of rhs and fix neighbor relations
         result.nodes.pop_back();
-        result.nodes.reserve(_lhs.degree()+_rhs.degree()+2);
+        result.nodes.reserve(_lhs.order()+_rhs.order()+2);
         for (size_t i = 1; i < _rhs.nodes.size(); ++i) {
             result.nodes.emplace_back(_rhs.nodes[i]);
             for (TensorNetwork::Link &l : result.nodes.back().neighbors) {
@@ -1393,8 +1393,8 @@ namespace xerus {
         // Add all external indices of rhs
         result.externalLinks.clear(); // NOTE that this is necessary because in the operator case we added indices
         result.dimensions.clear();   //        in the wrong position when we copied the lhs
-        result.externalLinks.reserve(_lhs.degree()+_rhs.degree());
-        result.dimensions.reserve(_lhs.degree()+_rhs.degree());
+        result.externalLinks.reserve(_lhs.order()+_rhs.order());
+        result.dimensions.reserve(_lhs.order()+_rhs.order());
 
         for (size_t i = 0; i < lhsNumComponents; ++i) {
             const size_t d=_lhs.dimensions[i];

@@ -130,7 +130,7 @@ static misc::UnitTest tt_namedconstr("TT", "named_constructors", [](){
 	
 	TTTensor X = TTTensor::random(dimensions, ranks);
 	std::vector<size_t> found_ranks = X.ranks();
-	X.move_core(X.degree()-1);
+	X.move_core(X.order()-1);
 	X.move_core(0);
 	MTEST(X.ranks() == found_ranks, X.ranks() << " vs " << found_ranks);
 // 	{
@@ -145,7 +145,7 @@ static misc::UnitTest tt_namedconstr("TT", "named_constructors", [](){
 	
 	TTOperator Xop = TTOperator::random(operatorDimensions, ranks);
 	found_ranks = Xop.ranks();
-	Xop.move_core(X.degree()-1);
+	Xop.move_core(X.order()-1);
 	Xop.move_core(0);
 	MTEST(Xop.ranks() == found_ranks, Xop.ranks() << " vs " << found_ranks);
 // 	{

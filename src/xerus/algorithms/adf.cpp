@@ -55,7 +55,7 @@ namespace xerus {
 			TTTensor& x;
 			
 			///@brief Degree of the solution.
-			const size_t degree;
+			const size_t order;
 			
 			///@brief Maximally allowed ranks.
 			const std::vector<size_t> maxRanks;
@@ -75,14 +75,14 @@ namespace xerus {
 			///@brief The current projected Gradient component. That is E(A^T(Ax-b))
 			Tensor projectedGradientComponent;
 			
-			///@brief Ownership holder for a (degree+2)*numMeasurments array of Tensor pointers. (Not used directly)
+			///@brief Ownership holder for a (order+2)*numMeasurments array of Tensor pointers. (Not used directly)
 			std::unique_ptr<Tensor*[]> forwardStackMem;
 			
-			/** @brief Array [numMeasurments][degree]. For positions smaller than the current corePosition and for each measurment, this array contains the pre-computed
+			/** @brief Array [numMeasurments][order]. For positions smaller than the current corePosition and for each measurment, this array contains the pre-computed
 			* contraction of the first _ component tensors and the first _ components of the measurment operator. These tensors are deduplicated in the sense that for each unqiue
 			* part of the position only one tensor is actually stored, which is why the is an array of pointers. The Tensors at the current corePosition are used as 
-			* scatch space. For convinience the underlying array (forwardStackMem) is larger, wherefore also the positions -1 and degree are allow, all poining to a {1} tensor
-			* containing 1 as only entry. Note that position degree-1 must not be used.
+			* scatch space. For convinience the underlying array (forwardStackMem) is larger, wherefore also the positions -1 and order are allow, all poining to a {1} tensor
+			* containing 1 as only entry. Note that position order-1 must not be used.
 			**/
 			Tensor* const * const forwardStack;
 			
@@ -93,13 +93,13 @@ namespace xerus {
 			std::vector<std::vector<size_t>> forwardUpdates;
 			
 			
-			///@brief Ownership holder for a (degree+2)*numMeasurments array of Tensor pointers. (Not used directly)
+			///@brief Ownership holder for a (order+2)*numMeasurments array of Tensor pointers. (Not used directly)
 			std::unique_ptr<Tensor*[]> backwardStackMem;
 			
-			/** @brief Array [numMeasurments][degree]. For positions larger than the current corePosition and for each measurment, this array contains the pre-computed
+			/** @brief Array [numMeasurments][order]. For positions larger than the current corePosition and for each measurment, this array contains the pre-computed
 			* contraction of the last _ component tensors and the last _ components of the measurment operator. These tensors are deduplicated in the sense that for each unqiue
 			* part of the position only one tensor is actually stored, which is why the is an array of pointers. The Tensors at the current corePosition are used as 
-			* scratch space. For convinience the underlying array (forwardStackMem) is larger, wherefore also the positions -1 and degree are allow, all poining to a {1} tensor
+			* scratch space. For convinience the underlying array (forwardStackMem) is larger, wherefore also the positions -1 and order are allow, all poining to a {1} tensor
 			* containing 1 as only entry. Note that position zero must not be used.
 			**/
 			Tensor* const * const backwardStack;
@@ -178,7 +178,7 @@ namespace xerus {
 				PerformanceData& _perfData ) : 
 		OptimizationSolver(_optiAlgorithm, _perfData),
 		x(_x),
-		degree(_x.degree()),
+		order(_x.order()),
 		maxRanks(TTTensor::reduce_to_maximal_ranks(_maxRanks, _x.dimensions)),
 		
 		measurments(_measurments),
@@ -187,19 +187,19 @@ namespace xerus {
 		
 		residual(numMeasurments),
 		
-		forwardStackMem(new Tensor*[numMeasurments*(degree+2)]),
+		forwardStackMem(new Tensor*[numMeasurments*(order+2)]),
 		forwardStack(forwardStackMem.get()+numMeasurments),
-		forwardUpdates(degree),
+		forwardUpdates(order),
 			
-		backwardStackMem(new Tensor*[numMeasurments*(degree+2)]),
+		backwardStackMem(new Tensor*[numMeasurments*(order+2)]),
 		backwardStack(backwardStackMem.get()+numMeasurments),
-		backwardUpdates(degree),
+		backwardUpdates(order),
 		
 		measurmentNorms(new double[numMeasurments])
 	{
 		_x.require_correct_format();
 		XERUS_REQUIRE(numMeasurments > 0, "Need at very least one measurment.");
-		XERUS_REQUIRE(measurments.order() == degree, "Measurment degree must coincide with x degree.");
+		XERUS_REQUIRE(measurments.order() == order, "Measurment order must coincide with x order.");
 	}
 	
 	
@@ -223,7 +223,7 @@ namespace xerus {
     template<class MeasurmentSet>
     class MeasurmentComparator {
         const bool forward;
-        const size_t degree;
+        const size_t order;
         const MeasurmentSet& measurments;
     public:
         MeasurmentComparator(const MeasurmentSet& _measurments, const bool _forward);
@@ -232,17 +232,17 @@ namespace xerus {
     };
 
     template<>
-    MeasurmentComparator<SinglePointMeasurementSet>::MeasurmentComparator(const SinglePointMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.order()), measurments(_measurments) { }
+    MeasurmentComparator<SinglePointMeasurementSet>::MeasurmentComparator(const SinglePointMeasurementSet& _measurments, const bool _forward) : forward(_forward), order(_measurments.order()), measurments(_measurments) { }
 
     template<>
     bool MeasurmentComparator<SinglePointMeasurementSet>::operator()(const size_t _a, const size_t _b) const {
         if(forward) {
-            for (size_t j = 0; j < degree; ++j) {
+            for (size_t j = 0; j < order; ++j) {
                 if (measurments.positions[_a][j] < measurments.positions[_b][j]) { return true; }
                 if (measurments.positions[_a][j] > measurments.positions[_b][j]) { return false; }
             }
         } else {
-            for (size_t j = degree; j > 0; --j) {
+            for (size_t j = order; j > 0; --j) {
                 if (measurments.positions[_a][j-1] < measurments.positions[_b][j-1]) { return true; }
                 if (measurments.positions[_a][j-1] > measurments.positions[_b][j-1]) { return false; }
             }
@@ -253,18 +253,18 @@ namespace xerus {
 
 
     template<>
-    MeasurmentComparator<RankOneMeasurementSet>::MeasurmentComparator(const RankOneMeasurementSet& _measurments, const bool _forward) : forward(_forward), degree(_measurments.order()), measurments(_measurments) { }
+    MeasurmentComparator<RankOneMeasurementSet>::MeasurmentComparator(const RankOneMeasurementSet& _measurments, const bool _forward) : forward(_forward), order(_measurments.order()), measurments(_measurments) { }
 
     template<>
     bool MeasurmentComparator<RankOneMeasurementSet>::operator()(const size_t _a, const size_t _b) const {
         if(forward) {
-            for (size_t j = 0; j < degree; ++j) {
+            for (size_t j = 0; j < order; ++j) {
                 const int res = internal::compare(measurments.positions[_a][j], measurments.positions[_b][j]);
                 if(res == -1) { return true; }
                 if(res == 1) { return false; }
             }
         } else {
-            for (size_t j = degree; j > 0; --j) {
+            for (size_t j = order; j > 0; --j) {
                 const int res = internal::compare(measurments.positions[_a][j-1], measurments.positions[_b][j-1]);
                 if(res == -1) { return true; }
                 if(res == 1) { return false; }
@@ -284,7 +284,7 @@ namespace xerus {
         Tensor** const stack(_stackMem.get()+numMeasurments);
 
         // Temporary map. For each stack entry (i.e. measurement number + corePosition) gives a measurement number of a stack entry (at same corePosition) that shall have an equal value (or its own number otherwise).
-        std::vector<size_t> calculationMap(degree*numMeasurments);
+        std::vector<size_t> calculationMap(order*numMeasurments);
 
         // Count how many Tensors we need for the stacks
         size_t numUniqueStackEntries = 0;
@@ -297,7 +297,7 @@ namespace xerus {
         perfData << "End sorting " << _forward ;
 
         // Create the entries for the first measurement (these are allways unqiue).
-        for(size_t corePosition = 0; corePosition < degree; ++corePosition) {
+        for(size_t corePosition = 0; corePosition < order; ++corePosition) {
             const size_t realId = reorderedMeasurments[0];
             calculationMap[realId + corePosition*numMeasurments] = realId;
             ++numUniqueStackEntries;
@@ -309,11 +309,11 @@ namespace xerus {
             const size_t realPreviousId = reorderedMeasurments[i-1];
 
             size_t position = 0;
-            size_t corePosition = _forward ? position : degree-1-position;
+            size_t corePosition = _forward ? position : order-1-position;
 
             for( ;
-                position < degree && approx_equal(measurments.positions[realId][corePosition], measurments.positions[realPreviousId][corePosition]);
-                ++position, corePosition = _forward ? position : degree-1-position)
+                position < order && approx_equal(measurments.positions[realId][corePosition], measurments.positions[realPreviousId][corePosition]);
+                ++position, corePosition = _forward ? position : order-1-position)
             {
                 if( realPreviousId < realId ) {
                     calculationMap[realId + corePosition*numMeasurments] = calculationMap[realPreviousId + corePosition*numMeasurments];
@@ -331,27 +331,27 @@ namespace xerus {
                 }
             }
 
-            for( ; position < degree; ++position, corePosition = _forward ? position : degree-1-position) {
+            for( ; position < order; ++position, corePosition = _forward ? position : order-1-position) {
                 calculationMap[realId + corePosition*numMeasurments] = realId;
                 ++numUniqueStackEntries;
             }
         }
 
         // Create the stack
-        numUniqueStackEntries++; // +1 for the special positions -1 and degree.
+        numUniqueStackEntries++; // +1 for the special positions -1 and order.
         _stackSaveSlot.reset(new Tensor[numUniqueStackEntries]);
         size_t usedSlots = 0;
-        _stackSaveSlot[usedSlots++] = Tensor::ones({1}); // Special slot reserved for the the position -1 and degree stacks
+        _stackSaveSlot[usedSlots++] = Tensor::ones({1}); // Special slot reserved for the the position -1 and order stacks
 
-        // NOTE that _stackMem contains (degree+2)*numMeasurments entries and has an offset of numMeasurments (to have space for corePosition -1).
+        // NOTE that _stackMem contains (order+2)*numMeasurments entries and has an offset of numMeasurments (to have space for corePosition -1).
 
-        // Set links for the special entries -1 and degree
+        // Set links for the special entries -1 and order
         for(size_t i = 0; i < numMeasurments; ++i) {
             stack[i - 1*numMeasurments] = &_stackSaveSlot[0];
-            stack[i + degree*numMeasurments] = &_stackSaveSlot[0];
+            stack[i + order*numMeasurments] = &_stackSaveSlot[0];
         }
 
-        for(size_t corePosition = 0; corePosition < degree; ++corePosition) {
+        for(size_t corePosition = 0; corePosition < order; ++corePosition) {
             for(size_t i = 0; i < numMeasurments; ++i) {
                 if(calculationMap[i + corePosition*numMeasurments] == i) {
                     _updates[corePosition].emplace_back(i);
@@ -364,15 +364,15 @@ namespace xerus {
         }
 
         INTERNAL_CHECK(usedSlots == numUniqueStackEntries, "Internal Error.");
-        perfData << "We have " << numUniqueStackEntries << " unique stack entries. There are " << numMeasurments*degree+1 << " virtual stack entries.";
+        perfData << "We have " << numUniqueStackEntries << " unique stack entries. There are " << numMeasurments*order+1 << " virtual stack entries.";
     }
 
     template<class MeasurmentSet>
     void InternalSolver<MeasurmentSet>::resize_stack_tensors() {
         #pragma omp parallel for schedule(static)
-        for(size_t corePosition = 0; corePosition < degree; ++corePosition) {
+        for(size_t corePosition = 0; corePosition < order; ++corePosition) {
             for(const size_t i : forwardUpdates[corePosition]) {
-                forwardStack[i + corePosition*numMeasurments]->reset({corePosition+1 == degree ? 1 : x.rank(corePosition)}, Tensor::Representation::Dense, Tensor::Initialisation::None);
+                forwardStack[i + corePosition*numMeasurments]->reset({corePosition+1 == order ? 1 : x.rank(corePosition)}, Tensor::Representation::Dense, Tensor::Initialisation::None);
             }
             for(const size_t i : backwardUpdates[corePosition]) {
                 backwardStack[i + corePosition*numMeasurments]->reset({corePosition == 0 ? 1 :x.rank(corePosition - 1)}, Tensor::Representation::Dense, Tensor::Initialisation::None);
@@ -687,7 +687,7 @@ namespace xerus {
             x.move_core(0, true);
 
             // Rebuild backwardStack
-            for(size_t corePosition = x.degree()-1; corePosition > 0; --corePosition) {
+            for(size_t corePosition = x.order()-1; corePosition > 0; --corePosition) {
                 update_backward_stack(corePosition, x.get_component(corePosition));
             }
 
@@ -707,7 +707,7 @@ namespace xerus {
             if(reached_stopping_criteria() || reached_convergence_criteria()) { break; }
 
             // Sweep from the first to the last component
-            for(size_t corePosition = 0; corePosition < degree; ++corePosition) {
+            for(size_t corePosition = 0; corePosition < order; ++corePosition) {
                 if(corePosition > 0) { // For corePosition 0 this calculation is allready done in the calculation of the residual.
                     calculate_residual(corePosition);
                 }
@@ -719,7 +719,7 @@ namespace xerus {
                 update_x(normAProjGrad, corePosition);
 
                 // If we have not yet reached the end of the sweep we need to take care of the core and update our stacks
-                if(corePosition+1 < degree) {
+                if(corePosition+1 < order) {
                     x.move_core(corePosition+1, true);
                     update_forward_stack(corePosition, x.get_component(corePosition));
                 }
@@ -777,7 +777,7 @@ namespace xerus {
 			
             // Increase the ranks
             x.move_core(0, true);
-            const auto rndTensor = TTTensor::random(x.dimensions, std::vector<size_t>(x.degree()-1, 1));
+            const auto rndTensor = TTTensor::random(x.dimensions, std::vector<size_t>(x.order()-1, 1));
             const auto diff = (1e-5*frob_norm(x))*rndTensor/frob_norm(rndTensor);
             x = x+diff;
 
