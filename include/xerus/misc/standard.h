@@ -45,23 +45,22 @@ namespace xerus {
 	extern const int VERSION_REVISION;
 	extern const int VERSION_COMMIT;
 
-    // Shorter names for unsigned types
-    typedef uint8_t byte; ///< unsigned int type of exactly 8 bit
-    typedef unsigned short ushort;
-    typedef unsigned int uint;
-    typedef unsigned long ulong;
+	// Shorter names for unsigned types
+	using byte = uint8_t;
+	using ushort = unsigned short;
+	using uint = unsigned int;
+	using ulong = unsigned long;
 
-    // Shorter names for fixed width types
-    typedef int8_t int8;
-    typedef int16_t int16;
-    typedef int32_t int32;
-    typedef int64_t int64;
+	// Shorter names for fixed width types
+	using int8 = int8_t;
+	using int16 = int16_t;
+	using int32 = int32_t;
+	using int64 = int64_t;
 
-    typedef uint8_t uint8;
-    typedef uint16_t uint16;
-    typedef uint32_t uint32;
-    typedef uint64_t uint64;
-
+	using uint8 = uint8_t;
+	using uint16 = uint16_t;
+	using uint32 = uint32_t;
+	using uint64 = uint64_t;
 }
 
 /** 
@@ -80,7 +79,7 @@ namespace xerus {
  */
 #if __cplusplus > 201400L
 	#define XERUS_deprecated(msg) [[deprecated(msg)]]
-#elif defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ * 100 + __GNUC_MINOR__) > 409
+#elif defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 409
 	#define XERUS_deprecated(msg) [[gnu::deprecated(msg)]]
 #else
 	#define XERUS_deprecated(msg)

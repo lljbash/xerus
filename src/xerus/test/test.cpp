@@ -164,7 +164,7 @@ namespace xerus { namespace misc {
 
 #undef main
 int main(int argc, char* argv[]) {
-	typedef void (*required_test_t)(void);
+	using required_test_t = void (*)();
 	
 // 	signal(SIGINT, xerus::misc::internal::catch_signals); // users ctrl+c should actually terminate the program
 // 	signal(SIGTERM, xerus::misc::internal::catch_signals);

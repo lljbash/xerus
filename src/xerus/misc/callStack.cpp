@@ -54,7 +54,7 @@ namespace xerus { namespace misc { namespace internal {
 	struct bfdResolver {
 		/// @brief relevant information belonging to a single bfd
 		struct storedBfd {
-			typedef bfd_boolean(deleter_t)(bfd*);
+			using deleter_t = bfd_boolean (*)(bfd*);
 			std::unique_ptr<bfd, deleter_t*> abfd;
 			std::unique_ptr<asymbol*[]> symbols;
 			intptr_t offset;

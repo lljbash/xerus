@@ -27,10 +27,11 @@
 namespace xerus {
     
 	class Tensor;
-    class TensorNetwork;
-    template<bool isOperator> class TTNetwork;
-    typedef TTNetwork<false> TTTensor;
-    typedef TTNetwork<true> TTOperator;
+	class TensorNetwork;
+	
+	template<bool isOperator> class TTNetwork;
+	using TTTensor = TTNetwork<false>;
+	using TTOperator = TTNetwork<true>;
 	
 	class SinglePointMeasurementSet;
 	class RankOneMeasurementSet;

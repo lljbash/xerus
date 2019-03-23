@@ -516,8 +516,8 @@ namespace xerus {
 
     };
 
-    typedef TTNetwork<false> TTTensor;
-    typedef TTNetwork<true> TTOperator;
+	using TTTensor = TTNetwork<false>;
+	using TTOperator = TTNetwork<true>;
 
 
     /**

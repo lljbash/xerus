@@ -44,7 +44,7 @@
 			struct xerus_test_a{ static void rt() {\
 				xerus::misc::internal::RequiredTest::register_test(xerus_test_fname, __FILE__, __LINE__);\
 			} };\
-			typedef void (*xerus_test_t)();\
+			using xerus_test_t = void (*)();\
 			static xerus_test_t xerus_test_rtp __attribute__((section(".init_array"))) = &xerus_test_a::rt; \
 			(void)xerus_test_rtp; \
 			xerus::misc::internal::RequiredTest::increase_counter(xerus_test_fname, __FILE__, __LINE__); \

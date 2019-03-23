@@ -512,8 +512,8 @@ namespace xerus {
 		
 	};
 
-	typedef HTNetwork<false> HTTensor;
-	typedef HTNetwork<true> HTOperator;
+	using HTTensor = HTNetwork<false>;
+	using HTOperator = HTNetwork<true>;
 
 
 	/**

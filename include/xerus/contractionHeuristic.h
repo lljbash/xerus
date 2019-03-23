@@ -32,7 +32,7 @@ namespace xerus {
 	class TensorNetwork;
 	
 	namespace internal {
-		typedef void (*ContractionHeuristic)(double &, std::vector<std::pair<size_t,size_t>> &, TensorNetwork);
+		using ContractionHeuristic = void (*)(double &, std::vector<std::pair<size_t,size_t>> &, TensorNetwork);
 		
 		template<double (*scoreFct)(double, double, double, double, double)>
 		void greedy_heuristic(double &_bestCost, std::vector<std::pair<size_t,size_t>> &_contractions, TensorNetwork _network);

@@ -89,10 +89,10 @@ namespace xerus {
 		enum class Representation : bool { Dense, Sparse };
 		
 		///@brief: Represention of the dimensions of a Tensor.
-		typedef std::vector<size_t> DimensionTuple; // NOTE must not be declared as "using.." (internal segfault in gcc4.8.1)
+		using DimensionTuple = std::vector<size_t>;
 		
 		///@brief: Represention of a MultiIndex, i.e. the tuple of positions for each dimension determining a single position in a Tensor.
-		typedef std::vector<size_t> MultiIndex; // NOTE must not be declared as "using.." (internal segfault in gcc4.8.1)
+		using MultiIndex = std::vector<size_t>;
 		
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Member variables - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		/// @brief Vector containing the individual dimensions of the tensor.
