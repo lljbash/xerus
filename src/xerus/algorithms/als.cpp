@@ -482,21 +482,23 @@ namespace xerus {
 	
 	double ALSVariant::solve(const TTOperator *_Ap, TTTensor &_x, const TTTensor &_b, size_t _numHalfSweeps, value_t _convergenceEpsilon, PerformanceData &_perfData) const {
 		LOG(ALS, "ALS("<< sites <<") called");
-		#ifndef XERUS_DISABLE_RUNTIME_CHECKS
+		
+		IF_CHECK(
+			REQUIRE(&_x != &_b, "Cannot use the same TTTensor as _x and _b. Make a copy of _x and use it as _b?");
+			REQUIRE(_x.order() > 0, "The ALS implementation requires x to have order larger then 0.");
+			REQUIRE(_x.dimensions == _b.dimensions, "The ALS implementation requires x and b to have the same dimensions."); //TODO why? 
 			_x.require_correct_format();
 			_b.require_correct_format();
-			REQUIRE(_x.order() > 0, "");
-			REQUIRE(_x.dimensions == _b.dimensions, "");
 			
 			if (_Ap != nullptr) {
 				_Ap->require_correct_format();
-				REQUIRE(_Ap->dimensions.size() == _b.dimensions.size()*2, "");
+				REQUIRE(_Ap->dimensions.size() == _b.dimensions.size()*2, "Inconsistend order of A and x/b");
 				for (size_t i=0; i<_x.dimensions.size(); ++i) {
-					REQUIRE(_Ap->dimensions[i] == _x.dimensions[i], "");
-					REQUIRE(_Ap->dimensions[i+_Ap->order()/2] == _x.dimensions[i], "");
+					REQUIRE(_Ap->dimensions[i] == _x.dimensions[i], "Inconsistend local dimensions between of A and x/b");
+					REQUIRE(_Ap->dimensions[i+_Ap->order()/2] == _x.dimensions[i], "Inconsistend local dimensions between of A and x/b");
 				}
 			}
-		#endif
+		);
 		
 		if (_Ap != nullptr) {
 			_perfData << "ALS for ||A*x - b||^2, x.dimensions: " << _x.dimensions << '\n'
