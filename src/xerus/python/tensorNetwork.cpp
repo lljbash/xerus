@@ -37,7 +37,10 @@ void expose_tensorNetwork() {
 			.add_property("dimensions", +[](TensorNetwork &_A) {
 				return _A.dimensions;
 			})
-			.def("degree", &TensorNetwork::order) // TODO Deprecated, should print some kind of warning.
+			.def("degree", +[](const TensorNetwork& _A){
+				XERUS_LOG(warning, "TensorNetwork::degree() is deprecated and will be removed in a future version. Use TensorNetwork::order() instead.");
+				return _A.degree();
+			})
 			.def("order", &TensorNetwork::order)
 			.def("datasize", &TensorNetwork::datasize)
 			.add_property("nodes", +[](TensorNetwork &_this){

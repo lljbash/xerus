@@ -131,7 +131,10 @@ void expose_tensor() {
             .add_property("dimensions", +[](Tensor &_A) {
                 return _A.dimensions;
             })
-            .def("degree", &Tensor::order) // TODO Deprecated, should print some kind of warning.
+            .def("degree", +[](const Tensor& _A){
+				XERUS_LOG(warning, "Tensor::degree() is deprecated and will be removed in a future version. Use Tensor::order() instead.");
+				return _A.degree();
+			})
             .def("order", &Tensor::order)
             .def_readonly("factor", &Tensor::factor)
             .def_readonly("size", &Tensor::size)
