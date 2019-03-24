@@ -39,7 +39,7 @@ void expose_tensorNetwork() {
 			})
 			.def("degree", +[](const TensorNetwork& _A){
 				XERUS_LOG(warning, "TensorNetwork::degree() is deprecated and will be removed in a future version. Use TensorNetwork::order() instead.");
-				return _A.degree();
+				return _A.order();
 			})
 			.def("order", &TensorNetwork::order)
 			.def("datasize", &TensorNetwork::datasize)

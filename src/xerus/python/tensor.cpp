@@ -133,7 +133,7 @@ void expose_tensor() {
             })
             .def("degree", +[](const Tensor& _A){
 				XERUS_LOG(warning, "Tensor::degree() is deprecated and will be removed in a future version. Use Tensor::order() instead.");
-				return _A.degree();
+				return _A.order();
 			})
             .def("order", &Tensor::order)
             .def_readonly("factor", &Tensor::factor)
