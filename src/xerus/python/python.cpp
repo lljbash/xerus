@@ -14,7 +14,7 @@ PYBIND11_MODULE(xerus, m) {
     /* expose_factorizations(); */
     expose_tensor(m);
     expose_tensorNetwork(m);
-    /* expose_ttnetwork(); */
+    expose_ttnetwork(m);
     /* expose_htnetwork(); */
 
     /* expose_leastSquaresAlgorithms(); */

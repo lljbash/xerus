@@ -39,12 +39,7 @@ void expose_tensorNetwork(module& m) {
         .def("round_edge", &TensorNetwork::round_edge)
         .def("transfer_core", &TensorNetwork::transfer_core, arg("from"), arg("to"), arg("allowRankReduction")=true)
         .def("reduce_representation", &TensorNetwork::reduce_representation)
-        .def("find_common_edge",
-            +[](TensorNetwork &_this, size_t _nodeA, size_t _nodeB){
-                const auto result = _this.find_common_edge(_nodeA, _nodeB);
-                return make_tuple(result.first, result.second);
-            }
-        )
+        .def("find_common_edge", &TensorNetwork::find_common_edge)
         .def("sanitize", &TensorNetwork::sanitize)
         .def("fix_mode", &TensorNetwork::fix_mode)
         .def("remove_slate", &TensorNetwork::remove_slate)

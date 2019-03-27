@@ -25,7 +25,7 @@ using namespace xerus;
 /* void expose_factorizations(module& m); */
 void expose_tensor(module& m);
 void expose_tensorNetwork(module& m);
-/* void expose_ttnetwork(module& m); */
+void expose_ttnetwork(module& m);
 /* void expose_htnetwork(module& m); */
 
 /* void expose_leastSquaresAlgorithms(module& m); */
