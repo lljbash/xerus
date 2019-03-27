@@ -1,0 +1,83 @@
+#include "misc.h"
+
+void expose_tensorNetwork(module& m) {
+    class_<TensorNetwork>(m, "TensorNetwork")
+        .def(init<>())
+        .def(init<Tensor>())
+        .def(init<const TensorNetwork &>())
+        .def_readonly("dimensions", &TensorNetwork::dimensions)
+        .def("degree", &TensorNetwork::degree)
+        .def("datasize", &TensorNetwork::datasize)
+        .def_readonly("nodes", &TensorNetwork::nodes)
+        .def("node", +[](TensorNetwork &_this, size_t _i) {
+            return _this.nodes[_i];
+        })
+        .def_readonly("externalLinks", &TensorNetwork::externalLinks)
+        /* .def("__call__", +[](TensorNetwork &_this, const std::vector<Index> &_idx){ */
+        /*     return  new xerus::internal::IndexedTensor<TensorNetwork>(std::move(_this(_idx))); */
+        /* }, return_value_policy<manage_new_object, with_custodian_and_ward_postcall<0, 1>>() ) */
+        .def(self * value_t())
+        .def(value_t() * self)
+        .def(self / value_t())
+        .def("__getitem__", +[](TensorNetwork &_this, size_t _i) {
+            if (_i >= misc::product(_this.dimensions)) {
+                throw index_error("Index out of range");
+            }
+            return _this[_i];
+        })
+        .def("__getitem__", +[](TensorNetwork &_this, std::vector<size_t> _idx) {
+            return _this[_idx];
+        })
+        /* .def("reshuffle_nodes", +[](TensorNetwork &_this, boost::python::object _f) { //TODO */
+        /*     _this.reshuffle_nodes(_f); */
+        /* }) */
+        .def("require_valid_network", +[](TensorNetwork &_this) {
+            _this.require_valid_network();
+        })
+        .def("require_correct_format", &TensorNetwork::require_correct_format)
+        .def("swap_external_links", &TensorNetwork::swap_external_links)
+        .def("round_edge", &TensorNetwork::round_edge)
+        .def("transfer_core", &TensorNetwork::transfer_core, arg("from"), arg("to"), arg("allowRankReduction")=true)
+        .def("reduce_representation", &TensorNetwork::reduce_representation)
+        .def("find_common_edge",
+            +[](TensorNetwork &_this, size_t _nodeA, size_t _nodeB){
+                const auto result = _this.find_common_edge(_nodeA, _nodeB);
+                return make_tuple(result.first, result.second);
+            }
+        )
+        .def("sanitize", &TensorNetwork::sanitize)
+        .def("fix_mode", &TensorNetwork::fix_mode)
+        .def("remove_slate", &TensorNetwork::remove_slate)
+        .def("resize_mode", &TensorNetwork::resize_mode, arg("mode"), arg("newDimension"), arg("cutPosition")=~0ul)
+        .def("contract", static_cast<void (TensorNetwork::*)(size_t, size_t)>(&TensorNetwork::contract))
+        .def("contract", static_cast<size_t (TensorNetwork::*)(const std::set<size_t>&)>(&TensorNetwork::contract)) //TODO write converter
+        .def("contraction_cost", &TensorNetwork::contraction_cost)
+        .def("draw", &TensorNetwork::draw)
+        .def("frob_norm", &TensorNetwork::frob_norm)
+    ;
+
+    class_<TensorNetwork::TensorNode>(m, "TensorNode")
+        .def("size", &TensorNetwork::TensorNode::size)
+        .def("degree", &TensorNetwork::TensorNode::degree)
+        /* .def_readonly("erased", &TensorNetwork::TensorNode::erased) // internal */
+        /* .def("erase", &TensorNetwork::TensorNode::erase) // internal */
+        .def_property_readonly("tensorObject", +[](TensorNetwork::TensorNode &_this)->object {
+            if (_this.tensorObject) {
+                return cast(_this.tensorObject.get());
+            } else {
+                return none();
+            }
+        })
+        .def_readonly("neighbors", &TensorNetwork::TensorNode::neighbors);
+    ;
+
+    class_<TensorNetwork::Link>(m, "TensorNetworkLink")
+        .def_readonly("other", &TensorNetwork::Link::other)
+        .def_readonly("indexPosition", &TensorNetwork::Link::indexPosition)
+        .def_readonly("dimension", &TensorNetwork::Link::dimension)
+        .def_readonly("external", &TensorNetwork::Link::external)
+        .def("links", &TensorNetwork::Link::links)
+    ;
+
+    /* variable_argument_member_to_tuple_wrapper("TensorNetwork.__call__", "TensorNetworkCallOperator"); */
+}
