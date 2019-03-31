@@ -18,7 +18,7 @@
 // or contact us at contact@libXerus.org.
 
 
-#include<xerus.h>
+#include <xerus.h>
 #include "../../include/xerus/test/test.h"
 #include "../../include/xerus/misc/internal.h"
 

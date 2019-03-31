@@ -72,18 +72,31 @@
 #endif
 
 
-///@brief: A single test of the given condition. To be used inside a misc::UnitTest.
-#define TEST(...) if (!(__VA_ARGS__)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #__VA_ARGS__ << " failed"); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
+#ifdef XERUS_UNITTEST
+	///@brief: A single test of the given condition. To be used inside a misc::UnitTest.
+	#define TEST(...) if (!(__VA_ARGS__)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #__VA_ARGS__ << " failed"); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
 
-///@brief: A single test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given error message on failure.
-#define MTEST(cond, ...) if (!(cond)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #cond << " failed. Msg: " << __VA_ARGS__); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
+	///@brief: A single test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given error message on failure.
+	#define MTEST(cond, ...) if (!(cond)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #cond << " failed. Msg: " << __VA_ARGS__); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
 
-///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest.
-#define TEST_SKIPPABLE(...) if (!(__VA_ARGS__)) {XERUS_PRINTSKIP; XERUS_LOG(debug, #__VA_ARGS__ << " failed"); } else {XERUS_PRINTCHECK;} void(0)
+	///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest.
+	#define TEST_SKIPPABLE(...) if (!(__VA_ARGS__)) {XERUS_PRINTSKIP; XERUS_LOG(debug, #__VA_ARGS__ << " failed"); } else {XERUS_PRINTCHECK;} void(0)
 
-///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given debug message on failure.
-#define MTEST_SKIPPABLE(cond, ...) if (!(cond)) {XERUS_PRINTSKIP; XERUS_LOG(debug, "Skipped test:" << #cond << " failed. Msg: " << __VA_ARGS__);} else {XERUS_PRINTCHECK;} void(0)
+	///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given debug message on failure.
+	#define MTEST_SKIPPABLE(cond, ...) if (!(cond)) {XERUS_PRINTSKIP; XERUS_LOG(debug, "Skipped test:" << #cond << " failed. Msg: " << __VA_ARGS__);} else {XERUS_PRINTCHECK;} void(0)
+#else
+	///@brief: A single test of the given condition. To be used inside a misc::UnitTest.
+	#define TEST(...) if (!(__VA_ARGS__)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #__VA_ARGS__ << " failed");} else {XERUS_PRINTCHECK;} void(0)
 
+	///@brief: A single test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given error message on failure.
+	#define MTEST(cond, ...) if (!(cond)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #cond << " failed. Msg: " << __VA_ARGS__);} else {XERUS_PRINTCHECK;} void(0)
+
+	///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest.
+	#define TEST_SKIPPABLE(...) if (!(__VA_ARGS__)) {XERUS_PRINTSKIP; XERUS_LOG(debug, #__VA_ARGS__ << " failed"); } else {XERUS_PRINTCHECK;} void(0)
+
+	///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given debug message on failure.
+	#define MTEST_SKIPPABLE(cond, ...) if (!(cond)) {XERUS_PRINTSKIP; XERUS_LOG(debug, "Skipped test:" << #cond << " failed. Msg: " << __VA_ARGS__);} else {XERUS_PRINTCHECK;} void(0)
+#endif
 
 namespace xerus { namespace misc {
 	#ifdef XERUS_UNITTEST

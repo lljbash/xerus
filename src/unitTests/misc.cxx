@@ -18,7 +18,7 @@
 // or contact us at contact@libXerus.org.
 
 
-#include<xerus.h> // NOTE xerus.h header file is necessary for below check of internal header export
+#include <xerus.h> // NOTE xerus.h header file is necessary for below check of internal header export
 
 #include "../../include/xerus/test/test.h"
 using namespace xerus;
