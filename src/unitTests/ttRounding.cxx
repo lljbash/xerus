@@ -94,7 +94,8 @@ static misc::UnitTest tt_noround("TT", "no_rounding", [](){
 	TTTensor a = TTTensor::random({2,2,2,2,2,2,2}, {2,2,2,2,2,2});
 	TTTensor b(a);
 	a.round(2);
-	MTEST(approx_equal(Tensor(a),Tensor(b)), frob_norm(a-b));
+	MTEST(approx_equal(Tensor(a),Tensor(b), 1e-14), frob_norm(a-b));
+	
 	TTTensor c = TTTensor::random({2,2,2,2,2,2,2}, {2,2,2,2,2,2});
 	a(i&0) = a(i&0) + 0.0*c(i&0);
 	LOG(unit_test, a.ranks());

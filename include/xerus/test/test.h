@@ -53,6 +53,10 @@
 	#define XERUS_REQUIRE_TEST (void)0
 #endif
 
+#define XERUS_PRINTCHECK std::cout << u8"\033[1;32m\u2713 \033[0m" << std::flush
+#define XERUS_PRINTFAIL  std::cout << u8"\033[1;31m\u2717 \033[0m" << std::flush
+#define XERUS_PRINTSKIP  std::cout << u8"\033[1;33m\u2297 \033[0m" << std::flush
+
 #ifndef XERUS_DISABLE_RUNTIME_CHECKS
 	#define FAILTEST(test) \
 		{\
@@ -67,12 +71,18 @@
 	#define FAILTEST(test) XERUS_LOG(warning, "Failtest is not useful with flag XERUS_DISABLE_RUNTIME_CHECKS")
 #endif
 
-#define XERUS_PRINTCHECK std::cout << u8"\033[1;32m\u2713 \033[0m" << std::flush
-#define XERUS_PRINTFAIL  std::cout << u8"\033[1;31m\u2717 \033[0m" << std::flush
 
+///@brief: A single test of the given condition. To be used inside a misc::UnitTest.
 #define TEST(...) if (!(__VA_ARGS__)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #__VA_ARGS__ << " failed"); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
 
-#define MTEST(cond, ...) if (!(cond)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #cond << " failed, msg: " << __VA_ARGS__); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
+///@brief: A single test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given error message on failure.
+#define MTEST(cond, ...) if (!(cond)) {XERUS_PRINTFAIL; XERUS_LOG(warning, #cond << " failed. Msg: " << __VA_ARGS__); ::xerus::misc::UnitTest::passed = false;} else {XERUS_PRINTCHECK;} void(0)
+
+///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest.
+#define TEST_SKIPPABLE(...) if (!(__VA_ARGS__)) {XERUS_PRINTSKIP; XERUS_LOG(debug, #__VA_ARGS__ << " failed"); } else {XERUS_PRINTCHECK;} void(0)
+
+///@brief: A single skippable test of the given condition @a cond. To be used inside a misc::UnitTest. Prints the given debug message on failure.
+#define MTEST_SKIPPABLE(cond, ...) if (!(cond)) {XERUS_PRINTSKIP; XERUS_LOG(debug, "Skipped test:" << #cond << " failed. Msg: " << __VA_ARGS__);} else {XERUS_PRINTCHECK;} void(0)
 
 
 namespace xerus { namespace misc {
