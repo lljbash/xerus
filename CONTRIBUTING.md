@@ -25,7 +25,7 @@ int main() {
 
 * Create a merge request against the [xerus development branch](https://git.hemio.de/xerus/xerus/tree/development). 
 
-* Ensure the PR description clearly describes the problem and the solution. Include the relevant issue number if applicable.
+* Ensure the description clearly describes the problem and the solution. Include the relevant issue number if applicable.
 
 
 #### **You want to add a new feature to xerus or change an existing one**
@@ -34,7 +34,7 @@ int main() {
 
 * If the feedback is positive feel free to create a new branch and implement you changes.
 
-* We have a few code and style conventions we ask our contributers to respect:
+* We have a few code and style conventions. Look around the existing code to get a grasp of them. In particular we ask our contributers to respect:
 
   - As a general rule we loosly follow the [C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md) and recommend everyone to read them before starting to work on larger contributions.
 
