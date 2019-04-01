@@ -26,49 +26,49 @@
 #ifndef XERUS_H
 #define XERUS_H
 
-    #define MISC_NAMESPACE xerus
-    
-    // The misc stuff needed by xerus
-    #include "xerus/misc.h"
-    
-    // File which sets the custom log levels
-    #include "xerus/tensorLogger.h"
+	#define MISC_NAMESPACE xerus
+	
+	// The misc stuff needed by xerus
+	#include "xerus/misc.h"
+	
+	// File which sets the custom log levels
+	#include "xerus/tensorLogger.h"
 
-    // All the xerus headers
+	// All the xerus headers
 	#include "xerus/blasLapackWrapper.h"
 #ifdef ARPACK_LIBRARIES
 	#include "xerus/arpackWrapper.h"
 #endif
-    #include "xerus/index.h"
-    #include "xerus/indexedTensorReadOnly.h"
-    #include "xerus/indexedTensorWritable.h"
-    #include "xerus/indexedTensor.h"
-    #include "xerus/indexedTensorMoveable.h"
-    #include "xerus/indexedTensorList.h"
-    #include "xerus/tensor.h"
-    #include "xerus/cholmod_wrapper.h"
-    #include "xerus/sparseTimesFullContraction.h"
-    #include "xerus/sparseTimesFullContraction.h"
-    #include "xerus/indexedTensor_tensor_factorisations.h"
-    #include "xerus/tensorNetwork.h"
-    #include "xerus/contractionHeuristic.h"
-    #include "xerus/ttNetwork.h"
-    #include "xerus/htNetwork.h"
-    #include "xerus/ttStack.h"
+	#include "xerus/index.h"
+	#include "xerus/indexedTensorReadOnly.h"
+	#include "xerus/indexedTensorWritable.h"
+	#include "xerus/indexedTensor.h"
+	#include "xerus/indexedTensorMoveable.h"
+	#include "xerus/indexedTensorList.h"
+	#include "xerus/tensor.h"
+	#include "xerus/cholmod_wrapper.h"
+	#include "xerus/sparseTimesFullContraction.h"
+	#include "xerus/sparseTimesFullContraction.h"
+	#include "xerus/indexedTensor_tensor_factorisations.h"
+	#include "xerus/tensorNetwork.h"
+	#include "xerus/contractionHeuristic.h"
+	#include "xerus/ttNetwork.h"
+	#include "xerus/htNetwork.h"
+	#include "xerus/ttStack.h"
 	#include "xerus/performanceData.h"
 	#include "xerus/measurments.h"
-    #include "xerus/algorithms/als.h"
-    #include "xerus/algorithms/steepestDescent.h"
-    #include "xerus/algorithms/cg.h"
-    #include "xerus/algorithms/decompositionAls.h"
-    #include "xerus/algorithms/adf.h"
-    #include "xerus/algorithms/asd.h"
-    #include "xerus/algorithms/iht.h"
-    #include "xerus/algorithms/largestEntry.h"
-    #include "xerus/algorithms/randomSVD.h"
-    #include "xerus/applications/uq.h"
-    #include "xerus/applications/uqAdf.h"
-    
+	#include "xerus/algorithms/als.h"
+	#include "xerus/algorithms/steepestDescent.h"
+	#include "xerus/algorithms/cg.h"
+	#include "xerus/algorithms/decompositionAls.h"
+	#include "xerus/algorithms/adf.h"
+	#include "xerus/algorithms/asd.h"
+	#include "xerus/algorithms/iht.h"
+	#include "xerus/algorithms/largestEntry.h"
+	#include "xerus/algorithms/randomSVD.h"
+	#include "xerus/applications/uq.h"
+	#include "xerus/applications/uqAdf.h"
+	
 	#include "xerus/examples/specificLowRankTensors.h"
 
 #endif

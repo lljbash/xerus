@@ -20,9 +20,9 @@ PYTEST3 = pytest3
 #=================================================================================================
 # C++ Version
 #=================================================================================================
-# Xerus requires at least C++11 language support, however some features need support of C++14 or
-# even C++17 in order to activated.
-COMPATIBILITY = -std=c++11
+# Xerus requires at least C++11 language support. It is advised to use the c++14 or higher versions
+# though to have access to all features of the Xerus library.
+COMPATIBILITY = -std=c++14
 
 
 #=================================================================================================
