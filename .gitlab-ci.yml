@@ -1,9 +1,8 @@
 stages:
 - build_homepage
-- build_gcc
-- test_gcc
 - build_gcc_nocheck
 - test_gcc_nocheck
+- code_coverage
 - build_python2
 - build_python3
 - test_python2
@@ -25,15 +24,6 @@ job_build_homepage:
     - master
   allow_failure: true
 
-job_make_gcc:
-  stage: build_gcc
-  script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; make XerusTest"
-  when: always
-
-job_test_gcc:
-  stage: test_gcc
-  script: "echo $CI_COMMIT_SHA; ./XerusTest all"
-
 job_make_gcc_nocheck:
   stage: build_gcc_nocheck
   script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc.nocheck config.mk; make XerusTest"
@@ -41,6 +31,11 @@ job_make_gcc_nocheck:
 job_test_gcc_nocheck:
   stage: test_gcc_nocheck
   script: "echo $CI_COMMIT_SHA; ./XerusTest all"
+
+job_code_coverage:
+  stage: code_coverage
+  script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; make test"
+  when: always
 
 job_build_python2:
   stage: build_python2
