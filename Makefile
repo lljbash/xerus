@@ -1,4 +1,4 @@
-.PHONY: help shared static python doc install test clean opt warn printBoostVersion
+.PHONY: help shared static python doc install test clean version opt warn printBoostVersion
 
 # ------------------------------------------------------------------------------------------------------
 #				Default rule should be the help message
@@ -22,26 +22,30 @@ help:
 # Name of the test executable
 TEST_NAME = XerusTest
 
-# xerus version from VERSION file
-XERUS_VERSION = $(shell git describe --tags --always 2>/dev/null || cat VERSION)
-DEBUG += -D XERUS_VERSION="$(XERUS_VERSION)"
 
-XERUS_MAJOR_V = $(word 1, $(subst ., ,$(XERUS_VERSION)) )
+# ------------------------------------------------------------------------------------------------------
+#				Extract Xerus version from VERSION file
+# ------------------------------------------------------------------------------------------------------
+
+VERSION_STRING = $(shell git describe --tags --always 2>/dev/null || cat VERSION)
+VERSION = -D XERUS_VERSION="$(VERSION_STRING)"
+
+XERUS_MAJOR_V = $(word 1, $(subst ., ,$(VERSION_STRING)) )
 ifneq (,$(findstring v, $(XERUS_MAJOR_V)))
 	XERUS_MAJOR_V := $(strip $(subst v, ,$(XERUS_MAJOR_V)) )
 endif
-DEBUG += -DXERUS_VERSION_MAJOR=$(XERUS_MAJOR_V)
-XERUS_MINOR_V = $(word 2, $(subst ., ,$(XERUS_VERSION)) )
-DEBUG += -DXERUS_VERSION_MINOR=$(XERUS_MINOR_V)
-XERUS_REVISION_V = $(word 3, $(subst ., ,$(XERUS_VERSION)) )
+VERSION += -D XERUS_VERSION_MAJOR=$(XERUS_MAJOR_V)
+XERUS_MINOR_V = $(word 2, $(subst ., ,$(VERSION_STRING)) )
+VERSION += -D XERUS_VERSION_MINOR=$(XERUS_MINOR_V)
+XERUS_REVISION_V = $(word 3, $(subst ., ,$(VERSION_STRING)) )
 ifneq (,$(findstring -, $(XERUS_REVISION_V)))
 	XERUS_COMMIT_V := $(word 2, $(subst -, ,$(XERUS_REVISION_V)) )
 	XERUS_REVISION_V := $(word 1, $(subst -, ,$(XERUS_REVISION_V)) )
 else
 	XERUS_COMMIT_V = 0
 endif
-DEBUG += -DXERUS_VERSION_REVISION=$(XERUS_REVISION_V)
-DEBUG += -DXERUS_VERSION_COMMIT=$(XERUS_COMMIT_V)
+VERSION += -D XERUS_VERSION_REVISION=$(XERUS_REVISION_V)
+VERSION += -D XERUS_VERSION_COMMIT=$(XERUS_COMMIT_V)
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -111,8 +115,8 @@ define \n
 
 endef
 
-FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(OPTIMIZE) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER))
-PYTHON_FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER) -fno-var-tracking-assignments)
+FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(OPTIMIZE) $(VERSION) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER))
+PYTHON_FLAGS = $(strip $(COMPATIBILITY) $(WARNINGS) $(VERSION) $(LOGGING) $(DEBUG) $(ADDITIONAL_INCLUDE) $(OTHER) -fno-var-tracking-assignments)
 MINIMAL_DEPS = Makefile config.mk makeIncludes/general.mk makeIncludes/warnings.mk makeIncludes/optimization.mk
 
 
@@ -254,6 +258,9 @@ clean:
 	-rm -f $(TEST_NAME)
 	-rm -f include/xerus.h.gch
 	make -C doc clean
+
+version:
+	@echo $(VERSION)
 
 
 

@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <cstdint>
 #include <cstddef>
+#include <string>
 
 namespace xerus {
 	/**
@@ -40,6 +41,7 @@ namespace xerus {
 	/**
 	 * The version of the compiled xerus library
 	 */
+	extern const std::string VERSION_FULL;
 	extern const int VERSION_MAJOR;
 	extern const int VERSION_MINOR;
 	extern const int VERSION_REVISION;

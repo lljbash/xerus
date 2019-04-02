@@ -40,6 +40,7 @@
 #include <xerus/misc/random.h>
 #include <xerus/misc/internal.h>
 
+
 namespace xerus { namespace misc {
 			
 	std::map<std::string, std::map<std::string, std::function<void()>>> *xerus::misc::UnitTest::tests;
@@ -193,9 +194,10 @@ int main(int argc, char* argv[]) {
 	std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 	
 	std::cout << "###############################################################################\n";
-	std::cout << "#                                unit-testing                                 #\n";
+	std::cout << "#                                  Unit Tests                                 #\n";
+	std::cout << "#                   Xerus version: " << std::setw(42) << std::left << xerus::VERSION_FULL << " #\n";
 	std::cout << "###############################################################################" << std::endl;
-	// no unittests defined (ie. the map tests does not exist!)
+	// No unittests defined (ie. the map tests does not exist!)
 	if (!xerus::misc::UnitTest::tests) {
 		std::cout << "no unittests defined.\n";
 		std::cout << "use the macro UNIT_TEST(group, testname, ...) to define unittests inside the sourcecode." << std::endl;
@@ -214,6 +216,7 @@ int main(int argc, char* argv[]) {
 		}
 		return 0;
 	}
+	
 	
 	unsigned passCount=0;
 	unsigned totalPassCount=0; 
