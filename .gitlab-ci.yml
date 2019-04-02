@@ -32,7 +32,7 @@ job_make_gcc:
 
 job_test_gcc:
   stage: test_gcc
-  script: "make version; ./XerusTest all"
+  script: "echo $CI_COMMIT_SHA; ./XerusTest all"
 
 job_make_gcc_nocheck:
   stage: build_gcc_nocheck
@@ -40,7 +40,7 @@ job_make_gcc_nocheck:
 
 job_test_gcc_nocheck:
   stage: test_gcc_nocheck
-  script: "make version; ./XerusTest all"
+  script: "echo $CI_COMMIT_SHA; ./XerusTest all"
 
 job_build_python2:
   stage: build_python2
@@ -69,5 +69,5 @@ job_make_clang:
 
 job_test_clang:
   stage: test_clang
-  script: "make version; ./XerusTest all"
+  script: "echo $CI_COMMIT_SHA; ./XerusTest all"
 
