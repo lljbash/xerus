@@ -34,9 +34,6 @@ namespace xerus {
 		/// @brief Demangles the function and class names created by gcc into a more readable format.
 		std::string XERUS_warn_unused demangle_cxa(const std::string& _cxa);
 
-		/// @brief Resolves 'folder/..' occurences in pathnames.
-		std::string XERUS_warn_unused normalize_pathname(const std::string& _name);
-
 		///@brief: Explodes a string at positions indicated by _delim.
 		std::vector<std::string> explode(const std::string& _string, const char _delim);
 

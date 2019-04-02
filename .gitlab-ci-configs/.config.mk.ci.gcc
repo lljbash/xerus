@@ -4,8 +4,7 @@
 CXX = g++
 COMPATIBILITY = -std=c++11
 
-STRICT_WARNINGS = TRUE
-DEBUG += -D XERUS_TEST_COVERAGE                 # Enable coverage tests
+ACTIVATE_CODE_COVERAGE = TRUE                 # Enable coverage tests
 DEBUG += -D _GLIBCXX_ASSERTIONS        # Activate GLIBCXX assertions
 
 DEBUG += -g                # Adds debug symbols

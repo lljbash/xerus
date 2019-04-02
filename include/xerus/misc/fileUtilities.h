@@ -28,6 +28,8 @@
 #include <string>
 #include <fstream>
 
+// #include "standard.h"
+
 namespace xerus { namespace misc {
 	
 	///@brief Creates all directories in the @a _path of the file, if needed.
@@ -44,6 +46,10 @@ namespace xerus { namespace misc {
 	
 	///@brief Reads the complete content of the file at the given @a _path into a string.
 	std::string read_file(const std::string& _path);
+	
+	
+	/// @brief Resolves 'folder/..' occurences in pathnames.
+	std::string /*XERUS_warn_unused*/ normalize_pathname(const std::string& _name);
 	
 	
 	#if __cplusplus >= 201402L

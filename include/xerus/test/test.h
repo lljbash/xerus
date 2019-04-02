@@ -24,34 +24,14 @@
 
 #pragma once
 
-
-/**
- * @def XERUS_REQUIRE_TEST
- * @brief Marked position for the code-coverage test. Any not passed XERUS_REQUIRE_TEST macro will result in a warning.
- * XERUS_REQUIRE_TEST is implied by any XERUS_REQUIRE(...) macro if test coverage is enabled.
- */
-
 #include <map>
 #include <string>
 #include <functional>
 
 #include "../misc/namedLogger.h"
 
-#ifdef XERUS_TEST_COVERAGE
-	#define XERUS_REQUIRE_TEST \
-		do { \
-			static const char * xerus_test_fname = __PRETTY_FUNCTION__;\
-			struct xerus_test_a{ static void rt() {\
-				xerus::misc::internal::RequiredTest::register_test(xerus_test_fname, __FILE__, __LINE__);\
-			} };\
-			using xerus_test_t = void (*)();\
-			static xerus_test_t xerus_test_rtp __attribute__((section(".init_array"))) = &xerus_test_a::rt; \
-			(void)xerus_test_rtp; \
-			xerus::misc::internal::RequiredTest::increase_counter(xerus_test_fname, __FILE__, __LINE__); \
-		} while(false)
-#else
-	#define XERUS_REQUIRE_TEST (void)0
-#endif
+#include "../misc/codeCoverage.h"
+
 
 #define XERUS_PRINTCHECK std::cout << u8"\033[1;32m\u2713 \033[0m" << std::flush
 #define XERUS_PRINTFAIL  std::cout << u8"\033[1;31m\u2717 \033[0m" << std::flush
@@ -108,24 +88,4 @@ namespace xerus { namespace misc {
 			UnitTest(std::string _group, std::string _name, std::function<void()> _f);
 		};
 	#endif
-
-	namespace internal {
-	#ifdef XERUS_TEST_COVERAGE
-		struct RequiredTest {
-			struct Identifier {
-				std::string functionName;
-				std::string filename;
-				size_t lineNumber;
-				Identifier(std::string _func, std::string _file, size_t _line);
-				bool operator<(const Identifier &_rhs) const;
-			};
-			
-			// order of construction of global objects is random so the first one has to create the map
-			static std::map<Identifier, size_t> *tests;
-			
-			static void register_test(std::string _functionName, std::string _fileName, size_t _lineNb);
-			
-			static void increase_counter(std::string _functionName, std::string _fileName, size_t _lineNb);
-		};
-	#endif
-}}}
+}}

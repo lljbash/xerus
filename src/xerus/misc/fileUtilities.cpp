@@ -24,6 +24,7 @@
 
 #include <xerus/misc/fileUtilities.h>
 #include <xerus/misc/internal.h>
+#include <xerus/misc/stringUtilities.h>
 
 #include <fstream>
 #include <boost/filesystem.hpp>
@@ -72,6 +73,27 @@ namespace xerus { namespace misc {
 		fileStream.seekg(0, std::ios::beg);
 		fileStream.read(&contents[0], std::streamsize(contents.size()));
 		return contents;
+	}
+	
+	
+	std::string normalize_pathname(const std::string &_name) {
+		std::vector<std::string> oldpath = explode(_name,'/');
+		std::vector<std::string *> newpath;
+		for (std::string &f : oldpath) {
+			if (f.empty()) { continue; }
+			if (f==".." && !newpath.empty() && *newpath.back() != "..") {
+				newpath.pop_back();
+			} else {
+				newpath.push_back(&f);
+			}
+		}
+		std::string ret;
+		for (std::string *f : newpath) {
+			ret += *f;
+			ret += '/';
+		}
+		if (!ret.empty()) { ret.pop_back(); }
+		return ret;
 	}
 	
 	

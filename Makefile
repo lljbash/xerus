@@ -24,7 +24,7 @@ TEST_NAME = XerusTest
 
 
 # ------------------------------------------------------------------------------------------------------
-#				Extract Xerus version from VERSION file
+#			Extract Xerus version from VERSION file and the git repository
 # ------------------------------------------------------------------------------------------------------
 
 VERSION_STRING = $(shell git describe --tags --always 2>/dev/null || cat VERSION)
@@ -101,9 +101,9 @@ include makeIncludes/optimization.mk
 # ------------------------------------------------------------------------------------------------------
 #					Set additional compiler options
 # ------------------------------------------------------------------------------------------------------
-
-
-
+ifdef ACTIVATE_CODE_COVERAGE
+	DEBUG += -D XERUS_TEST_COVERAGE
+endif
 
 # ------------------------------------------------------------------------------------------------------
 #					Convinience variables
@@ -225,7 +225,7 @@ endif
 
 
 $(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
-	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) -o $(TEST_NAME)
+	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(BOOST_LIBS) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
 build/print_boost_version: src/print_boost_version.cpp
 	@$(CXX) -o $@ $<
@@ -233,8 +233,16 @@ build/print_boost_version: src/print_boost_version.cpp
 printBoostVersion: build/print_boost_version
 	@build/print_boost_version
 
+ifdef ACTIVATE_CODE_COVERAGE
+test:
+	mkdir -p build
+	$(MAKE) $(TEST_NAME) 2>&1 >/dev/null | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
+	./$(TEST_NAME) all
+else
 test:  $(TEST_NAME)
 	./$(TEST_NAME) all
+endif
+
 
 
 test_python2: build/libxerus.so build/python2/xerus.so
@@ -297,7 +305,7 @@ endif
 # Build and execution rules for tutorials
 build/.tutorialObjects/%: %.cpp $(MINIMAL_DEPS) build/libxerus.a build/libxerus_misc.a
 	mkdir -p $(dir $@)
-	$(CXX) -I include $< build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(CALLSTACK_LIBS) $(FLAGS) -MMD -o $@
+	$(CXX) -I include $< build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(BOOST_LIBS) $(CALLSTACK_LIBS) $(FLAGS) -MMD -o $@
 
 
 # Build rule for the preCompileHeader

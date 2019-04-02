@@ -65,7 +65,7 @@ COMPILE_THREADS = 8                     # Number of threads to use during link t
 # When performing tests it is useful to ensure that all of the code in covered. This is ensured by
 # a set of macros including REQUIRE_TEST to mark lines that need to be tested. With the following
 # definition this coverage is tested.
-# DEBUG += -D XERUS_TEST_COVERAGE           # Enable coverage tests
+# ACTIVATE_CODE_COVERAGE = TRUE            # Enable coverage tests
 
 
 # You can add all kind of debuging options. In the following are some examples
@@ -134,7 +134,7 @@ LAPACK_LIBRARIES = -llapacke -llapack                       # Standard Lapack + 
 SUITESPARSE = -lcholmod -lspqr
 
 # Uncomment or add the approriate boost libraries
-BOOST_LIBS = -lboost_filesystem
+BOOST_LIBS = -lboost_filesystem -lboost_system
 
 # (optional) Uncomment if needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
 # ARPACK_LIBRARIES = -larpack

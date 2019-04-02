@@ -37,6 +37,7 @@
 #include <xerus/misc/standard.h>
 #include <xerus/misc/exceptions.h>
 #include <xerus/misc/stringUtilities.h>
+#include <xerus/misc/fileUtilities.h>
 #include <xerus/misc/random.h>
 #include <xerus/misc/internal.h>
 
@@ -57,42 +58,6 @@ namespace xerus { namespace misc {
 	}
 	
 	namespace internal {
-	#ifdef XERUS_TEST_COVERAGE
-		std::map<RequiredTest::Identifier, size_t> *RequiredTest::tests;
-		
-		RequiredTest::Identifier::Identifier(std::string _func, std::string _file, size_t _line) : functionName(_func), filename(_file), lineNumber(_line) {}
-				
-		bool RequiredTest::Identifier::operator<(const Identifier &_rhs) const {
-			if (functionName < _rhs.functionName) {
-				return true;
-			} else if (functionName == _rhs.functionName && lineNumber < _rhs.lineNumber) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-	
-		void RequiredTest::register_test(std::string _functionName, std::string _fileName, size_t _lineNb)  {
-			if (!tests) {
-				tests = new std::map<Identifier, size_t>();
-			}
-			Identifier key = Identifier(_functionName, _fileName, _lineNb);
-	// 		std::cout << "registered " << _functionName << " (" << _fileName << ":" << _lineNb << ")" << std::endl;
-			if (tests->count(key) == 0) {
-				(*tests)[key] = 0;
-			}
-		}
-			
-		void RequiredTest::increase_counter(std::string _functionName, std::string _fileName, size_t _lineNb) {
-			if (!tests) {
-				// this can happen if some function in the init section (ie. before main) use REQUIREs
-				tests = new std::map<Identifier, size_t>();
-			}
-			Identifier key = Identifier(_functionName, _fileName, _lineNb);
-	// 		std::cout << "encountered " << _functionName << " (" << _fileName << ":" << _lineNb << ")" << std::endl;
-			(*tests)[key] += 1;
-		}
-	#endif
 		
 	bool test(const std::pair<std::string, std::function<void()>> &_t, uint64 _seed=0) {
 		std::cout << "| " << _t.first << " starting: "  << std::flush;
@@ -178,6 +143,7 @@ int main(int argc, char* argv[]) {
 	// Prevent swap usage
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 	
+	// TODO Is this code useful?
 	// perform required_test initializations
 	// pass address of xerus::misc::internal::catch_signals as the address of main cannot be taken as by ISO c++...
 	std::pair<uintptr_t, uintptr_t> requiredTestRange = xerus::misc::get_range_of_section(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&xerus::misc::internal::catch_signals)), "required_tests");
@@ -185,7 +151,7 @@ int main(int argc, char* argv[]) {
 		try {
 			(*p)();
 		} catch (...) {
-			std::cout << "required test initialization failed. required test listing will be wrong." << std::endl;
+			std::cout << "Required test initialization failed. Required test listing will be wrong." << std::endl;
 			break;
 		}
 	}
@@ -291,45 +257,11 @@ int main(int argc, char* argv[]) {
 	std::cout << "-------------------------------------------------------------------------------" << std::endl;
 	
 	#ifdef XERUS_TEST_COVERAGE
-			// check whether all REQUIRED_TESTs were tested
-			std::map<std::string, std::pair<size_t, size_t>> perFile;
-			
-			if (xerus::misc::internal::RequiredTest::tests) {
-				for (auto &t : (*xerus::misc::internal::RequiredTest::tests)) {
-					std::string normPath = xerus::misc::normalize_pathname(t.first.filename);
-					std::pair<size_t, size_t> &pf = perFile[normPath];
-					pf.second += 1;
-					if (t.second == 0) {
-						std::cout << "\033[1;31m missing test for function \033[0m" 
-							<< xerus::misc::demangle_cxa(t.first.functionName) << " (" << normPath << ":" << t.first.lineNumber << ")" << std::endl;
-					} else {
-						pf.first += 1;
-					}
-				}
-				
-				uint64_t totalPerformed=0;
-				uint64_t totalExisting=0;
-				
-				for (auto &f : perFile) {
-					std::pair<size_t, size_t> &fstats = f.second;
-					totalPerformed += fstats.first;
-					totalExisting += fstats.second;
-					if (fstats.first == fstats.second) {
-						std::cout << "file " << f.first << " :\033[1;32m " << fstats.first << " of " << fstats.second << " tests performed\033[0m" << std::endl;
-					} else {
-						std::cout << "file " << f.first << " :\033[1;31m " << fstats.first << " of " << fstats.second << " tests performed\033[0m" << std::endl;
-					}
-				}
-				
-				std::cout << "In total: " << totalPerformed << " of " << totalExisting << " = " << 100*double(totalPerformed)/double(totalExisting) << "% covered" << std::endl;
-			}
+		xerus::misc::CodeCoverage::print_code_coverage();
 	#endif
 	
 	// Destroy all stored tests to make memory-leak detection simpler
 	delete xerus::misc::UnitTest::tests;
-	#ifdef XERUS_TEST_COVERAGE
-		delete xerus::misc::internal::RequiredTest::tests;
-	#endif
 	
 	return totalPassCount != totalCount;
 }
