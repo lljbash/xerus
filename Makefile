@@ -304,7 +304,7 @@ JOB_FLAG := $(filter -j%, $(subst -j ,-j,$(shell ps T | grep "^\s*$(MAKE_PID).*$
 
 test:
 	mkdir -p build
-	make $(TEST_NAME) $(JOB_FLAG) &> build/build_output.txt
+	make $(TEST_NAME) $(JOB_FLAG) &> build/build_output.txt || cat build/build_output.txt
 	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
 	./$(TEST_NAME) all
 endif
