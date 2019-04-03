@@ -10,12 +10,6 @@ stages:
 - build_clang
 - test_clang
 
-cache:
-  key: "$CI_COMMIT_SHA"
-  paths:
-    - build/
-    - XerusTest
-
 job_build_homepage:
   stage: build_homepage
   script: "cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; make -C doc doc && scp -r doc/html xerusweb:libxerus.org-443"
@@ -27,15 +21,26 @@ job_build_homepage:
 job_make_gcc_nocheck:
   stage: build_gcc_nocheck
   script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc.nocheck config.mk; make XerusTest"
+  artifacts:
+    expire_in: 1h30min
+    paths:
+      - XerusTest
 
 job_test_gcc_nocheck:
   stage: test_gcc_nocheck
   script: "echo $CI_COMMIT_SHA; ./XerusTest all"
+  dependencies:
+    - job_make_gcc_nocheck
+
 
 job_code_coverage:
   stage: code_coverage
   script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; mkdir -p build; make test &> build/build_output.txt || tail -n 500 build/build_output.txt; tail -n 500 build/build_output.txt" 
   when: always
+  artifacts:
+    expire_in: 3h
+    paths:
+      - build/build_output.txt
 
 job_build_python2:
   stage: build_python2
@@ -61,8 +66,14 @@ job_make_clang:
   stage: build_clang
   script: "clang++ --version; cp .gitlab-ci-configs/.config.mk.ci.clang config.mk; make XerusTest"
   when: always
+  artifacts:
+    expire_in: 1h30min
+    paths:
+      - XerusTest
 
 job_test_clang:
   stage: test_clang
   script: "echo $CI_COMMIT_SHA; ./XerusTest all"
+  dependencies:
+    - job_make_clang
 
