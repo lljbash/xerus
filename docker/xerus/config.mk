@@ -4,8 +4,8 @@ COMPILE_THREADS = 8                       # Number of threads to use during link
 HIGH_OPTIMIZATION = TRUE                  # Activates -O3 -march=native and some others
 OTHER += -fopenmp
 
-PYTHON3_CONFIG = `python3-config --cflags --ldflags`
 PYTHON2_CONFIG = `python-config --cflags --ldflags`
+PYTHON3_CONFIG = `python3-config --cflags --ldflags`
 
 LOGGING += -D XERUS_LOG_INFO              # Information that is not linked to any unexpected behaviour but might nevertheless be of interest.
 LOGGING += -D XERUS_LOGFILE               # Use 'error.log' file instead of cerr
@@ -13,8 +13,8 @@ LOGGING += -D XERUS_LOG_ABSOLUTE_TIME     # Print absolute times instead of rela
 
 INSTALL_LIB_PATH = /usr/local/lib         # Path where to install the libxerus.so shared library.
 INSTALL_HEADER_PATH = /usr/local/include  # Path where to install the xerus header files.
-INSTALL_PYTHON2_PATH = `dirname $(python2-config --configdir)`/site-packages
-INSTALL_PYTHON3_PATH = `dirname $(python3-config --configdir)`/site-packages
+INSTALL_PYTHON2_PATH = /usr/local/lib/python2.7/site-packages
+INSTALL_PYTHON3_PATH = /usr/local/lib/python3.5/site-packages
 
 BLAS_LIBRARIES = -lopenblas -lgfortran    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack     # Standard Lapack + Lapacke libraries
