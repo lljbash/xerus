@@ -45,16 +45,16 @@
  */
 #define XERUS_REQUIRE_TEST \
 	do { \
+		static const char * const xerusCCLocalFunctionLocation = LOCATION;\
 		static const char * const xerusCCLocalFunctionName = __PRETTY_FUNCTION__;\
-		\
-		struct xerus_test_a{ static void rt() {\
-			xerus::misc::CodeCoverage::register_test(LOCATION, xerusCCLocalFunctionName);\
-		} };\
-		using xerus_test_t = void (*)(); \
-		static xerus_test_t xerus_test_rtp __attribute__((section(".init_array"))) = &xerus_test_a::rt; \
-		(void) xerus_test_rtp; \
-		\
-		xerus::misc::CodeCoverage::covered(LOCATION, xerusCCLocalFunctionName); \
+		__asm__( \
+			".pushsection .cc_loc, \"a\", @progbits" "\n" \
+			".quad %c0" "\n" \
+			".quad %c1" "\n" \
+			".popsection" "\n" \
+			: : "i"(xerusCCLocalFunctionLocation), "i"(xerusCCLocalFunctionName) \
+		); \
+		xerus::misc::CodeCoverage::covered(xerusCCLocalFunctionLocation, xerusCCLocalFunctionName); \
 		\
 		XERUS_CC_MARK_WARNING \
 	} while(false)

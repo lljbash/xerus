@@ -71,17 +71,29 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 		// requiredTests[file][lineNumber][functionIdentifier]
 		std::map<std::string, std::map<size_t, std::map<std::string, bool>>> requiredTests;
 		
-		for(const auto& localTests : *testsRequiredInit) {
-			const auto locationParts = misc::explode(localTests.first, ':');
-			REQUIRE(locationParts.size() == 2, "Error parsing the required tests.");
+		// Load required tests from .cc_loc section
+		auto range = get_range_of_section(reinterpret_cast<void*>(&print_code_coverage) /* ie inside this executable */, ".cc_loc");
+		auto step = sizeof(uintptr_t);
+		size_t count = 0;
+		for (auto p = range.first; p < range.second; p += 2*step) {
+			char * loc = reinterpret_cast<char *>(*reinterpret_cast<uintptr_t*>(p));
+			const auto locationParts = misc::explode(loc, ':');
+			if (locationParts.size() != 2) {
+				LOG(warning, "i don't understand the required test location: '" << loc << "'");
+				continue;
+			}
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);
 			const auto lineNumber = xerus::misc::from_string<size_t>(locationParts[1]);
-			for(const auto& identifier : localTests.second) {
-				requiredTests[file][lineNumber][identifier] = false;
+			char * name = reinterpret_cast<char *>(*reinterpret_cast<uintptr_t*>(p+step));
+			if (requiredTests.count(file) == 0 || requiredTests[file].count(lineNumber) == 0 || requiredTests[file][lineNumber].count(name) == 0) {
+				requiredTests[file][lineNumber][name] = false;
+				count += 1;
 			}
+			// LOG(codeCoverage, count << " " << file << ":" << lineNumber);
 		}
 		
 		// Load further required tests
+		try{
 		const auto testLines = xerus::misc::explode(xerus::misc::read_file("build/required_tests.txt"), '\n');
 		
 		for(const auto& line : testLines) {
@@ -95,6 +107,7 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 				requiredTests[file][lineNumber][unknownName] = false;
 			}
 		}
+		} catch(...) {}
 		
 		// Assing covered tests to required ones
 		for( const auto &test : *testsCovered ) {
@@ -103,11 +116,14 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);
 			const auto lineNumber = xerus::misc::from_string<size_t>(locationParts[1]);
 			for( const auto& identifier : test.second ) {
-				REQUIRE(requiredTests.count(file) > 0 && requiredTests.at(file).count(lineNumber) > 0 && (requiredTests.at(file).at(lineNumber).count(identifier) > 0 || requiredTests.at(file).at(lineNumber).count(unknownName) > 0), "Test for: " << file << ":" << lineNumber << "( " << identifier << " ) is not required???");
-				if(requiredTests.at(file).at(lineNumber).count(unknownName) > 0) {
-					requiredTests[file][lineNumber][unknownName] = true;
+				if (requiredTests.count(file) > 0 && requiredTests.at(file).count(lineNumber) > 0 && (requiredTests.at(file).at(lineNumber).count(identifier) > 0 || requiredTests.at(file).at(lineNumber).count(unknownName) > 0)) {
+					if(requiredTests.at(file).at(lineNumber).count(unknownName) > 0) {
+						requiredTests[file][lineNumber][unknownName] = true;
+					} else {
+						requiredTests[file][lineNumber][identifier] = true;
+					}
 				} else {
-					requiredTests[file][lineNumber][identifier] = true;
+					LOG(warning, "Test for: " << file << ":" << lineNumber << "( " << identifier << " ) is not required???");
 				}
 			}
 		}

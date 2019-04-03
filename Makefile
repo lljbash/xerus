@@ -241,9 +241,13 @@ test:
 	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
 	./$(TEST_NAME) all
 else
+
+MAKE_PID := $(shell echo $$PPID)
+JOB_FLAG := $(filter -j%, $(subst -j ,-j,$(shell ps T | grep "^\s*$(MAKE_PID).*$(MAKE)")))
+
 test:
 	mkdir -p build
-	make $(TEST_NAME) &> build/build_output.txt
+	make $(TEST_NAME) $(JOB_FLAG) &> build/build_output.txt
 	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
 	./$(TEST_NAME) all
 endif

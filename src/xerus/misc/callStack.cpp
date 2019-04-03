@@ -196,7 +196,7 @@ namespace xerus { namespace misc { namespace internal {
 	}
 	
 } // namespace misc
- } // namespace xerus
+} // namespace xerus
 
 #else // No fancy callstack
 	#include <execinfo.h>
