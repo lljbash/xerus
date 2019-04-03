@@ -4,8 +4,8 @@ COMPILE_THREADS = 8                       # Number of threads to use during link
 HIGH_OPTIMIZATION = TRUE                  # Activates -O3 -march=native and some others
 OTHER += -fopenmp
 
-PYTHON3_CONFIG = `python3-config --cflags`
-PYTHON3_CONFIG += `python3-config --ldflags`
+PYTHON3_CONFIG = `python3-config --cflags --ldflags`
+PYTHON2_CONFIG = `python-config --cflags --ldflags`
 
 LOGGING += -D XERUS_LOG_INFO              # Information that is not linked to any unexpected behaviour but might nevertheless be of interest.
 LOGGING += -D XERUS_LOGFILE               # Use 'error.log' file instead of cerr
