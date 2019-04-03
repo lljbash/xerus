@@ -5,6 +5,7 @@ CXX = g++
 COMPATIBILITY = -std=c++11
 
 ACTIVATE_CODE_COVERAGE = TRUE                 # Enable coverage tests
+BROCKEN_CI = TRUE			# Enable workaround for brocken CI runner
 DEBUG += -D _GLIBCXX_ASSERTIONS        # Activate GLIBCXX assertions
 
 DEBUG += -g                # Adds debug symbols
@@ -15,4 +16,4 @@ DEBUG += -g                # Adds debug symbols
 BLAS_LIBRARIES = -lopenblas -lgfortran                    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack                     # Standard Lapack + Lapacke libraries
 SUITESPARSE = -lcholmod  -lspqr
-BOOST_LIBS = -lboost_filesystem
+BOOST_LIBS = -lboost_filesystem -lboost_system
