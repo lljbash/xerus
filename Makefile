@@ -133,6 +133,55 @@ MINIMAL_DEPS = Makefile config.mk makeIncludes/general.mk makeIncludes/warnings.
 
 
 # ------------------------------------------------------------------------------------------------------
+#					Custom functions
+# ------------------------------------------------------------------------------------------------------
+
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
+check_defined = \
+	$(strip $(foreach 1,$1, \
+		$(call __check_defined,$1,$(strip $(value 2)))))
+__check_defined = \
+	$(if $(value $1),, \
+		$(error Undefined $1$(if $2, ($2))$(if $(value @), \
+				required by target `$@')))
+
+# Check that given variables are declared (they may have empty values),
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
+check_declared = \
+	$(strip $(foreach 1,$1, \
+		$(call __check_defined,$1,$(strip $(value 2)))))
+__check_declared = \
+	$(if $(filter undefined,$(origin $1)), \
+		$(error Undeclared $1$(if $2, ($2))$(if $(value @), \
+                required by target `$@' (variable may be empty but must be defined))))
+
+# Check that a variable specified through the stem is defined and has
+# a non-empty value, die with an error otherwise.
+#
+#   %: The name of the variable to test.
+#
+check-defined-%: __check_defined_FORCE
+    @:$(call check_defined, $*, target-specific)
+
+# Since pattern rules can't be listed as prerequisites of .PHONY,
+# we use the old-school and hackish FORCE workaround.
+# You could go without this, but otherwise a check can be missed
+# in case a file named like `check-defined-...` exists in the root
+# directory, e.g. left by an accidental `make -t` invocation.
+.PHONY: __check_defined_FORCE
+__check_defined_FORCE:
+
+
+# ------------------------------------------------------------------------------------------------------
 #					Make Rules
 # ------------------------------------------------------------------------------------------------------
 
@@ -149,11 +198,17 @@ warn:
 
 shared: build/libxerus_misc.so build/libxerus.so
 
-build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES)
+.PHONY: libxerus_misc_dependencies
+libxerus_misc_dependencies:
+	@:$(call check_defined, BOOST_LIBS, include and link paths)
+build/libxerus_misc.so: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_SOURCES)
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) $(BOOST_LIBS) -o build/libxerus_misc.so
 
-build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
+.PHONY: libxerus_dependencies
+libxerus_dependencies:
+	@:$(call check_defined, SUITESPARSE LAPACK_LIBRARIES BLAS_LIBRARIES, include and link paths)
+build/libxerus.so: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
@@ -162,10 +217,12 @@ python2: build/python2/xerus.so
 python3: build/python3/xerus.so
 
 build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+	@:$(call check_defined, PYTHON2_CONFIG BOOST_PYTHON2, include and link paths)
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
 
 build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+	@:$(call check_defined, PYTHON3_CONFIG BOOST_PYTHON3, include and link paths)
 	mkdir -p $(dir $@)
 	@# -fpermissive is needed because of a bug in the definition of BOOST_PYTHON_MODULE_INIT in <boost/python/module_init.h>
 	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON3_CONFIG) $(PYTHON_FLAGS) -fpermissive -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON3) -o $@
@@ -173,7 +230,7 @@ build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 
 static: build/libxerus_misc.a build/libxerus.a
 
-build/libxerus_misc.a: $(MINIMAL_DEPS) $(MISC_OBJECTS)
+build/libxerus_misc.a: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_OBJECTS)
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
@@ -181,7 +238,7 @@ else
 	ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
 endif
 
-build/libxerus.a: $(MINIMAL_DEPS) $(XERUS_OBJECTS)
+build/libxerus.a: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_OBJECTS)
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus.a $(XERUS_OBJECTS)
@@ -255,9 +312,11 @@ endif
 
 
 test_python2: build/libxerus.so build/python2/xerus.so
+	@:$(call check_defined, PYTEST2, pytest executable)
 	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
 
 test_python3: build/libxerus.so build/python3/xerus.so
+	@:$(call check_defined, PYTEST3, pytest executable)
 	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 
