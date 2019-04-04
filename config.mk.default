@@ -28,12 +28,12 @@ COMPATIBILITY = -std=c++14
 #=================================================================================================
 # Optimization
 #=================================================================================================
-# We suggest the use of one of the following optimization levels. The first uses basically no
-# optimization and is primarly intended for debugging purposes. The second (recommended) level
-# activates more or less all optimization options that conform with the ISO C++ Standard.
+# We suggest the use of one of the following optimization levels. The first uses -Og and is 
+# primarly intended for debugging purposes. The second (recommended) level activates more or 
+# less all optimization options that conform with the ISO C++ Standard.
 # The last level activates all optimazations available, including non-ISO C++ conform optimization
 # and optimazations that may result in a loss of numerical precicsion, use at your own risk.
-# LOW_OPTIMIZATION = TRUE               # Activates -O0
+# DEBUG_OPTIMIZATION = TRUE               # Activates -O0
 HIGH_OPTIMIZATION = TRUE                # Activates -O3 -march=native and some others
 # DANGEROUS_OPTIMIZATION = TRUE         # Activates everything of HIGH_OPTIMIZATION plus basically everything that is said to improve performance including several potentially unsafe optimizations
 
