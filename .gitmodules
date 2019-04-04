@@ -1,0 +1,3 @@
+[submodule "3rdParty/measurement_utils"]
+	path = 3rdParty/measurement_utils
+	url = https://trunschk@bitbucket.org/trunschk/measurement_utils.git
