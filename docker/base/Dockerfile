@@ -39,6 +39,11 @@ RUN apt-get -y install \
     python-dev \
     python-numpy
 
+# Install Python3 based environment
+RUN apt-get -y install \
+    python3-dev \
+    python3-numpy
+
 # Clean apt
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
