@@ -115,7 +115,7 @@ static misc::UnitTest tensor_rnd_add_sub("Tensor", "Random_Add_Sub", [](){
 	std::vector<size_t> dimensions;
 	std::vector<size_t> idxPow(5, 0);
 	
-	for(size_t d = 0; d < 10; ++d) {
+	for(size_t d = 0; d < 5; ++d) {
 		std::vector<size_t> opDim(dimensions);
 		opDim.insert(opDim.end(), dimensions.begin(), dimensions.end());
 		std::uniform_int_distribution<size_t> numDist (0, misc::product(dimensions));
