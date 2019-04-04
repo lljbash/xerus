@@ -36,7 +36,9 @@ endif
 # Set optimization options
 ifdef DEBUG_OPTIMIZATION
 	DEBUG += -D DEBUG_OPTIMIZATION
-	OPTIMIZE += -Og
+	ifndef USE_CLANG
+		OPTIMIZE += -Og
+	endif
 else ifdef HIGH_OPTIMIZATION
 	DEBUG += -D HIGH_OPTIMIZATION
 	OPTIMIZE += -O3				# Even more optimization, using non iso conform C++ operations
