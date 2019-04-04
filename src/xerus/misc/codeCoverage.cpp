@@ -76,7 +76,7 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 		auto step = sizeof(uintptr_t);
 		size_t count = 0;
 		for (auto p = range.first; p < range.second; p += 2*step) {
-			char * loc = reinterpret_cast<char *>(*reinterpret_cast<uintptr_t*>(p));
+			char * loc = *reinterpret_cast<char **>(*reinterpret_cast<uintptr_t*>(p));
 			const auto locationParts = misc::explode(loc, ':');
 			if (locationParts.size() != 2) {
 				LOG(warning, "i don't understand the required test location: '" << loc << "'");
@@ -84,7 +84,7 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 			}
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);
 			const auto lineNumber = xerus::misc::from_string<size_t>(locationParts[1]);
-			char * name = reinterpret_cast<char *>(*reinterpret_cast<uintptr_t*>(p+step));
+			char * name = *reinterpret_cast<char **>(*reinterpret_cast<uintptr_t*>(p+step));
 			if (requiredTests.count(file) == 0 || requiredTests[file].count(lineNumber) == 0 || requiredTests[file][lineNumber].count(name) == 0) {
 				requiredTests[file][lineNumber][name] = false;
 				count += 1;

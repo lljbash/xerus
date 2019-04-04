@@ -52,7 +52,7 @@
 			".quad %c0" "\n" \
 			".quad %c1" "\n" \
 			".popsection" "\n" \
-			: : "i"(xerusCCLocalFunctionLocation), "i"(xerusCCLocalFunctionName) \
+			: : "i"(&xerusCCLocalFunctionLocation), "i"(&xerusCCLocalFunctionName) \
 		); \
 		xerus::misc::CodeCoverage::covered(xerusCCLocalFunctionLocation, xerusCCLocalFunctionName); \
 		\
