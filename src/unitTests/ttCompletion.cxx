@@ -37,7 +37,7 @@ static misc::UnitTest alg_adf_inverseidx("Algorithm", "adf_inverse_index_ratios"
 	std::uniform_real_distribution<value_t> distF(-1.0, 1.0);
 	SinglePointMeasurementSet measurements;
 	
-	REQUIRE(D*N*CS*R*R < misc::pow(N, D), "CS too large");
+	MTEST(D*N*CS*R*R < misc::pow(N, D), "CS too large");
 
 	for(size_t d = 0; d < D; ++d) {
 		for(size_t n = 0; n < N; ++n) {
