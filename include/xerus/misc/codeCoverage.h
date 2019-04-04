@@ -68,8 +68,6 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 	extern std::map<std::string, std::unordered_set<std::string>>* testsCovered;
 	extern std::map<std::string, std::unordered_set<std::string>>* testsRequiredInit;
 	
-	void register_test(const std::string& _location, const std::string& _identifier);
-	
 	void covered(const std::string& _location, const std::string& _identifier);
 	
 	void print_code_coverage();
