@@ -1,8 +1,9 @@
 import numpy as np
 import xerus as xe
+from functools import partial
 
-from basis import HermitePolynomials
-from samplers import Uniform, CMDensity, CMSampler, CMWeights, CartesianProductSampler, test_CMSamples, test_CMWeights, approx_quantiles, constant, gaussian
+from basis import HermitePolynomials, Generic, scipy_integral, gramian
+from samplers import CMDensity, CMSampler, CMWeights, CartesianProductSampler, test_CMSamples, test_CMWeights, approx_quantiles, gaussian, constant
 from measures import BasisMeasure, MeasurementList, IdentityMeasure
 
 # the function to approximate
@@ -21,10 +22,21 @@ def rejection_sampler(density, domain):
 	return RejectionSampler(sampler_1d.domain, density, sampler_1d)
 
 
-density_1d = gaussian(0, 1)  # the base density for the 1-dimensional sampler
+density_1d = gaussian(0,1)
 density = lambda xs: np.prod(density_1d(xs), axis=1)
 
-basis = HermitePolynomials(6, mean=0, variance=1)
+
+
+
+def CONST(v): return constant(v)
+def COS(k): return lambda x: np.cos(np.pi*(k+1)*x)
+def SIN(k): return lambda x: np.sin(np.pi*(k+1)*x)
+functions = [CONST(1)] + [COS(k) for k in range(3)] + [SIN(k) for k in range(3)]
+# functions = [CONST(1)] + [SIN(k) for k in range(6)]
+coefficients = np.eye(len(functions))
+dom = (-np.inf,np.inf)
+integ = partial(scipy_integral, density=density_1d, limit=50)
+basis = Generic(functions, coefficients, dom).orthonormalize(integ)
 cm_density = CMDensity(basis, density_1d, check=False)
 q = approx_quantiles(cm_density, 1e-4)
 dom = (-q,q)

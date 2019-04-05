@@ -1,6 +1,5 @@
 import numpy as np
 import xerus as xe
-from scipy.optimize import bisect
 
 from basis import HermitePolynomials, Generic
 from samplers import CMDensity, CMSampler, CMWeights, CartesianProductSampler, test_CMSamples, test_CMWeights, approx_quantiles, gaussian
