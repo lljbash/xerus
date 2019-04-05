@@ -52,7 +52,7 @@
 			".quad %c0" "\n" \
 			".quad %c1" "\n" \
 			".popsection" "\n" \
-			: : "i"(xerusCCLocalFunctionLocation), "i"(xerusCCLocalFunctionName) \
+			: : "i"(&xerusCCLocalFunctionLocation), "i"(&xerusCCLocalFunctionName) \
 		); \
 		xerus::misc::CodeCoverage::covered(xerusCCLocalFunctionLocation, xerusCCLocalFunctionName); \
 		\
@@ -67,8 +67,6 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 	
 	extern std::map<std::string, std::unordered_set<std::string>>* testsCovered;
 	extern std::map<std::string, std::unordered_set<std::string>>* testsRequiredInit;
-	
-	void register_test(const std::string& _location, const std::string& _identifier);
 	
 	void covered(const std::string& _location, const std::string& _identifier);
 	
