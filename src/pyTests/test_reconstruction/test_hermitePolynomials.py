@@ -84,4 +84,4 @@ for e, sampler_1d in enumerate([cm_sampler_1d, test_sampler_1d]):
 		error = np.sqrt(np.mean(error))
 		print("Error: {:.2e}".format(error))
 		errors[e,d-1] = error
-np.save("errors."+__file__[5:-3]+".npz", errors)
+np.save("errors."+__file__[5:-3]+".npy", errors)
