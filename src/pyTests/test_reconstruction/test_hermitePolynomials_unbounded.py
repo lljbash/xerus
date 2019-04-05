@@ -22,25 +22,13 @@ def rejection_sampler(density, domain):
 	return RejectionSampler(sampler_1d.domain, density, sampler_1d)
 
 
-def quantiles_for_variance(variance, tol):
-	basis = HermitePolynomials(6, mean=0, variance=variance)
-	density = gaussian(0, variance)  # the base density for the 1-dimensional sampler
-	cm_density = CMDensity(basis, density, check=False)  # checks is_orhtonormal(basis, density)
-	q = 5*variance
-	q = approx_quantiles(cm_density, tol, (-q,q))
-	return q
-
-
-tol = 1e-3
-variance = bisect(lambda v: quantiles_for_variance(v, tol/10)-1-tol, 1e-4, 1, xtol=tol)
-q = quantiles_for_variance(variance, tol/10)
-# assert q <= 1 and abs(q-1) < tol, q
-
-dom = (-1,1)
-basis = HermitePolynomials(6, mean=0, variance=variance)
-
-density_1d = gaussian(0, variance)  # the base density for the 1-dimensional sampler
+density_1d = gaussian(0, 1)  # the base density for the 1-dimensional sampler
 density = lambda xs: np.prod(density_1d(xs), axis=1)
+
+basis = HermitePolynomials(6, mean=0, variance=1)
+cm_density = CMDensity(basis, density_1d, check=False)
+q = approx_quantiles(cm_density, 1e-4)
+dom = (-q,q)
 
 cm_sampler_1d = CMSampler(basis, density_1d, dom)
 test_sampler_1d = rejection_sampler(density_1d, dom)
