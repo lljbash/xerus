@@ -85,8 +85,12 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 		const auto testLines = xerus::misc::explode(xerus::misc::read_file("build/required_tests.txt"), '\n');
 		
 		for(const auto& line : testLines) {
+			if (line.find("note: #pragma message: REQUIRE_TEST @")==line.npos // gcc
+				&& line.find("warning: REQUIRE_TEST @")==line.npos // clang
+			) {
+				continue;
+			}
 			const auto lineParts = xerus::misc::explode(line, '@');
-			REQUIRE(lineParts.size() == 3, "Error parsing the required tests.");
 			const auto locationParts = misc::explode(lineParts[1], ':');
 			REQUIRE(locationParts.size() == 2, "Error parsing the required tests.");
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);

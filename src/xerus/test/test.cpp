@@ -130,8 +130,6 @@ namespace xerus { namespace misc {
 
 #undef main
 int main(int argc, char* argv[]) {
-	using required_test_t = void (*)();
-	
 // 	signal(SIGINT, xerus::misc::internal::catch_signals); // users ctrl+c should actually terminate the program
 // 	signal(SIGTERM, xerus::misc::internal::catch_signals);
 // 	signal(SIGHUP, xerus::misc::internal::catch_signals);
@@ -142,19 +140,6 @@ int main(int argc, char* argv[]) {
 	
 	// Prevent swap usage
 	mlockall(MCL_CURRENT | MCL_FUTURE);
-	
-	// TODO Is this code useful?
-	// perform required_test initializations
-	// pass address of xerus::misc::internal::catch_signals as the address of main cannot be taken as by ISO c++...
-	std::pair<uintptr_t, uintptr_t> requiredTestRange = xerus::misc::get_range_of_section(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&xerus::misc::internal::catch_signals)), "required_tests");
-	for (required_test_t* p = reinterpret_cast<required_test_t*>(requiredTestRange.first); p < reinterpret_cast<required_test_t*>(requiredTestRange.second); p += 1) {
-		try {
-			(*p)();
-		} catch (...) {
-			std::cout << "Required test initialization failed. Required test listing will be wrong." << std::endl;
-			break;
-		}
-	}
 	
 	//Calculate complete time
 	std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();

@@ -297,7 +297,7 @@ ifdef BROCKEN_CI
 test:
 	mkdir -p build
 	make $(TEST_NAME)
-	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
+	@cat build/build_output.txt | grep "REQUIRE_TEST @" > build/required_tests.txt
 	./$(TEST_NAME) all
 else
 
@@ -307,7 +307,7 @@ JOB_FLAG := $(filter -j%, $(subst -j ,-j,$(shell ps T | grep "^\s*$(MAKE_PID).*$
 test:
 	mkdir -p build
 	make $(TEST_NAME) $(JOB_FLAG) &> build/build_output.txt || cat build/build_output.txt
-	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
+	@cat build/build_output.txt | grep "REQUIRE_TEST @" > build/required_tests.txt
 	./$(TEST_NAME) all
 endif
 else
