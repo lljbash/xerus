@@ -476,8 +476,6 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
             initialResiduum = optResidual; /* TODO: inefficient */
 
             for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
-                double optResidual, testResidual;
-                std::vector<double> setResiduals;
                 std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
                 residuals.push_back(optResidual);
                 prevRanks.push_back(x.ranks());
