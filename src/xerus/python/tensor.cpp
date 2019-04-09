@@ -1,6 +1,18 @@
 #include "misc.h"
 
 
+std::vector<sizt_t> strides_from_dimensions_and_item_size(const std::vector<size_t>& _dimensions, const size_t _item_size) {
+    const size_t ndim = _dimensions.size();
+    std::vector<size_t> strides(ndim, 0);
+    strides[ndim-1] = _item_size
+    for (size_t i=0; i<ndim-1; ++i) {
+        size_t rev_i = ndim-1-i;
+        strides[rev_i-1] = a.shape[rev_i] * strides[rev_i]
+    }
+    return strides;
+}
+
+
 void expose_tensor(module& m) {
     enum_<Tensor::Representation>(m, "Representation", "Possible representations of Tensor objects.")
         .value("Dense", Tensor::Representation::Dense)
@@ -11,7 +23,17 @@ void expose_tensor(module& m) {
         .value("None", Tensor::Initialisation::None)
     ;
 
-    class_<Tensor>(m, "Tensor", "a non-decomposed Tensor in either sparse or dense representation")
+    class_<Tensor>(m, "Tensor", "a non-decomposed Tensor in either sparse or dense representation", buffer_protocol())
+    .def_buffer([](Tensor& t) -> buffer_info {
+        return buffer_info(
+            t.data(),                              /* Pointer to buffer */
+            sizeof(value_t),                       /* Size of one scalar */
+            format_descriptor<value_t>::format(),  /* Python struct-style format descriptor */
+            t.order(),                             /* Number of dimensions */
+            t.dimensions,                          /* Buffer dimensions */
+            strides_from_dimensions_and_item_size(t.dimensions, sizeof(value_t))  /* Strides (in bytes) for each index */
+        );
+    })
     .def(init<>(), "constructs an empty Tensor")
     .def(init<Tensor::DimensionTuple, Tensor::Representation, Tensor::Initialisation>(),
         "constructs a Tensor with the given dimensions",
@@ -21,7 +43,7 @@ void expose_tensor(module& m) {
     )
     .def(init<const TensorNetwork&>())
     .def(init<const Tensor &>())
-    .def(init<const Tensor::DimensionTuple&, const std::function<value_t(std::vector<size_t>)>>())
+    /* .def(init<const Tensor::DimensionTuple&, const std::function<value_t(std::vector<size_t>)>>()) */
     .def_static("from_function", +[](const Tensor::DimensionTuple& _dim, const std::function<value_t(std::vector<size_t>)> _f){
         LOG(warning, "Deprecation warning: `from_function` is deprecated and will be removed in Xerus v5.0.0. Use the `Tensor` constructor instead.");
         return Tensor(_dim, _f);
