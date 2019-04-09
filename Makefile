@@ -345,7 +345,7 @@ clean:
 	make -C doc clean
 
 version:
-	@echo $(VERSION)
+	@echo $(XERUS_MAJOR_V).$(XERUS_MINOR_V).$(XERUS_REVISION_V)
 
 
 
