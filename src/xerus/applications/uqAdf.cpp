@@ -29,7 +29,16 @@
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/circular_buffer.hpp>
+#pragma GCC diagnostic pop
 
 #ifdef _OPENMP
     #include <omp.h>
