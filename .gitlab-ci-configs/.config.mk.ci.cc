@@ -1,8 +1,10 @@
 #=================================================================================================
 # Compiler Options
 #=================================================================================================
-CXX = g++
-COMPATIBILITY = -std=c++11
+CXX = clang++
+COMPATIBILITY = -std=c++14
+
+DEBUG_OPTIMIZATION = TRUE
 
 ACTIVATE_CODE_COVERAGE = TRUE                 # Enable coverage tests
 BROCKEN_CI = TRUE			# Enable workaround for brocken CI runner

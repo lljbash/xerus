@@ -34,9 +34,11 @@ ifdef USE_LTO
 endif
 
 # Set optimization options
-ifdef LOW_OPTIMIZATION
-	DEBUG += -D LOW_OPTIMIZATION
-	OPTIMIZE += -O0
+ifdef DEBUG_OPTIMIZATION
+	DEBUG += -D DEBUG_OPTIMIZATION
+	ifndef USE_CLANG
+		OPTIMIZE += -Og
+	endif
 else ifdef HIGH_OPTIMIZATION
 	DEBUG += -D HIGH_OPTIMIZATION
 	OPTIMIZE += -O3				# Even more optimization, using non iso conform C++ operations

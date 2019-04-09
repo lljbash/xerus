@@ -12,7 +12,7 @@ stages:
 
 job_build_homepage:
   stage: build_homepage
-  script: "cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; make -C doc doc && scp -r doc/html xerusweb:libxerus.org-443"
+  script: "cp .gitlab-ci-configs/.config.mk.ci.cc config.mk; make -C doc doc && scp -r doc/html xerusweb:libxerus.org-443"
   when: always
   only: 
     - master
@@ -35,7 +35,7 @@ job_test_gcc_nocheck:
 
 job_code_coverage:
   stage: code_coverage
-  script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.gcc config.mk; mkdir -p build; make test &> build/build_output.txt; tail -n 500 build/build_output.txt"
+  script: "g++ --version; cp .gitlab-ci-configs/.config.mk.ci.cc config.mk; mkdir -p build; make test &> build/build_output.txt || { tail -n 500 build/build_output.txt && readelf -S XerusTest && objdump -s -j .cc_loc XerusTest && false; }; tail -n 500 build/build_output.txt"
   when: always
   artifacts:
     expire_in: 3h
