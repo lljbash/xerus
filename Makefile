@@ -162,7 +162,7 @@ check_declared = \
 __check_declared = \
 	$(if $(filter undefined,$(origin $1)), \
 		$(error Undeclared $1$(if $2, ($2))$(if $(value @), \
-                required by target `$@' (variable may be empty but must be defined))))
+                required by target '$@' (variable may be empty but must be defined))))
 
 # Check that a variable specified through the stem is defined and has
 # a non-empty value, die with an error otherwise.
