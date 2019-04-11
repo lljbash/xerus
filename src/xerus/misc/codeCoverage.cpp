@@ -46,15 +46,6 @@
 namespace xerus { namespace misc { namespace CodeCoverage {
 	
 	std::map<std::string, std::unordered_set<std::string>>* testsCovered;
-	std::map<std::string, std::unordered_set<std::string>>* testsRequiredInit;
-	
-	
-	void register_test(const std::string& _location, const std::string& _identifier) {
-		// Initialization order is undefined, therefore the first one has to initialize.
-		if(!testsRequiredInit) { testsRequiredInit = new std::map<std::string, std::unordered_set<std::string>>; }
-		
-		(*testsRequiredInit)[_location].insert(_identifier);
-	}
 	
 	void covered(const std::string& _location, const std::string& _identifier) {
 		// Initialization order is undefined, therefore the first covered test has to initialize.
@@ -74,7 +65,7 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 		// Load required tests from .cc_loc section
 		auto range = get_range_of_section(reinterpret_cast<void*>(&print_code_coverage) /* ie inside this executable */, ".cc_loc");
 		auto step = sizeof(uintptr_t);
-		size_t count = 0;
+// 		size_t count = 0;
 		for (auto p = range.first; p < range.second; p += 2*step) {
 			char * loc = *reinterpret_cast<char **>(*reinterpret_cast<uintptr_t*>(p));
 			const auto locationParts = misc::explode(loc, ':');
@@ -85,10 +76,7 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);
 			const auto lineNumber = xerus::misc::from_string<size_t>(locationParts[1]);
 			char * name = *reinterpret_cast<char **>(*reinterpret_cast<uintptr_t*>(p+step));
-			if (requiredTests.count(file) == 0 || requiredTests[file].count(lineNumber) == 0 || requiredTests[file][lineNumber].count(name) == 0) {
-				requiredTests[file][lineNumber][name] = false;
-				count += 1;
-			}
+			requiredTests[file][lineNumber][name] = false;
 			// LOG(codeCoverage, count << " " << file << ":" << lineNumber);
 		}
 		
@@ -97,8 +85,12 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 		const auto testLines = xerus::misc::explode(xerus::misc::read_file("build/required_tests.txt"), '\n');
 		
 		for(const auto& line : testLines) {
+			if (line.find("note: #pragma message: REQUIRE_TEST @")==line.npos // gcc
+				&& line.find("warning: REQUIRE_TEST @")==line.npos // clang
+			) {
+				continue;
+			}
 			const auto lineParts = xerus::misc::explode(line, '@');
-			REQUIRE(lineParts.size() == 3, "Error parsing the required tests.");
 			const auto locationParts = misc::explode(lineParts[1], ':');
 			REQUIRE(locationParts.size() == 2, "Error parsing the required tests.");
 			const auto file = xerus::misc::normalize_pathname(locationParts[0]);

@@ -29,7 +29,16 @@
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/circular_buffer.hpp>
+#pragma GCC diagnostic pop
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -43,6 +52,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
         const size_t N;
         const size_t d;
 
+        double initialResiduum = 0.0;
         const double targetResidual;
         const size_t maxRank = 50;
         const double minRankEps = 1e-10;
@@ -456,7 +466,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                 }
             }
 
-            LOG(uqADF, "Residual decrease from " << std::scientific << 0.0 /* TODO */ << " to " << std::scientific << residuals.back() << " in " << _iteration << " iterations.");
+            LOG(uqADF, "Residual decrease from " << std::scientific << initialResiduum << " to " << std::scientific << residuals.back() << " in " << _iteration << " iterations.");
         }
 
 
@@ -469,9 +479,12 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
                 calc_right_stack(corePosition);
             }
 
+            double optResidual, testResidual;
+            std::vector<double> setResiduals;
+            std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
+            initialResiduum = optResidual; /* TODO: inefficient */
+
             for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
-                double optResidual, testResidual;
-                std::vector<double> setResiduals;
                 std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
                 residuals.push_back(optResidual);
                 prevRanks.push_back(x.ranks());

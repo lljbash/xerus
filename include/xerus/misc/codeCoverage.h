@@ -30,13 +30,13 @@
 
 #ifdef XERUS_TEST_COVERAGE
 
-#define S1(x) #x
-#define S2(x) S1(x)
-#define LOCATION __FILE__ ":" S2(__LINE__)
-#define LOCATION_MARKED "@" LOCATION "@"
+#define XERUS_S1(x) #x
+#define XERUS_S2(x) XERUS_S1(x)
+#define XERUS_LOCATION __FILE__ ":" XERUS_S2(__LINE__)
+#define XERUS_LOCATION_MARKED "@" XERUS_LOCATION "@"
 
-#define XERUS_CC_MARK_WARNING enum [[deprecated(LOCATION_MARKED)]] EnumMarker {}; [[maybe_unused]] EnumMarker trigger;
-
+#define XERUS_DO_PRAGMA(x) _Pragma (#x)
+#define XERUS_CC_MARK(msg) XERUS_DO_PRAGMA(message ("REQUIRE_TEST @" msg "@"))
 
 /**
  * @def XERUS_REQUIRE_TEST
@@ -45,7 +45,7 @@
  */
 #define XERUS_REQUIRE_TEST \
 	do { \
-		static const char * const xerusCCLocalFunctionLocation = LOCATION;\
+		static const char * const xerusCCLocalFunctionLocation = XERUS_LOCATION;\
 		static const char * const xerusCCLocalFunctionName = __PRETTY_FUNCTION__;\
 		__asm__( \
 			".pushsection .cc_loc, \"a\", @progbits" "\n" \
@@ -56,7 +56,7 @@
 		); \
 		xerus::misc::CodeCoverage::covered(xerusCCLocalFunctionLocation, xerusCCLocalFunctionName); \
 		\
-		XERUS_CC_MARK_WARNING \
+		XERUS_CC_MARK(XERUS_LOCATION) \
 	} while(false)
 
 #else
@@ -67,8 +67,6 @@ namespace xerus { namespace misc { namespace CodeCoverage {
 	
 	extern std::map<std::string, std::unordered_set<std::string>>* testsCovered;
 	extern std::map<std::string, std::unordered_set<std::string>>* testsRequiredInit;
-	
-	void register_test(const std::string& _location, const std::string& _identifier);
 	
 	void covered(const std::string& _location, const std::string& _identifier);
 	

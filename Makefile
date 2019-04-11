@@ -5,14 +5,15 @@
 # ------------------------------------------------------------------------------------------------------
 help:
 	@printf "Possible make targets are:\n \
-	\t\tshared \t\t -- Build xerus as a shared library.\n \
-	\t\tstatic \t\t -- Build xerus as a static library.\n \
-	\t\tpython2 \t\t -- Build the xerus python2 wrappers.\n \
-	\t\tpython3 \t\t -- Build the xerus python3 wrappers.\n \
-	\t\tdoc \t\t -- Build the html documentation for the xerus library.\n \
+	\t\tversion \t -- Print the version of xerus.\n \
+	\t\tshared  \t -- Build xerus as a shared library.\n \
+	\t\tstatic  \t -- Build xerus as a static library.\n \
+	\t\tpython2 \t -- Build the xerus python2 wrappers.\n \
+	\t\tpython3 \t -- Build the xerus python3 wrappers.\n \
+	\t\tdoc     \t -- Build the html documentation for the xerus library.\n \
 	\t\tinstall \t -- Install the shared library and header files (may require root).\n \
-	\t\ttest \t\t -- Build and run the xerus unit tests.\n \
-	\t\tclean \t\t -- Remove all object, library and executable files.\n"
+	\t\ttest    \t -- Build and run the xerus unit tests.\n \
+	\t\tclean   \t -- Remove all object, library and executable files.\n"
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -282,8 +283,7 @@ install:
 	@printf "Cannot install xerus: INSTALL_LIB_PATH not set.  Please set the path in config file.\n"
 endif
 
-
-$(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
+$(TEST_NAME): libxerus_misc_dependencies libxerus_dependencies $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
 	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(BOOST_LIBS) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
 build/print_boost_version: src/print_boost_version.cpp
@@ -297,7 +297,7 @@ ifdef BROCKEN_CI
 test:
 	mkdir -p build
 	make $(TEST_NAME)
-	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
+	@cat build/build_output.txt | grep "REQUIRE_TEST @" > build/required_tests.txt
 	./$(TEST_NAME) all
 else
 
@@ -307,7 +307,7 @@ JOB_FLAG := $(filter -j%, $(subst -j ,-j,$(shell ps T | grep "^\s*$(MAKE_PID).*$
 test:
 	mkdir -p build
 	make $(TEST_NAME) $(JOB_FLAG) &> build/build_output.txt || cat build/build_output.txt
-	@cat build/build_output.txt | grep "‘EnumMarker’ is deprecated" > build/required_tests.txt
+	@cat build/build_output.txt | grep "REQUIRE_TEST @" > build/required_tests.txt
 	./$(TEST_NAME) all
 endif
 else
@@ -316,13 +316,16 @@ test:  $(TEST_NAME)
 endif
 
 
-
-test_python2: build/libxerus.so build/python2/xerus.so
+.PHONY: test_python2_dependencies
+test_python2_dependencies:
 	@:$(call check_defined, PYTEST2, pytest executable)
+test_python2: test_python2_dependencies build/libxerus.so build/python2/xerus.so
 	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
 
-test_python3: build/libxerus.so build/python3/xerus.so
+.PHONY: test_python3_dependencies
+test_python3_dependencies:
 	@:$(call check_defined, PYTEST3, pytest executable)
+test_python3: test_python3_dependencies build/libxerus.so build/python3/xerus.so
 	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 
@@ -342,7 +345,7 @@ clean:
 	make -C doc clean
 
 version:
-	@echo $(VERSION)
+	@echo $(XERUS_MAJOR_V).$(XERUS_MINOR_V).$(XERUS_REVISION_V)
 
 
 
