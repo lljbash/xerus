@@ -27,6 +27,42 @@ E.g. to install all dependencies on a fedora system execute
 dnf install gcc-c++ openblas-devel suitesparse-devel lapack-devel boost-devel binutils-devel
 ~~~
 
+Or to install all dependencies for Ubuntu (tested for 18.04) execute:
+~~~ bash
+apt-get update
+apt install make g++ libboost-all-dev binutils-dev libsuitesparse-dev libz-dev libiberty-dev libopenblas-dev liblapack-dev liblapacke-dev gfortran
+~~~
+
+To build the optional ARPACK extension, you need to install ARPACK and the c++ headers by hand. First clone the git project to an appropriate place, enter the project directory, configure the sources and make the library:
+~~~ bash
+git clone https://github.com/opencollab/arpack-ng.git
+cd arpack-ng
+apt-get install autoconf
+sh bootstrap
+./configure F77=gfortran --enable-icb
+make
+make check
+~~~
+You can add your own installation path with --prefix=<installation-path> for the configure command. 
+Unfortunately, the C wrapper is broken. You need to modify the file_exists arpack.hpp:
+~~~ bash
+cd ICB/
+vi arpack.hpp
+~~~
+In arpack.hpp comment out all 4 instances of the function neupd.
+
+After that, to install the packages type:
+~~~ bash
+make install
+~~~
+
+Once ARPACK is installed you need to modify the xerus config file. Just remove the hashtags in front of ARPACK_LIBRARIES and the addtional flag below:
+~~~ bash
+# (optional) Uncomment if needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
+ARPACK_LIBRARIES = -larpack
+OTHER += -DARPACK_LIBRARIES
+~~~
+
 To build the python bindings you will furthermore need the python development headers, `numpy` as well as `boost-python` or 
 `boost-python3` depending on the python version you wish to use. E.g. for a fedora system and if you want to use python 2 simply execute
 ~~~ bash
