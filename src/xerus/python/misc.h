@@ -22,10 +22,25 @@
  * @brief Definition of common functions for the python bindings.
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wswitch-default"
 #include <boost/function.hpp>
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/python/call.hpp>
+#pragma GCC diagnostic pop
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"

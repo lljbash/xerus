@@ -30,7 +30,16 @@
 #include <limits>
 #include <functional>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/math/tools/polynomial.hpp>
+#pragma GCC diagnostic pop
 
 namespace xerus { namespace misc {
 	
