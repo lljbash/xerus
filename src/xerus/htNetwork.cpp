@@ -168,6 +168,7 @@ namespace xerus {
 		}
 		dimensions = _tensor.dimensions;
 		Tensor remains;
+		auto epsPerSite = numComp < 2 ? _eps : misc::hard_equal(_eps, 0.0) ? EPSILON : _eps / std::sqrt(double(2*numComp-3));
 
 
 
@@ -213,7 +214,8 @@ namespace xerus {
 
 			xerus::reshuffle(remains, remains, ithmode);
 
-			calculate_svd(newNode, singularValues, remains, remains, N, _maxRanks[pos - 1], _eps);
+
+			calculate_svd(newNode, singularValues, remains, remains, N, _maxRanks[pos - 1], epsPerSite);
 			if (isOperator){
 				xerus::reshuffle(newNode, newNode, {1,2,0});
 			} else {
@@ -247,7 +249,7 @@ namespace xerus {
 				}
 				xerus::reshuffle(remains, remains, ithmode);
 
-				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[numCompOnLvl + pos - 2], _eps); // TODO fix maxRanks
+				calculate_svd(newNode, singularValues, remains, remains, 2, _maxRanks[numCompOnLvl + pos - 2], epsPerSite); // TODO fix maxRanks
 				xerus::reshuffle(newNode, newNode, {1,2,0}); // first parent then children
 				set_component(numCompOnLvl + pos - 1, std::move(newNode));
 				newNode.reset();
@@ -727,8 +729,12 @@ namespace xerus {
 
 		canonicalize_root();
 
-		for (size_t n = numComponents - 1; n > 0; --n) {
-			round_edge(n, (n + 1) / 2 - 1, _maxRanks[n - 1], _eps, 0.0);
+		if(numComponents > 1) {
+			auto epsPerSite = misc::hard_equal(_eps, 0.0) ? EPSILON : _eps / std::sqrt(double(2*numComponents-3)); // Taken from HIERARCHICAL SINGULAR VALUE DECOMPOSITION OF TENSORS
+																																																					 // from Lars Grasedyck
+			for (size_t n = numComponents - 1; n > 0; --n) {
+				round_edge(n, (n + 1) / 2 - 1, _maxRanks[n - 1], epsPerSite, 0.0);
+			}
 		}
 
 		assume_core_position(0);

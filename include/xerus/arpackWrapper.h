@@ -56,25 +56,88 @@ namespace xerus {
 	* a seriously low level implementation of a critical part of an algorithm is required.
 	*/
 	namespace arpackWrapper {
-		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
+		/**
+		 * @brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd, executes the Lanczos method
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _A operator data as double array
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _ritzoption specifies if the smallest or largest eigenvalue is needed, values can be arpack::which::smallest_algebraic and arpack::which::largest_algebraic
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
-		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
+		/**
+		 * @brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _A operator data as double array
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev_smallest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
-		///@brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues
+		/**
+		 * @brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _A operator data as double array
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev_largest(double* const _x, const double* const _A, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
 
 
-		//TODO check if this can be simplified!!
-		///@brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd
+		/**
+		 * @brief: Solves Ax = lambda*x for x, this calls the Arpack Routine dsaupd, executes the Lanczos method
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _op operator data as a Tensor network
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _ritzoption specifies if the smallest or largest eigenvalue is needed, values can be arpack::which::smallest_algebraic and arpack::which::largest_algebraic
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, arpack::which const _ritz_option, int _info);
-		///@brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues, takes Tensor Network as Operator
+		/**
+		 * @brief: Solves Ax = lambda*x for x, for the smallest _k eigenvalues
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _op operator data as a Tensor network
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev_smallest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
-		//@brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues, takes Tensor Network as Operator
+		/**
+		 * @brief: Solves Ax = lambda*x for x, for the largest _k eigenvalues
+		 * @param _x on input can be start value for iterative scheme on output it is the eigenvector
+		 * @param _op operator data as a Tensor network
+		 * @param _ev on output contains the requested eigenvalue
+		 * @param _k number of eigenvalues wanted
+		 * @param _n dimension of the operator
+		 * @param _resid work array for the algorithm,
+		 * @param _maxiter number of maximal iterations, when reached will exit with error!
+		 * @param _eps accuracy of the eigenvalue, highly influeces the number of iterations needed
+		 * @param _info value which specifies if _x should be used as start vector or if the algorithm should be initialized randomly by the routine
+		 */
 		void solve_ev_largest_special(double* const _x, const TensorNetwork& _op, double* const _ev, const size_t _k, const size_t _n, double* const _resid, const size_t _maxiter, const double _eps, int _info);
-
-
-
-
 
 	}
 }
