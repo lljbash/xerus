@@ -47,6 +47,7 @@ namespace xerus { namespace misc {
 		}
 	}
 	
+	
 	std::set<std::string> get_files(const std::string& _path) {
 		REQUIRE(boost::filesystem::exists(_path) && boost::filesystem::is_directory(_path), "Invalid path " << _path << " (not an existing directory).");
 		std::set<std::string> files;
@@ -59,6 +60,21 @@ namespace xerus { namespace misc {
 		
 		return files;
 	}
+	
+	
+	std::set<std::string> get_directories(const std::string& _path) {
+		REQUIRE(boost::filesystem::exists(_path) && boost::filesystem::is_directory(_path), "Invalid path " << _path << " (not an existing directory).");
+		std::set<std::string> files;
+		
+		for (boost::filesystem::directory_iterator itr(_path), end; itr != end; ++itr) {
+			if(!boost::filesystem::is_directory(itr->path())) { continue;}
+			const auto file = itr->path().filename().string();
+			files.emplace(file);
+		}
+		
+		return files;
+	}
+	
 	
 	bool file_exists(const std::string& _path) {
 		return boost::filesystem::exists(_path);
