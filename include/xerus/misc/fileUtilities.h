@@ -27,6 +27,7 @@
 #include <set>
 #include <string>
 #include <fstream>
+#include <vector>
 
 // #include "standard.h"
 
@@ -44,11 +45,17 @@ namespace xerus { namespace misc {
 	///@brief Checks whether a file at the given @a _path exists.
 	bool file_exists(const std::string& _path);
 	
+	///@brief Checks whether a directory at the given @a _path exists.
+	bool directory_exists(const std::string& _path);
+	
 	///@brief Checks whether a file at the given @a _path is empty.
 	bool file_is_empty(const std::string& _path);
 	
 	///@brief Reads the complete content of the file at the given @a _path into a string.
 	std::string read_file(const std::string& _path);
+	
+	///@brief Reads all lines of the file at the given @a _path into a vector of strings.
+	std::vector<std::string> read_file_lines(const std::string& _path);
 	
 	
 	/// @brief Resolves 'folder/..' occurences in pathnames.

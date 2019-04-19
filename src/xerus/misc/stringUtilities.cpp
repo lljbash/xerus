@@ -44,14 +44,22 @@ namespace xerus {
 		
 		std::vector<std::string> explode(const std::string& _string, const char _delim) {
 			std::vector<std::string> result;
-			std::istringstream iss(_string);
+			
+			const std::string::size_type length = _string.length();
+			std::string::size_type pos, lastPos = 0;
 
-			std::string token;
-			while(std::getline(iss, token, _delim)) {
-				result.push_back(std::move(token));
+			while(lastPos < length + 1) {
+				pos = _string.find(_delim, lastPos);
+				if(pos == std::string::npos) { pos = length; }
+
+				if(pos != lastPos) {
+					result.emplace_back(_string, lastPos, pos-lastPos);
+				}
+
+				lastPos = pos + 1;
 			}
-
-			return result;
+			
+			return result; 
 		}
 		
 

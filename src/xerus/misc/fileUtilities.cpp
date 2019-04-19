@@ -77,6 +77,12 @@ namespace xerus { namespace misc {
 	
 	
 	bool file_exists(const std::string& _path) {
+		REQUIRE(!boost::filesystem::exists(_path) || boost::filesystem::is_regular_file(_path), "Path '" << _path << "' exists but is not a regular file.");
+		return boost::filesystem::exists(_path);
+	}
+	
+	bool directory_exists(const std::string& _path) {
+		REQUIRE(!boost::filesystem::exists(_path) || boost::filesystem::is_directory(_path), "Path '" << _path << "' exists but is not a directory.");
 		return boost::filesystem::exists(_path);
 	}
 	
@@ -88,7 +94,7 @@ namespace xerus { namespace misc {
 	
 
 	std::string read_file(const std::string& _path) {
-		REQUIRE(boost::filesystem::exists(_path), "File " << _path << " does not exist.");
+		REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
 		std::ifstream fileStream(_path, std::ifstream::in);
 		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
 		
@@ -98,6 +104,22 @@ namespace xerus { namespace misc {
 		fileStream.seekg(0, std::ios::beg);
 		fileStream.read(&contents[0], std::streamsize(contents.size()));
 		return contents;
+	}
+	
+	
+	std::vector<std::string> read_file_lines(const std::string& _path) {
+		REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
+		std::ifstream fileStream(_path, std::ifstream::in);
+		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
+		
+		std::vector<std::string> lines(1);
+		
+		while(getline(fileStream, lines.back())) {
+			lines.emplace_back();
+		}
+		lines.pop_back();
+		
+		return lines;
 	}
 	
 	
