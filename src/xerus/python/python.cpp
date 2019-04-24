@@ -10,15 +10,15 @@ PYBIND11_MODULE(xerus, m) {
     m.attr("VERSION_REVISION") = VERSION_REVISION;
     m.attr("VERSION_COMMIT") = VERSION_COMMIT;
 
-    /* expose_indexedTensors(); */
-//    expose_factorizations(m);
+    /* expose_indexedTensors(m); */
+    /* expose_factorizations(m); */
     expose_tensor(m);
     expose_tensorNetwork(m);
     expose_ttnetwork(m);
     expose_htnetwork(m);
 
-    /* expose_leastSquaresAlgorithms(); */
-    /* expose_recoveryAlgorithms(); */
+    /* expose_leastSquaresAlgorithms(m); */
+    /* expose_recoveryAlgorithms(m); */
 
-    /* expose_misc(); */
+    expose_misc(m);
 }
