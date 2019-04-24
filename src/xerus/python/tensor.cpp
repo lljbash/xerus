@@ -1,13 +1,15 @@
 #include "misc.h"
 
 
-std::vector<sizt_t> strides_from_dimensions_and_item_size(const std::vector<size_t>& _dimensions, const size_t _item_size) {
+std::vector<size_t> strides_from_dimensions_and_item_size(const std::vector<size_t>& _dimensions, const size_t _item_size) {
     const size_t ndim = _dimensions.size();
     std::vector<size_t> strides(ndim, 0);
-    strides[ndim-1] = _item_size
-    for (size_t i=0; i<ndim-1; ++i) {
-        size_t rev_i = ndim-1-i;
-        strides[rev_i-1] = a.shape[rev_i] * strides[rev_i]
+    if (ndim > 0) {
+        strides[ndim-1] = _item_size;
+        for (size_t i=0; i<ndim-1; ++i) {
+            size_t rev_i = ndim-1-i;
+            strides[rev_i-1] = _dimensions[rev_i] * strides[rev_i];
+        }
     }
     return strides;
 }
@@ -26,10 +28,10 @@ void expose_tensor(module& m) {
     class_<Tensor>(m, "Tensor", "a non-decomposed Tensor in either sparse or dense representation", buffer_protocol())
     .def_buffer([](Tensor& t) -> buffer_info {
         return buffer_info(
-            t.data(),                              /* Pointer to buffer */
+            t.get_dense_data(),                    /* Pointer to buffer */
             sizeof(value_t),                       /* Size of one scalar */
             format_descriptor<value_t>::format(),  /* Python struct-style format descriptor */
-            t.order(),                             /* Number of dimensions */
+            t.degree(),                            /* Number of dimensions */
             t.dimensions,                          /* Buffer dimensions */
             strides_from_dimensions_and_item_size(t.dimensions, sizeof(value_t))  /* Strides (in bytes) for each index */
         );
