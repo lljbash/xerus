@@ -118,6 +118,7 @@ arg("dim")
         parametersDocstr "dim : list or tuple of int",
 arg("dim")
     )
+    //TODO: overload_cast
     .def_static("dirac", static_cast<Tensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&Tensor::dirac),
         "Construct a Tensor with a single entry equals one and all other zero."
         parametersDocstr
@@ -126,6 +127,7 @@ arg("dim")
         "    position of the 1 entry",
         arg("dim"), arg("pos")
     )
+    //TODO: overload_cast
     .def_static("dirac", static_cast<Tensor (*)(Tensor::DimensionTuple, const size_t)>(&Tensor::dirac))
     .def("has_factor", &Tensor::has_factor)
     .def("is_dense", &Tensor::is_dense)
