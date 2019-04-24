@@ -20,7 +20,7 @@ void expose_ttnetwork(module& m) {
             +[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
                 return xerus::TTTensor::random(_dim, _rank);
             })
-        .def("ones", &TTTensor::ones)
+        .def_static("ones", &TTTensor::ones)
         .def_static("kronecker", &TTTensor::kronecker)
         /* .def_static("dirac", &TTTensor::dirac) */
         .def_static("dirac", static_cast<TTTensor (*)(Tensor::DimensionTuple, const Tensor::MultiIndex&)>(&TTTensor::dirac))
