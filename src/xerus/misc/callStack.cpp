@@ -54,11 +54,11 @@ namespace xerus { namespace misc { namespace internal {
 	struct bfdResolver {
 		/// @brief relevant information belonging to a single bfd
 		struct storedBfd {
-			typedef bfd_boolean(deleter_t)(bfd*);
-			std::unique_ptr<bfd, deleter_t*> abfd;
+			using deleter_t = bfd_boolean (*)(bfd*);
+			std::unique_ptr<bfd, deleter_t> abfd;
 			std::unique_ptr<asymbol*[]> symbols;
 			intptr_t offset;
-			storedBfd(bfd *_abfd, deleter_t *_del) : abfd(_abfd, _del) {}
+			storedBfd(bfd *_abfd, deleter_t _del) : abfd(_abfd, _del) {}
 		};
 		static std::map<void *, storedBfd> bfds;
 		static bool bfd_initialized;
@@ -196,7 +196,7 @@ namespace xerus { namespace misc { namespace internal {
 	}
 	
 } // namespace misc
- } // namespace xerus
+} // namespace xerus
 
 #else // No fancy callstack
 	#include <execinfo.h>

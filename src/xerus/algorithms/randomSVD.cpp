@@ -31,9 +31,9 @@
 namespace xerus {
 
 TTTensor randomTTSVD(const Tensor& _x, const std::vector<size_t>& _ranks) {
-    const size_t d = _x.degree();
+    const size_t d = _x.order();
 	
-	REQUIRE(d == _ranks.size()+1, "Inconsitend degree vs number of provided ranks.");
+	REQUIRE(d == _ranks.size()+1, "Inconsitend order vs number of provided ranks.");
 	
     TTTensor u(d);
     Tensor a;

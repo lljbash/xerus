@@ -28,8 +28,17 @@
 #include <xerus/misc/basicArraySupport.h>
 #include <xerus/misc/internal.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/math/special_functions/hermite.hpp>
 #include <boost/math/special_functions/legendre.hpp>
+#pragma GCC diagnostic pop
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -85,7 +94,7 @@ namespace xerus { namespace uq {
 		// M1		
 		TTTensor m1TT = _x;
 		
-		while(m1TT.degree() > 1) {
+		while(m1TT.order() > 1) {
 			m1TT.fix_mode(1, 0);
 		}
 		Tensor m1 = Tensor(m1TT);
@@ -93,7 +102,7 @@ namespace xerus { namespace uq {
 		// M2
 		const Index l1, l2, c1, c2, r1, r2;
 		Tensor m2 = Tensor::identity({1,1});
-		for(size_t k = _x.degree()-1; k > 0; --k) {
+		for(size_t k = _x.order()-1; k > 0; --k) {
 			m2(l1, l2) = _x.get_component(k)(l1, c1, r1)*normalization_matrix(_basisType, _x.get_component(k).dimensions[1])(c1, c2)*m2(r1, r2)*_x.get_component(k)(l2, c2, r2);
 		}
 		m2(c1, c2) = _x.get_component(0)(l1, c1, r1)*m2(r1, r2)*_x.get_component(0)(l1, c2, r2);
@@ -115,7 +124,7 @@ namespace xerus { namespace uq {
 		
 		for(size_t i = 0; i < _N; ++i) {
 			Tensor p = one;
-			for(size_t k = _x.degree()-1; k > 0; --k) {
+			for(size_t k = _x.order()-1; k > 0; --k) {
 				contract(p, _x.get_component(k), p, 1);
 				contract(p, p, polynomial_basis_evaluation(_basisType == PolynomBasis::Hermite ? hermiteDist(misc::randomEngine) : legendreDist(misc::randomEngine), _basisType, _x.dimensions[k]), 1);
 			}
@@ -151,10 +160,10 @@ namespace xerus { namespace uq {
 	
 	
 	Tensor evaluate(const TTTensor& _x, const std::vector<double>& _parameters, const PolynomBasis _basisType) {
-		REQUIRE(_x.degree() > 1, "IE");
-		REQUIRE(_parameters.size()+1 == _x.degree(), "Invalid Parameters");
+		REQUIRE(_x.order() > 1, "IE");
+		REQUIRE(_parameters.size()+1 == _x.order(), "Invalid Parameters");
 		Tensor p = Tensor::ones({1});
-		for(size_t k = _x.degree()-1; k > 0; --k) {
+		for(size_t k = _x.order()-1; k > 0; --k) {
 			contract(p, _x.get_component(k), p, 1);
 			contract(p, p, polynomial_basis_evaluation(_parameters[k-1], _basisType, _x.dimensions[k]), 1);
 		}
@@ -206,7 +215,7 @@ namespace xerus { namespace uq {
 		// Set mean
 		mean.reinterpret_dimensions({1, _dimensions[0], 1});
 		initalGuess.set_component(0, mean);
-		for(size_t k = 1; k < initalGuess.degree(); ++k) {
+		for(size_t k = 1; k < initalGuess.order(); ++k) {
 			initalGuess.set_component(k, Tensor::dirac({1, _dimensions[k], 1}, 0));
 		}
 		initalGuess.assume_core_position(0);
@@ -219,10 +228,10 @@ namespace xerus { namespace uq {
 			const auto& paramVec = _parameterVectors[m];
 			const auto& sol = _solutions[m];
 			
-			REQUIRE(paramVec.size()+1 == initalGuess.degree(), "Invalid parameter vector");
+			REQUIRE(paramVec.size()+1 == initalGuess.order(), "Invalid parameter vector");
 			
 			// Find parameter number
-			size_t p = initalGuess.degree();
+			size_t p = initalGuess.order();
 			bool skip = false;
 			for(size_t i = 0; i < paramVec.size(); ++i) {
 				if(std::abs(paramVec[i]) > 0.0) {
@@ -231,20 +240,20 @@ namespace xerus { namespace uq {
 						skip = true;
 						continue; 
 					}
-					REQUIRE(p == initalGuess.degree(), "Parameters contains several non-zero entries: " << paramVec);
+					REQUIRE(p == initalGuess.order(), "Parameters contains several non-zero entries: " << paramVec);
 					REQUIRE(!misc::contains(usedParams, i), "Parameters " << i << " appears twice!" << _parameterVectors);
 					usedParams.emplace(i);
 					p = i;
 				}
 			}
 			if(skip) { continue; }
-			REQUIRE(p != initalGuess.degree(), "Parameters contains no non-zero entry: " << paramVec);
+			REQUIRE(p != initalGuess.order(), "Parameters contains no non-zero entry: " << paramVec);
 			
 			TTTensor linearTerm(_dimensions);
 			Tensor tmp = (sol - mean)/paramVec[p]; // TODO
 			tmp.reinterpret_dimensions({1, initalGuess.dimensions[0], 1});
 			linearTerm.set_component(0, tmp);
-			for(size_t k = 1; k < initalGuess.degree(); ++k) {
+			for(size_t k = 1; k < initalGuess.order(); ++k) {
 				if(k == p+1) {
 					linearTerm.set_component(k, Tensor::dirac({1, _dimensions[k], 1}, 1));
 				} else {

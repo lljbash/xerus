@@ -61,7 +61,7 @@ namespace xerus {
 			// direction: decreasing index
 			for (size_t p = _data.ALS.sites-1; p>0; --p) {
 				Tensor S, Vt;
-// 				calculate_svd(x, S, Vt, x, x.degree()-1, _data.targetRank[_data.currIndex+p-1], EPSILON); TODO
+// 				calculate_svd(x, S, Vt, x, x.order()-1, _data.targetRank[_data.currIndex+p-1], EPSILON); TODO
 				(x(i&1,j), S(j,k), Vt(k,l&1)) = SVD(x(i&2,l^2), _data.targetRank[_data.currIndex+p-1]);
 				_x[p] = std::move(Vt);
 				x(i&1,k) = x(i&1,j) * S(j,k);
@@ -103,7 +103,7 @@ namespace xerus {
 	 * modifies x
 	 */
 	void ALSVariant::ALSAlgorithmicData::prepare_x_for_als() {
-		const size_t d = x.degree();
+		const size_t d = x.order();
 		Index r1,r2,n1,cr1;
 		
 		size_t firstOptimizedIndex = 0;
@@ -215,7 +215,7 @@ namespace xerus {
 	}
 	
 	void ALSVariant::ALSAlgorithmicData::prepare_stacks() {
-		const size_t d = x.degree();
+		const size_t d = x.order();
 		Index r1,r2;
 		
 		Tensor tmpA;
@@ -482,21 +482,23 @@ namespace xerus {
 	
 	double ALSVariant::solve(const TTOperator *_Ap, TTTensor &_x, const TTTensor &_b, size_t _numHalfSweeps, value_t _convergenceEpsilon, PerformanceData &_perfData) const {
 		LOG(ALS, "ALS("<< sites <<") called");
-		#ifndef XERUS_DISABLE_RUNTIME_CHECKS
+		
+		IF_CHECK(
+			REQUIRE(&_x != &_b, "Cannot use the same TTTensor as _x and _b. Make a copy of _x and use it as _b?");
+			REQUIRE(_x.order() > 0, "The ALS implementation requires x to have order larger then 0.");
+			REQUIRE(_x.dimensions == _b.dimensions, "The ALS implementation requires x and b to have the same dimensions."); //TODO why? 
 			_x.require_correct_format();
 			_b.require_correct_format();
-			REQUIRE(_x.degree() > 0, "");
-			REQUIRE(_x.dimensions == _b.dimensions, "");
 			
 			if (_Ap != nullptr) {
 				_Ap->require_correct_format();
-				REQUIRE(_Ap->dimensions.size() == _b.dimensions.size()*2, "");
+				REQUIRE(_Ap->dimensions.size() == _b.dimensions.size()*2, "Inconsistend order of A and x/b");
 				for (size_t i=0; i<_x.dimensions.size(); ++i) {
-					REQUIRE(_Ap->dimensions[i] == _x.dimensions[i], "");
-					REQUIRE(_Ap->dimensions[i+_Ap->degree()/2] == _x.dimensions[i], "");
+					REQUIRE(_Ap->dimensions[i] == _x.dimensions[i], "Inconsistend local dimensions between of A and x/b");
+					REQUIRE(_Ap->dimensions[i+_Ap->order()/2] == _x.dimensions[i], "Inconsistend local dimensions between of A and x/b");
 				}
 			}
-		#endif
+		);
 		
 		if (_Ap != nullptr) {
 			_perfData << "ALS for ||A*x - b||^2, x.dimensions: " << _x.dimensions << '\n'

@@ -24,7 +24,12 @@
 
 #include <xerus/misc/standard.h>
 
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+
+
 namespace xerus {
+	const std::string VERSION_FULL = STR(XERUS_VERSION);
 	const int VERSION_MAJOR = XERUS_VERSION_MAJOR;
 	const int VERSION_MINOR = XERUS_VERSION_MINOR;
 	const int VERSION_REVISION = XERUS_VERSION_REVISION;

@@ -75,15 +75,15 @@ namespace xerus {
 
 
         /**
-        * @brief Constructs an zero initialized TTNetwork with the given degree and ranks all equal to one.
-        * @details Naturally for TTOperators the degree must be even.
+        * @brief Constructs an zero initialized TTNetwork with the given order and ranks all equal to one.
+        * @details Naturally for TTOperators the order must be even.
         */
-        explicit TTNetwork(const size_t _degree);
+        explicit TTNetwork(const size_t _order);
 
 
         /**
         * @brief Constructs an zero initialized TTNetwork with the given dimensions and ranks all equal to one.
-        * @details Naturally for TTOperators the degree must be even.
+        * @details Naturally for TTOperators the order must be even.
         */
         explicit TTNetwork(Tensor::DimensionTuple _dimensions);
 
@@ -256,10 +256,6 @@ namespace xerus {
 
         /*- - - - - - - - - - - - - - - - - - - - - - - - - - Internal helper functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
     protected:
-        ///@brief Constructs a TTNetwork in _out by decomposing the given Tensor _A.
-        static void construct_train_from_full(TensorNetwork& _out, const Tensor& _A, const double _eps);
-
-
         /**
          * @brief Tests whether any rank exceeds the theoretic maximal value it should have.
          * @details Does not check for the actual minimal rank for this tensor. But if any rank exceeds the theoretic maximum it is guaranteed not to be the minimal rank.
@@ -268,11 +264,11 @@ namespace xerus {
         bool exceeds_maximal_ranks() const;
 
 
-        ///@brief Return the number of components, i.e. degree()/N.
+        ///@brief Return the number of components, i.e. order()/N.
         size_t num_components() const;
 
 
-        ///@brief Return the number of ranks, i.e. 0 for degree zero and degree()/N-1 otherwise.
+        ///@brief Return the number of ranks, i.e. 0 for order zero and order()/N-1 otherwise.
         size_t num_ranks() const;
 
         /*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -435,7 +431,7 @@ namespace xerus {
 
         /**
         * @brief Move the core to the left.
-        * @details Basically calls move_core() with _position = degree()-1
+        * @details Basically calls move_core() with _position = order()-1
         */
         void canonicalize_right();
 
@@ -447,7 +443,7 @@ namespace xerus {
         template<bool B = isOperator, typename std::enable_if<B, int>::type = 0>
         void transpose() {
             const std::vector<size_t> shuffle({0,2,1,3});
-            for (size_t n = 0; n < degree()/N; ++n) {
+            for (size_t n = 0; n < order()/N; ++n) {
                 xerus::reshuffle(component(n), component(n), shuffle);
             }
         }
@@ -520,8 +516,8 @@ namespace xerus {
 
     };
 
-    typedef TTNetwork<false> TTTensor;
-    typedef TTNetwork<true> TTOperator;
+	using TTTensor = TTNetwork<false>;
+	using TTOperator = TTNetwork<true>;
 
 
     /**

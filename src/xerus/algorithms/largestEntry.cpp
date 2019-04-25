@@ -5,9 +5,9 @@
 namespace xerus {
 	template<bool isOperator>
 	size_t find_largest_entry_rank_one(const TTNetwork<isOperator> &_T) {
-		INTERNAL_CHECK(misc::sum(_T.ranks())+1 == _T.degree(), "Ie");
+		INTERNAL_CHECK(misc::sum(_T.ranks())+1 == _T.order(), "Ie");
 		
-		const size_t numComponents = _T.degree()/(isOperator?2:1);
+		const size_t numComponents = _T.order()/(isOperator?2:1);
 		size_t position = 0;
 		size_t factor = misc::product(_T.dimensions);
 		for(size_t c = 0; c < numComponents; ++c) {
@@ -30,7 +30,7 @@ namespace xerus {
 	size_t find_largest_entry(const TTNetwork<isOperator> &_T, const double _accuracy, const value_t _lowerBound) {
 		_T.require_correct_format();
 		
-		const value_t numSVDs = double(_T.degree()-1);
+		const value_t numSVDs = double(_T.order()-1);
 		const value_t gamma = (1-_accuracy)*_accuracy/2.0;
 		
 		TTNetwork<isOperator> X = _T;
@@ -40,7 +40,7 @@ namespace xerus {
 		double Xn = std::max(_T[find_largest_entry_rank_one(Y)], _lowerBound);
 		double tau = gamma*Xn*Xn/numSVDs;
 		
-		while(misc::sum(X.ranks()) >= _T.degree()) {
+		while(misc::sum(X.ranks()) >= _T.order()) {
 			X = entrywise_product(X, X);
 			X.soft_threshold(tau);
 			

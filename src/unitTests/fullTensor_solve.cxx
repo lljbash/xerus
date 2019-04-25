@@ -71,7 +71,7 @@ static misc::UnitTest tensor_solve("Tensor", "solve_Ax_equals_b", [](){
     TEST((x2[{1,1}]) < 1e-14);
 });
 
-static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalue of Matrix (direct)", [](){
+static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get_smallest_eigenvalue_of_Matrix_direct", [](){
     Index i,j,k,l,m,n,o,p;
 
     Tensor A1 = Tensor::random({4,3,4,3});
@@ -86,7 +86,7 @@ static misc::UnitTest tensor_solve_smallest_ev("Tensor", "get smallest eigenvalu
 });
 
 #ifdef ARPACK_LIBRARIES
-static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest eigenvalue of Matrix (iterative)", [](){
+static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get_smallest_eigenvalue_of_Matrix_iterative", [](){
     Index i,j,k,l,m,n,o,p;
     TensorNetwork A11,A22,A33;
     Tensor A1 = Tensor::random({4,3,4,3}) + (-1)*Tensor::identity({4,3,4,3});
@@ -95,10 +95,10 @@ static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest
     Tensor x1({4,3});
     Tensor x11({4,3});
 
-    value_t lambda1 = get_smallest_eigenpair_iterative(x1,A1, true, 10000, 1e-8);
-    value_t lambda11 = get_smallest_eigenpair_iterative(x11,A11, true, 10000, 1e-8);
+    value_t lambda1 = get_eigenpair_iterative(x1,A1, true, true, 10000, 1e-8);
+    value_t lambda11 = get_eigenpair_iterative(x11,A11, true, true, 10000, 1e-8);
     MTEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1* x1(i,j)) < 1e-8, frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)));
-    MTEST(frob_norm(A11(i,j,k,l)*x1(k,l) - lambda11* x11(i,j)) < 1e-8, frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11 * x11(i,j)));
+    MTEST(frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11* x11(i,j)) < 1e-8, frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11 * x11(i,j)));
 
     Tensor A2 = Tensor::random({2,2,2,2,2,2,2,2});
   	A22(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
@@ -106,8 +106,8 @@ static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest
 
 		Tensor x2({2,2,2,2});
 		Tensor x22({2,2,2,2});
-		value_t lambda2 = get_smallest_eigenpair_iterative(x2,A2, true, 10000, 1e-8);
-		value_t lambda22 = get_smallest_eigenpair_iterative(x22,A22, true, 10000, 1e-8);
+		value_t lambda2 = get_eigenpair_iterative(x2,A2, true, true, 10000, 1e-8);
+		value_t lambda22 = get_eigenpair_iterative(x22,A22, true, true, 10000, 1e-8);
     MTEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 1e-8, frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)));
     MTEST(frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)) < 1e-8, frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)));
 
@@ -117,14 +117,51 @@ static misc::UnitTest tensor_solve_smallest_ev_iterative("Tensor", "get smallest
 
     Tensor x3 = Tensor::random({2,2,2,2});
     Tensor x33 = Tensor::random({2,2,2,2});
-    value_t lambda3 = get_smallest_eigenpair_iterative(x3,A3, false, 10000, 1e-8);
-    value_t lambda33 = get_smallest_eigenpair_iterative(x33,A33, false, 10000, 1e-8);
+    value_t lambda3 = get_eigenpair_iterative(x3,A3, true, false, 10000, 1e-8);
+    value_t lambda33 = get_eigenpair_iterative(x33,A33, true, false, 10000, 1e-8);
+    MTEST(frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)) < 1e-8, frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)));
+    MTEST(frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)) < 1e-8, frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)));
+});
+
+static misc::UnitTest tensor_solve_largest_ev_iterative("Tensor", "get_largest_eigenvalue_of_Matrix_iterative", [](){
+    Index i,j,k,l,m,n,o,p;
+    TensorNetwork A11,A22,A33;
+    Tensor A1 = Tensor::random({4,3,4,3}) + (-1)*Tensor::identity({4,3,4,3});
+    A11(i/2,j/2) = A1(i/2, k/2) * A1(j/2, k/2);
+  	A1(i/2,j/2) = A1(i/2, k/2) * A1(j/2, k/2);
+    Tensor x1({4,3});
+    Tensor x11({4,3});
+
+    value_t lambda1 = get_eigenpair_iterative(x1,A1, false, true, 10000, 1e-10);
+    value_t lambda11 = get_eigenpair_iterative(x11,A11, false, true, 10000, 1e-10);
+    MTEST(frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1* x1(i,j)) < 1e-8, frob_norm(A1(i,j,k,l)*x1(k,l) - lambda1 * x1(i,j)));
+    MTEST(frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11* x11(i,j)) < 1e-8, frob_norm(A11(i,j,k,l)*x11(k,l) - lambda11 * x11(i,j)));
+
+    Tensor A2 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A22(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
+  	A2(i/2,j/2) = A2(i/2, k/2) * A2(j/2, k/2);
+
+		Tensor x2({2,2,2,2});
+		Tensor x22({2,2,2,2});
+		value_t lambda2 = get_eigenpair_iterative(x2,A2, false, true, 10000, 1e-10);
+		value_t lambda22 = get_eigenpair_iterative(x22,A22, false, true, 10000, 1e-10);
+    MTEST(frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)) < 1e-8, frob_norm(A2(i,j,k,l,m,n,o,p)*x2(m,n,o,p) - lambda2 * x2(i,j,k,l)));
+    MTEST(frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)) < 1e-8, frob_norm(A22(i,j,k,l,m,n,o,p)*x22(m,n,o,p) - lambda22 * x22(i,j,k,l)));
+
+    Tensor A3 = Tensor::random({2,2,2,2,2,2,2,2});
+  	A33(i/2,j/2) = A3(i/2, k/2) * A3(j/2, k/2);
+  	A3(i/2,j/2) = A3(i/2, k/2) * A3(j/2, k/2);
+
+    Tensor x3 = Tensor::random({2,2,2,2});
+    Tensor x33 = Tensor::random({2,2,2,2});
+    value_t lambda3 = get_eigenpair_iterative(x3,A3, false, false, 10000, 1e-10);
+    value_t lambda33 = get_eigenpair_iterative(x33,A33, false, false, 10000, 1e-10);
     MTEST(frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)) < 1e-8, frob_norm(A3(i,j,k,l,m,n,o,p)*x3(m,n,o,p) - lambda3 * x3(i,j,k,l)));
     MTEST(frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)) < 1e-8, frob_norm(A33(i,j,k,l,m,n,o,p)*x33(m,n,o,p) - lambda33 * x33(i,j,k,l)));
 });
 #endif
 
-static misc::UnitTest solve_vs_lsqr("Tensor", "solve vs least squares", [](){
+static misc::UnitTest solve_vs_lsqr("Tensor", "solve_vs_least_squares", [](){
 	const size_t N = 500;
 	Tensor A({N, N});
 	for (size_t i=0; i<N; ++i) {
@@ -307,7 +344,7 @@ static misc::UnitTest tensor_solve_matrix("Tensor", "solve_matrix", [](){
 	}
 });
 
-static misc::UnitTest tensor_solve_w_extra_degree("Tensor", "solve with extra degrees", [](){
+static misc::UnitTest tensor_solve_w_extra_order("Tensor", "solve_with_extra_orders", [](){
     Index ii,jj,kk,ll,mm,nn;
   	Tensor A = xerus::Tensor::random({2,2});
   	Tensor B = xerus::Tensor::random({2,2});

@@ -90,19 +90,19 @@ namespace xerus {
 	
 	Tensor::Tensor(DimensionTuple _dimensions, const std::function<value_t(const MultiIndex&)>& _f) : Tensor(std::move(_dimensions), Representation::Dense, Initialisation::None) {
 		value_t* const realData = denseData.get();
-		MultiIndex multIdx(degree(), 0);
+		MultiIndex multIdx(order(), 0);
 		size_t idx = 0;
 		while (true) {
 			realData[idx] = _f(multIdx);
 			// Increasing indices
 			idx++;
-			size_t changingIndex = degree()-1;
+			size_t changingIndex = order()-1;
 			multIdx[changingIndex]++;
 			while(multIdx[changingIndex] == dimensions[changingIndex]) {
 				multIdx[changingIndex] = 0;
 				changingIndex--;
 				// Return on overflow 
-				if(changingIndex >= degree()) { return; }
+				if(changingIndex >= order()) { return; }
 				multIdx[changingIndex]++;
 			}
 		}
@@ -130,7 +130,7 @@ namespace xerus {
 	}
 		
 	Tensor Tensor::identity(DimensionTuple _dimensions) {
-		REQUIRE(_dimensions.size()%2 == 0, "Identity tensor must have even degree, here: " << _dimensions.size());
+		REQUIRE(_dimensions.size()%2 == 0, "Identity tensor must have even order, here: " << _dimensions.size());
 		const size_t d = _dimensions.size();
 		
 		Tensor ret(std::move(_dimensions), Representation::Sparse);
@@ -160,11 +160,11 @@ namespace xerus {
 	
 	Tensor Tensor::kronecker(DimensionTuple _dimensions) {
 		Tensor ret(std::move(_dimensions), Representation::Sparse);
-		if(ret.degree() == 0) {
+		if(ret.order() == 0) {
 			ret[{}] = 1.0;
 		} else {
 			for(size_t i = 0; i < misc::min(ret.dimensions); ++i) {
-				ret[MultiIndex(ret.degree(), i)] = 1.0;
+				ret[MultiIndex(ret.order(), i)] = 1.0;
 			}
 		}
 		return ret;
@@ -205,6 +205,11 @@ namespace xerus {
 	
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Information - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	size_t Tensor::degree() const {
+		return order();
+	}
+	
+	
+	size_t Tensor::order() const {
 		return dimensions.size();
 	}
 	
@@ -626,7 +631,7 @@ namespace xerus {
 	
 	
 	void Tensor::resize_mode(const size_t _mode, const size_t _newDim, size_t _cutPos) {
-		REQUIRE(_mode < degree(), "Can't resize mode " << _mode << " as the tensor is only order " << degree());
+		REQUIRE(_mode < order(), "Can't resize mode " << _mode << " as the tensor is only order " << order());
 
 		if (dimensions[_mode] == _newDim) { return; }  // Trivial case: Nothing to do
 
@@ -636,7 +641,7 @@ namespace xerus {
 		REQUIRE(_newDim > 0, "Dimension must be larger than 0! Is " << _newDim);
 		REQUIRE(_newDim > oldDim || _cutPos >= oldDim -_newDim, "Cannot remove " << oldDim -_newDim << " slates starting (exclusivly) at position " << _cutPos);
 		
-		const size_t dimStepSize = misc::product(dimensions, _mode+1, degree());
+		const size_t dimStepSize = misc::product(dimensions, _mode+1, order());
 		const size_t oldStepSize = oldDim*dimStepSize;
 		const size_t newStepSize = _newDim*dimStepSize;
 		const size_t blockCount = size / oldStepSize; //  == misc::product(dimensions, 0, _n);
@@ -735,7 +740,7 @@ namespace xerus {
 		REQUIRE(_slatePosition < dimensions[_mode], "The given slatePosition must be smaller than the corresponding dimension. Here " << _slatePosition << " >= " << dimensions[_mode] << ", dim = " << dimensions << "=" << size << " mode " << _mode);
 		
 		const size_t stepCount = misc::product(dimensions, 0, _mode);
-		const size_t blockSize = misc::product(dimensions, _mode+1, degree());
+		const size_t blockSize = misc::product(dimensions, _mode+1, order());
 		const size_t stepSize = dimensions[_mode]*blockSize;
 		const size_t slateOffset = _slatePosition*blockSize;
 		
@@ -772,7 +777,7 @@ namespace xerus {
 	
 	
 	void Tensor::remove_slate(const size_t _mode, const size_t _pos) {
-		REQUIRE(_mode < degree(), "");
+		REQUIRE(_mode < order(), "");
 		REQUIRE(_pos < dimensions[_mode], _pos << " " << dimensions[_mode]);
 		REQUIRE(dimensions[_mode] > 1, "");
 		
@@ -790,7 +795,7 @@ namespace xerus {
 		
 		const size_t front = misc::product(dimensions, 0, _firstMode);
 		const size_t mid = misc::product(dimensions, _firstMode+1, _secondMode);
-		const size_t back = misc::product(dimensions, _secondMode+1, degree());
+		const size_t back = misc::product(dimensions, _secondMode+1, order());
 		const size_t traceDim = dimensions[_firstMode];
 		const size_t frontStepSize = traceDim*mid*traceDim*back;
 		const size_t traceStepSize = mid*traceDim*back+back;
@@ -843,11 +848,11 @@ namespace xerus {
 	void Tensor::modify_diagonal_entries(const std::function<void(value_t&)>& _f) {
 		ensure_own_data_and_apply_factor();
 		
-		if(degree() == 0) {
+		if(order() == 0) {
 			_f(at(0)); 
 		} else {
 			size_t stepSize = 1;
-			for(size_t i = 1; i < degree(); ++i) {
+			for(size_t i = 1; i < order(); ++i) {
 				stepSize *= dimensions[i];
 				stepSize += 1;
 			}
@@ -864,11 +869,11 @@ namespace xerus {
 	void Tensor::modify_diagonal_entries(const std::function<void(value_t&, const size_t)>& _f) {
 		ensure_own_data_and_apply_factor();
 		
-		if(degree() == 0) {
+		if(order() == 0) {
 			_f(at(0), 0); 
 		} else {
 			size_t stepSize = 1;
-			for(size_t i = 1; i < degree(); ++i) {
+			for(size_t i = 1; i < order(); ++i) {
 				stepSize *= dimensions[i];
 				stepSize += 1;
 			}
@@ -925,7 +930,7 @@ namespace xerus {
 	void Tensor::modify_entries(const std::function<void(value_t&, const MultiIndex&)>& _f) {
 		ensure_own_data_and_apply_factor();
 		
-		MultiIndex multIdx(degree(), 0);
+		MultiIndex multIdx(order(), 0);
 		size_t idx = 0;
 		while (true) {
 			if(is_dense()) {
@@ -944,13 +949,13 @@ namespace xerus {
 			
 			// Increase indices
 			idx++;
-			size_t changingIndex = degree()-1;
+			size_t changingIndex = order()-1;
 			multIdx[changingIndex]++;
 			while(multIdx[changingIndex] == dimensions[changingIndex]) {
 				multIdx[changingIndex] = 0;
 				changingIndex--;
 				// Return on overflow 
-				if(changingIndex >= degree()) { return; }
+				if(changingIndex >= order()) { return; }
 				multIdx[changingIndex]++;
 			}
 		}
@@ -970,9 +975,9 @@ namespace xerus {
 	
 	void Tensor::offset_add(const Tensor& _other, const std::vector<size_t>& _offsets) {
 		IF_CHECK(
-			REQUIRE(degree() == _other.degree(), "Degrees of the this and the given tensor must coincide. Here " << degree() << " vs " << _other.degree());
-			REQUIRE(degree() == _offsets.size(), "Degrees of the this tensor and number of given offsets must coincide. Here " << degree() << " vs " << _offsets.size());
-			for(size_t d = 0; d < degree(); ++d) {
+			REQUIRE(order() == _other.order(), "Degrees of the this and the given tensor must coincide. Here " << order() << " vs " << _other.order());
+			REQUIRE(order() == _offsets.size(), "Degrees of the this tensor and number of given offsets must coincide. Here " << order() << " vs " << _offsets.size());
+			for(size_t d = 0; d < order(); ++d) {
 				REQUIRE(dimensions[d] >= _offsets[d]+_other.dimensions[d], "Invalid offset/tensor dimension for dimension " << d << " because this dimension is " << dimensions[d] << " but other tensor dimension + offset is " << _offsets[d]+_other.dimensions[d]);
 			}
 		)
@@ -984,7 +989,7 @@ namespace xerus {
 		
 			// Calculate the actual offset
 			size_t offset = 0;
-			for(size_t d = 0; d < degree(); ++d) {
+			for(size_t d = 0; d < order(); ++d) {
 				offset += _offsets[d]*stepSizes[d];
 			}
 			
@@ -995,7 +1000,7 @@ namespace xerus {
 			misc::add_scaled(outPosition, _other.factor, inPosition, blockSize);
 			
 			for(size_t i = 1; i < _other.size/blockSize; ++i) {
-				size_t index = degree()-2;
+				size_t index = order()-2;
 				size_t multStep = _other.dimensions[index];
 				inPosition += blockSize;
 				outPosition += stepSizes[index];
@@ -1067,16 +1072,16 @@ namespace xerus {
 	
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	std::string Tensor::to_string() const {
-		if (degree() == 0) { return xerus::misc::to_string(operator[](0)); }
+		if (order() == 0) { return xerus::misc::to_string(operator[](0)); }
 		
 		std::string result;
 		for (size_t i = 0; i < size; ++i) {
 			result += xerus::misc::to_string(operator[](i)) + " ";
 			if ((i+1) % (size / dimensions[0]) == 0) {
 				result += '\n';
-			} else if (degree() > 1 && (i+1) % (size / dimensions[0] / dimensions[1]) == 0) {
+			} else if (order() > 1 && (i+1) % (size / dimensions[0] / dimensions[1]) == 0) {
 				result += '\t';
-			} else if (degree() > 2 && (i+1) % (size / dimensions[0] / dimensions[1] / dimensions[2]) == 0) {
+			} else if (order() > 2 && (i+1) % (size / dimensions[0] / dimensions[1] / dimensions[2]) == 0) {
 				result += "/ ";
 			}
 		}
@@ -1131,7 +1136,7 @@ namespace xerus {
 	
 	
 	size_t Tensor::multiIndex_to_position(const MultiIndex& _multiIndex, const DimensionTuple& _dimensions) {
-		REQUIRE(_multiIndex.size() == _dimensions.size(), "MultiIndex has wrong degree. Given " << _multiIndex.size() << ",  expected " << _dimensions.size());
+		REQUIRE(_multiIndex.size() == _dimensions.size(), "MultiIndex has wrong order. Given " << _multiIndex.size() << ",  expected " << _dimensions.size());
 		
 		size_t finalIndex = 0;
 		for(size_t i = 0; i < _multiIndex.size(); ++i) {
@@ -1252,15 +1257,15 @@ namespace xerus {
 	
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - External functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 	void contract(Tensor& _result, const Tensor& _lhs, const bool _lhsTrans, const Tensor& _rhs, const bool _rhsTrans, const size_t _numModes) {
-		REQUIRE(_numModes <= _lhs.degree() && _numModes <= _rhs.degree(), "Cannot contract more indices than both tensors have. we have: " 
-			<< _lhs.degree() << " and " << _rhs.degree() << " but want to contract: " << _numModes);
+		REQUIRE(_numModes <= _lhs.order() && _numModes <= _rhs.order(), "Cannot contract more indices than both tensors have. we have: " 
+			<< _lhs.order() << " and " << _rhs.order() << " but want to contract: " << _numModes);
 		
-		const size_t lhsRemainOrder = _lhs.degree() - _numModes;
+		const size_t lhsRemainOrder = _lhs.order() - _numModes;
 		const size_t lhsRemainStart = _lhsTrans ? _numModes : 0;
 		const size_t lhsContractStart = _lhsTrans ? 0 : lhsRemainOrder;
 		const size_t lhsRemainEnd = lhsRemainStart + lhsRemainOrder;
 		
-		const size_t rhsRemainOrder = _rhs.degree() - _numModes;
+		const size_t rhsRemainOrder = _rhs.order() - _numModes;
 		const size_t rhsRemainStart = _rhsTrans ? 0 : _numModes;
 		IF_CHECK(const size_t rhsContractStart = _rhsTrans ? rhsRemainOrder : 0;)
 		const size_t rhsRemainEnd = rhsRemainStart + rhsRemainOrder;
@@ -1285,7 +1290,7 @@ namespace xerus {
 		Tensor* usedResult;
 		if( &_result == &_lhs || &_result == &_rhs
 			|| _result.representation != resultRepresentation
-			|| _result.degree() != lhsRemainOrder + rhsRemainOrder
+			|| _result.order() != lhsRemainOrder + rhsRemainOrder
 			|| _result.size != leftDim*rightDim
 			|| !std::equal(_lhs.dimensions.begin() + lhsRemainStart, _lhs.dimensions.begin() + lhsRemainEnd, _result.dimensions.begin())
 			|| !std::equal(_rhs.dimensions.begin() + rhsRemainStart, _rhs.dimensions.begin() + rhsRemainEnd, _result.dimensions.begin() + (lhsRemainEnd-lhsRemainStart))
@@ -1360,10 +1365,10 @@ namespace xerus {
 
 	
 	XERUS_force_inline std::tuple<size_t, size_t, size_t> calculate_factorization_sizes(const Tensor& _input, const size_t _splitPos) {
-		REQUIRE(_splitPos <= _input.degree(), "Split position must be in range.");
+		REQUIRE(_splitPos <= _input.order(), "Split position must be in range.");
 		
 		const size_t lhsSize = misc::product(_input.dimensions, 0, _splitPos);
-		const size_t rhsSize = misc::product(_input.dimensions, _splitPos, _input.degree());
+		const size_t rhsSize = misc::product(_input.dimensions, _splitPos, _input.order());
 		const size_t rank = std::min(lhsSize, rhsSize);
 		
 		return std::make_tuple(lhsSize, rhsSize, rank);
@@ -1374,7 +1379,7 @@ namespace xerus {
 		_rhs.factor = 1.0;
 		
 		if (_lhs.representation != _rep
-			|| _lhs.degree() != _splitPos+1
+			|| _lhs.order() != _splitPos+1
 			|| _lhs.dimensions.back() != _rank 
 			|| !std::equal(_input.dimensions.begin(), _input.dimensions.begin() + _splitPos, _lhs.dimensions.begin())) 
 		{
@@ -1385,7 +1390,7 @@ namespace xerus {
 		}
 		
 		if (_rhs.representation != _rep
-			|| _rhs.degree() != _input.degree()-_splitPos+1 
+			|| _rhs.order() != _input.order()-_splitPos+1 
 			|| _rank != _rhs.dimensions.front() 
 			|| !std::equal(_input.dimensions.begin() + _splitPos, _input.dimensions.end(), _rhs.dimensions.begin()+1)) 
 		{
@@ -1485,7 +1490,7 @@ namespace xerus {
 			_Vt *= -1;
 		}
 		
-		_U.resize_mode(_U.degree()-1, rank);
+		_U.resize_mode(_U.order()-1, rank);
 		_Vt.resize_mode(0, rank);
 
         return std::sqrt(error);
@@ -1585,11 +1590,11 @@ namespace xerus {
 	
 	void solve_least_squares(Tensor& _X, const Tensor& _A, const Tensor& _B, const size_t _extraDegree) {
 		REQUIRE(&_X != &_B && &_X != &_A, "Not supportet yet");
-		const size_t degM = _B.degree() - _extraDegree;
-		const size_t degN = _A.degree() - degM;
+		const size_t degM = _B.order() - _extraDegree;
+		const size_t degN = _A.order() - degM;
 		
 		// Make sure X has right dimensions
-		if(	_X.degree() != degN + _extraDegree
+		if(	_X.order() != degN + _extraDegree
 			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degM)
 			|| !std::equal(_X.dimensions.begin()+ degN, _X.dimensions.end(), _B.dimensions.begin() + degM))
 		{
@@ -1662,11 +1667,11 @@ namespace xerus {
 		
 		REQUIRE(&_X != &_B && &_X != &_A, "x=b and x=a is not supported yet.");
 		
-		const size_t degM = _B.degree() - _extraDegree;
-		const size_t degN = _A.degree() - degM;
+		const size_t degM = _B.order() - _extraDegree;
+		const size_t degN = _A.order() - degM;
 		
 		// Make sure X has the right dimensions
-		if(	_X.degree() != degN + _extraDegree
+		if(	_X.order() != degN + _extraDegree
 			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degM)
 			|| !std::equal(_X.dimensions.begin()+ degN, _X.dimensions.end(), _B.dimensions.begin() + degM))
 		{
@@ -1712,12 +1717,12 @@ namespace xerus {
 		_X.factor = _B.factor / _A.factor;
 	}
 	
-	double get_smallest_eigenpair(Tensor& _X, const Tensor& _A) {
+	double get_smallest_eigenpair(Tensor& _X, Tensor& _A) {
 			REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 			REQUIRE(&_X != &_A, "Not supportet yet");
-			REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
+			REQUIRE(_A.order() % 2 == 0, "The tensor A needs to be an operator, i.e. has even order");
 
-			const size_t degN = _A.degree() / 2;
+			const size_t degN = _A.order() / 2;
 
 			// Calculate multDimensions
 			const size_t m = misc::product(_A.dimensions, 0, degN);
@@ -1725,7 +1730,7 @@ namespace xerus {
 			REQUIRE(m == n, "Inconsistent dimensions.");
 
 			// Make sure X has right dimensions
-			if(	_X.degree() != degN
+			if(	_X.order() != degN
 				|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
 			{
 				Tensor::DimensionTuple newDimX;
@@ -1742,7 +1747,7 @@ namespace xerus {
 				rev.get(), // right eigenvectors
 				re.get(),  // real eigenvalues
 				im.get(),  // imaginary eigenvalues
-				_A.get_unsanitized_dense_data(),  n);
+				_A.get_dense_data(),  n);
 
 			//get eigenvalue with minimal real part
 			double ev = re[0];
@@ -1763,13 +1768,13 @@ namespace xerus {
 		}
 	
 #ifdef ARPACK_LIBRARIES
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const Tensor& _A, bool _initialize, const size_t _miter, const double _eps) {
+	value_t get_eigenpair_iterative(Tensor& _X, Tensor& _A, bool _smallest, bool _initialize, const size_t _miter, const double _eps) {
 		REQUIRE(_A.is_dense(), "for now only dense is implemented"); //TODO implement sparse
 		REQUIRE(&_X != &_A, "Not supportet yet");
-		REQUIRE(_A.degree() % 2 == 0, "The tensor A needs to be an operator, i.e. has even degree");
+		REQUIRE(_A.order() % 2 == 0, "The tensor A needs to be an operator, i.e. has even order");
 		REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
 
-		const size_t degN = _A.degree() / 2;
+		const size_t degN = _A.order() / 2;
 		int info = _initialize ? 0 : 1;
 		std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
 
@@ -1779,7 +1784,7 @@ namespace xerus {
 		XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
 
 		// Make sure X has right dimensions
-		if(	_X.degree() != degN
+		if(	_X.order() != degN
 			|| !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
 		{
 			Tensor::DimensionTuple newDimX;
@@ -1791,17 +1796,28 @@ namespace xerus {
 		std::unique_ptr<double[]> rev(new double[n]); // right eigenvectors
 		std::unique_ptr<double[]> res(new double[n]); // residual
 		if (info > 0)
-			misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
+			misc::copy(res.get(), _X.get_dense_data(), n);
 
 		// Note that A is dense here
-		arpackWrapper::solve_ev_smallest(
-			rev.get(), // right ritz vectors
-			_A.get_unsanitized_dense_data(),
-			ev.get(), 1, n,
-			res.get(),
-			_miter,
-			_eps, info
-		);
+		if (_smallest){
+			arpackWrapper::solve_ev_smallest(
+				rev.get(), // right ritz vectors
+				_A.get_dense_data(),
+				ev.get(), 1, n,
+				res.get(),
+				_miter,
+				_eps, info
+			);
+		} else {
+			arpackWrapper::solve_ev_largest(
+				rev.get(), // right ritz vectors
+				_A.get_dense_data(),
+				ev.get(), 1, n,
+				res.get(),
+				_miter,
+				_eps, info
+			);
+		}
 
 		// eigenvector of smallest eigenvalue
 		auto tmpX = _X.override_dense_data();
@@ -1810,12 +1826,12 @@ namespace xerus {
 		return ev[0];
 	}
 
-	value_t get_smallest_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _initialize, const size_t _miter, const double _eps) {
+	value_t get_eigenpair_iterative(Tensor& _X, const TensorNetwork& _A, bool _smallest, bool _initialize, const size_t _miter, const double _eps) {
 			//REQUIRE(&_X != &_A, "Not supportet yet");
 			REQUIRE(_eps > 0 && _eps < 1, "epsilon must be betweeen 0 and 1, given " << _eps);
-			REQUIRE(_A.degree() % 2 == 0, "operator degree must be positive");
+			REQUIRE(_A.order() % 2 == 0, "operator order must be positive");
 
-			const size_t degN = _A.degree() / 2;
+			const size_t degN = _A.order() / 2;
 			int info = _initialize ? 0 : 1;
 			std::unique_ptr<value_t[]> ev(new value_t[1]); // resulting eigenvalue
 			// Calculate multDimensions
@@ -1824,7 +1840,7 @@ namespace xerus {
 			XERUS_REQUIRE(m == n, "the dimensions of A do not agree, m != n,  m x n = " << m << "x" << n);
 
 			// Make sure X has right dimensions
-			if(	_X.degree() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
+			if(	_X.order() != degN || !std::equal(_X.dimensions.begin(), _X.dimensions.begin() + degN, _A.dimensions.begin() + degN))
 			{
 				Tensor::DimensionTuple newDimX;
 				newDimX.insert(newDimX.end(), _A.dimensions.begin()+degN, _A.dimensions.end());
@@ -1838,16 +1854,27 @@ namespace xerus {
 				misc::copy(res.get(), _X.get_unsanitized_dense_data(), n);
 
 			// Note that A is dense here
-			arpackWrapper::solve_ev_smallest_special(
-				rev.get(), // right ritz vectors
-				_A,
-				ev.get(), 1, n,
-				res.get(),
-				_miter,
-				_eps, info
-			);
+			if (_smallest){
+				arpackWrapper::solve_ev_smallest_special(
+					rev.get(), // right ritz vectors
+					_A,
+					ev.get(), 1, n,
+					res.get(),
+					_miter,
+					_eps, info
+				);
+			} else {
+				arpackWrapper::solve_ev_largest_special(
+					rev.get(), // right ritz vectors
+					_A,
+					ev.get(), 1, n,
+					res.get(),
+					_miter,
+					_eps, info
+				);
+			}
 
-			// eigenvector of smallest eigenvalue
+			// eigenvector of eigenvalue
 			auto tmpX = _X.override_dense_data();
 			for (size_t i = 0; i < n; ++i)
 				tmpX[i] = rev[i];

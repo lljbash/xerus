@@ -8,7 +8,8 @@ WORKDIR "/tmp/"
 # Install Suitesparse
 RUN git clone https://github.com/jluttine/suitesparse.git
 WORKDIR "/tmp/suitesparse/"
-RUN make install -j $(cat /tmp/NCORES_1) && \
+RUN git checkout v5.2.0 && \
+    make install -j $(cat /tmp/NCORES_1) && \
     mv include /usr/local/include/suitesparse && \
     mv lib/ /usr/local/lib/suitesparse
 #TODO: mal sehen, ob das funktioniet...

@@ -40,7 +40,7 @@ Tensor create_S() {
 
 
 
-TTOperator create_operator(const size_t _degree) { 
+TTOperator create_operator(const size_t _order) { 
 	const Index i, j, k, l;
 	
 	// Create matrices
@@ -51,7 +51,7 @@ TTOperator create_operator(const size_t _degree) {
 	const Tensor I = Tensor::identity({MAX_NUM_PER_SITE, MAX_NUM_PER_SITE});
 	
 	// Create empty TTOperator
-	TTOperator A(2*_degree);
+	TTOperator A(2*_order);
 	
 	Tensor comp;
 	
@@ -71,7 +71,7 @@ TTOperator create_operator(const size_t _degree) {
 		+ L(j, k) * Tensor::dirac({3, 3}, {2, 1})(i, l)
 		+ I(j, k) * Tensor::dirac({3, 3}, {2, 2})(i, l);
 	
-	for(size_t c = 1; c+1 < _degree; ++c) {
+	for(size_t c = 1; c+1 < _order; ++c) {
 		A.set_component(c, comp);
 	}
 	
@@ -81,7 +81,7 @@ TTOperator create_operator(const size_t _degree) {
 		+ M(j, k)*Tensor::dirac({3, 1}, 1)(i, l) 
 		+ S(j, k)*Tensor::dirac({3, 1}, 2)(i, l);
     
-	A.set_component(_degree-1, comp);
+	A.set_component(_order-1, comp);
 	
 	return A;
 }
@@ -132,21 +132,21 @@ double get_mean_concentration(const TTTensor& _res, const size_t _i) {
 	});
 	const Tensor ones = Tensor::ones({MAX_NUM_PER_SITE});
 	
-	for (size_t j = 0; j < _res.degree(); ++j) {
+	for (size_t j = 0; j < _res.order(); ++j) {
 		if (j == _i) {
 			result(l&0) = result(k, l&1) * weights(k);
 		} else {
 			result(l&0) = result(k, l&1) * ones(k);
 		}
 	}
-	// at this point the degree of 'result' is 0, so there is only one entry
+	// at this point the order of 'result' is 0, so there is only one entry
 	return result[{}]; 
 }
 
 void print_mean_concentrations_to_file(const std::vector<TTTensor> &_result) {
 	std::fstream out("mean.dat", std::fstream::out);
 	for (const auto& res : _result) {
-		for (size_t k = 0; k < res.degree(); ++k) {
+		for (size_t k = 0; k < res.order(); ++k) {
 			out << get_mean_concentration(res, k) << ' ';
 		}
 		out << std::endl;
@@ -166,7 +166,7 @@ int main() {
 	start.use_dense_representations();
 	start += 1e-14 * TTTensor::random(
 			start.dimensions, 
-			std::vector<size_t>(start.degree()-1, rankX-1)
+			std::vector<size_t>(start.order()-1, rankX-1)
 	);
 	const auto A = create_operator(numProteins);
 	

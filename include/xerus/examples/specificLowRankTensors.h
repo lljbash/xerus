@@ -28,10 +28,10 @@
 namespace xerus { namespace examples {
 	
 	/**
-	 * @brief Constructs a rank _n+1 TTTensor of degree @a _degree and external dimensions @a _n that has entries >0, maximal where all indices coincide.
+	 * @brief Constructs a rank _n+1 TTTensor of order @a _order and external dimensions @a _n that has entries >0, maximal where all indices coincide.
 	 * @details Constructed as a sum of nearest-neighbor terms that each have entries as 1/(std::abs(i-j)+alpha)
 	 */
-	TTTensor peaking_diagonals(size_t _degree, size_t _n, value_t _alpha = 1.0);
+	TTTensor peaking_diagonals(size_t _order, size_t _n, value_t _alpha = 1.0);
 	
 }}
 

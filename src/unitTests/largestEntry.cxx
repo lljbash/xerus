@@ -32,7 +32,7 @@ static misc::UnitTest alg_largestEntry("Algorithm", "LargestEntry", [](){
 	std::uniform_int_distribution<size_t> dimDist(1, 4);
 	std::uniform_int_distribution<size_t> rankDist(1, 5);
     
-	const size_t D = 15;
+	const size_t D = 7;
 	
 	for(size_t k = 0; k < 3; ++k) {
 		std::vector<size_t> stateDims;

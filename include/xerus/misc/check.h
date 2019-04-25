@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "codeCoverage.h"
+
 /**
  * @def XERUS_CHECK(condition, level, message)
  * @brief Checks whether @a condition is true and calls XERUS_LOG(level, message) otherwise.
@@ -45,22 +47,13 @@
  * @brief Executes @a expression only if the compilation was without XERUS_DISABLE_RUNTIME_CHECKS set.
  */
 
-#ifdef XERUS_TEST_COVERAGE
-	#include "../test/test.h"
-#else
-	#define XERUS_REQUIRE_TEST (void)0
-#endif
 
 #ifndef XERUS_DISABLE_RUNTIME_CHECKS
 	#include "namedLogger.h"
 	#include "callStack.h"
 	#include "containerOutput.h"
 
-	#ifdef XERUS_TEST_COVERAGE
-		#define XERUS_CHECK(condition, level, message) XERUS_REQUIRE_TEST; if(XERUS_IS_LOGGING(level) && !(condition)) { XERUS_LOG(level, #condition " failed msg: " << message); } else void(0)
-	#else
-		#define XERUS_CHECK(condition, level, message) if(XERUS_IS_LOGGING(level) && !(condition)) { XERUS_LOG(level, #condition " failed msg: " << message); } else void(0)
-	#endif
+	#define XERUS_CHECK(condition, level, message) XERUS_REQUIRE_TEST; if(XERUS_IS_LOGGING(level) && !(condition)) { XERUS_LOG(level, #condition " failed msg: " << message); } else void(0)
 
 	#define XERUS_REQUIRE(condition, message) XERUS_CHECK(condition, error, message)
 	
@@ -85,11 +78,11 @@
 	
 	#define XERUS_IF_NO_CHECK(expression)
 #else
-	#define XERUS_CHECK(condition, level, message) void(0)
+	#define XERUS_CHECK(condition, level, message) XERUS_REQUIRE_TEST; void(0)
 	
-	#define XERUS_REQUIRE(condition, message) void(0)
+	#define XERUS_REQUIRE(condition, message) XERUS_REQUIRE_TEST; void(0)
 	
-	#define XERUS_INTERNAL_CHECK(condition, msg) void(0)
+	#define XERUS_INTERNAL_CHECK(condition, msg) XERUS_REQUIRE_TEST; void(0)
 	
 	#define XERUS_IF_CHECK(expression)
 	

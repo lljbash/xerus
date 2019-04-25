@@ -39,7 +39,7 @@ namespace xerus {
 	 * @details In future versions this should be allowed to be float, double, or complex.
 	 * In the current version however this is fixed to double.
 	 */
-	typedef double value_t;
+	using value_t = double;
 	
 	/**
 	 * @brief The default epsilon value in xerus.

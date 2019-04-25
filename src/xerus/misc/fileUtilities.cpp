@@ -24,9 +24,19 @@
 
 #include <xerus/misc/fileUtilities.h>
 #include <xerus/misc/internal.h>
+#include <xerus/misc/stringUtilities.h>
 
 #include <fstream>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/filesystem.hpp>
+#pragma GCC diagnostic pop
 
 namespace xerus { namespace misc {
 		
@@ -36,6 +46,7 @@ namespace xerus { namespace misc {
 			boost::filesystem::create_directories(folder);
 		}
 	}
+	
 	
 	std::set<std::string> get_files(const std::string& _path) {
 		REQUIRE(boost::filesystem::exists(_path) && boost::filesystem::is_directory(_path), "Invalid path " << _path << " (not an existing directory).");
@@ -50,7 +61,28 @@ namespace xerus { namespace misc {
 		return files;
 	}
 	
+	
+	std::set<std::string> get_directories(const std::string& _path) {
+		REQUIRE(boost::filesystem::exists(_path) && boost::filesystem::is_directory(_path), "Invalid path " << _path << " (not an existing directory).");
+		std::set<std::string> files;
+		
+		for (boost::filesystem::directory_iterator itr(_path), end; itr != end; ++itr) {
+			if(!boost::filesystem::is_directory(itr->path())) { continue;}
+			const auto file = itr->path().filename().string();
+			files.emplace(file);
+		}
+		
+		return files;
+	}
+	
+	
 	bool file_exists(const std::string& _path) {
+		REQUIRE(!boost::filesystem::exists(_path) || boost::filesystem::is_regular_file(_path), "Path '" << _path << "' exists but is not a regular file.");
+		return boost::filesystem::exists(_path);
+	}
+	
+	bool directory_exists(const std::string& _path) {
+		REQUIRE(!boost::filesystem::exists(_path) || boost::filesystem::is_directory(_path), "Path '" << _path << "' exists but is not a directory.");
 		return boost::filesystem::exists(_path);
 	}
 	
@@ -62,7 +94,7 @@ namespace xerus { namespace misc {
 	
 
 	std::string read_file(const std::string& _path) {
-		REQUIRE(boost::filesystem::exists(_path), "File " << _path << " does not exist.");
+		REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
 		std::ifstream fileStream(_path, std::ifstream::in);
 		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
 		
@@ -72,6 +104,43 @@ namespace xerus { namespace misc {
 		fileStream.seekg(0, std::ios::beg);
 		fileStream.read(&contents[0], std::streamsize(contents.size()));
 		return contents;
+	}
+	
+	
+	std::vector<std::string> read_file_lines(const std::string& _path) {
+		REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
+		std::ifstream fileStream(_path, std::ifstream::in);
+		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
+		
+		std::vector<std::string> lines(1);
+		
+		while(getline(fileStream, lines.back())) {
+			lines.emplace_back();
+		}
+		lines.pop_back();
+		
+		return lines;
+	}
+	
+	
+	std::string normalize_pathname(const std::string &_name) {
+		std::vector<std::string> oldpath = explode(_name,'/');
+		std::vector<std::string *> newpath;
+		for (std::string &f : oldpath) {
+			if (f.empty()) { continue; }
+			if (f==".." && !newpath.empty() && *newpath.back() != "..") {
+				newpath.pop_back();
+			} else {
+				newpath.push_back(&f);
+			}
+		}
+		std::string ret;
+		for (std::string *f : newpath) {
+			ret += *f;
+			ret += '/';
+		}
+		if (!ret.empty()) { ret.pop_back(); }
+		return ret;
 	}
 	
 	

@@ -34,32 +34,32 @@ namespace xerus {
 	thread_local uint64 Index::idCounter = (idThreadInitCounter++)<<54;
 	
 	
-	void Index::set_span(const size_t _degree) {
+	void Index::set_span(const size_t _order) {
 		REQUIRE(!flags[Flag::FIXED] || span == 1, "Fixed indices must have span one.");
 		if(flags[Flag::INVERSE_SPAN]) {
 			REQUIRE(!flags[Flag::FIXED], "Fixed indices must not have inverse span."); 
-			REQUIRE(span <= _degree, "Index with inverse span would have negative actual span. Tensor degree: " << _degree << ", inverse span " << span);
-			span = _degree-span;
+			REQUIRE(span <= _order, "Index with inverse span would have negative actual span. Tensor order: " << _order << ", inverse span " << span);
+			span = _order-span;
 			flags.reset();
 		} else if( flags[Flag::FRACTIONAL_SPAN] ) {
 			REQUIRE(!flags[Flag::FIXED], "Fixed indices must not have fractional span.");
-			REQUIRE(_degree%span == 0, "Fractional span must divide the tensor degree. Here tensor degree = " << _degree << ", span = " << span);
-			span = _degree/span;
+			REQUIRE(_order%span == 0, "Fractional span must divide the tensor order. Here tensor order = " << _order << ", span = " << span);
+			span = _order/span;
 			flags.reset();
 		}
 	}
 	
 	
-	size_t Index::actual_span(const size_t _degree) const {
+	size_t Index::actual_span(const size_t _order) const {
 		if(flags[Flag::INVERSE_SPAN]) {
 			REQUIRE(!flags[Flag::FIXED], "Fixed indices must not have inverse span."); 
-			REQUIRE(span <= _degree, "Index with inverse span would have negative actual span. Tensor degree: " << _degree << ", inverse span " << span);
-			return _degree-span;
+			REQUIRE(span <= _order, "Index with inverse span would have negative actual span. Tensor order: " << _order << ", inverse span " << span);
+			return _order-span;
 		} 
 		if( flags[Flag::FRACTIONAL_SPAN] ) {
 			REQUIRE(!flags[Flag::FIXED], "Fixed indices must not have fractional span.");
-			REQUIRE(_degree%span == 0, "Fractional span must divide the tensor degree. Here tensor degree = " << _degree << ", span = " << span);
-			return _degree/span;
+			REQUIRE(_order%span == 0, "Fractional span must divide the tensor order. Here tensor order = " << _order << ", span = " << span);
+			return _order/span;
 		}
 		REQUIRE(!flags[Flag::FIXED] || span == 1, "Fixed indices must have span one.");
 		return span;

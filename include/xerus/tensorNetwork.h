@@ -113,7 +113,7 @@ namespace xerus {
 
             size_t size() const noexcept;
 
-            size_t degree() const noexcept;
+            size_t order() const noexcept;
 
             void erase() noexcept;
         };
@@ -121,7 +121,7 @@ namespace xerus {
     protected:
 
         /**
-         * @brief Internal indicator to prevent the creation of an degree zero node in TensorNetwork constructor.
+         * @brief Internal indicator to prevent the creation of an order zero node in TensorNetwork constructor.
          */
         enum class ZeroNode : bool { None, Add };
 
@@ -169,16 +169,16 @@ namespace xerus {
 
 
         /**
-        * @brief Constructs the trivial TensorNetwork containing a Tensor with the given degree.
+        * @brief Constructs the trivial TensorNetwork containing a Tensor with the given order.
         * @details All dimensions are set equals one and the only entry
         * of the tensor is zero.
         */
-        TensorNetwork(size_t _degree);
+        TensorNetwork(size_t _order);
 
         /**
          * @brief (Internal) Constructs an order zero TensorNetwork.
          * @details The order of an empty TN is zero.
-         * @param _nodeStatus defines whether the network will contain one degree zero node with the single
+         * @param _nodeStatus defines whether the network will contain one order zero node with the single
          * entry zero.
          */
         explicit TensorNetwork(const ZeroNode _nodeStatus);
@@ -367,12 +367,21 @@ namespace xerus {
         /*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
         /**
-        * @brief Gets the degree of the TensorNetwork.
+        * @brief [Deprecated] Gets the degree of the TensorNetwork.
         * @details The degree is defined as the number of dimensions (i.e. dimensions.size())
         * and is always equal to the number of externalLinks (i.e. externalLinks.size()).
         * @return the degree.
         */
+		XERUS_deprecated("TensorNetwork::degree() is deprecated and will be removed in a future version. Use TensorNetwork::order() instead.")
         size_t degree() const;
+		
+		/**
+        * @brief Gets the order of the TensorNetwork.
+        * @details The order is defined as the number of dimensions (i.e. dimensions.size())
+        * and is always equal to the number of externalLinks (i.e. externalLinks.size()).
+        * @return the order.
+        */
+        size_t order() const;
 
         /**
         * @brief Calculates the storage requirement of the current representation.
@@ -419,7 +428,7 @@ namespace xerus {
 
         /**
          * @brief Finds traces defined by the indices and internally links the corresponding indices. Also applys all fixed indices
-         * @details For each trace this reduces the degree of the TN by two and removes two indices from the IndexedTensor.
+         * @details For each trace this reduces the order of the TN by two and removes two indices from the IndexedTensor.
          */
         static void link_traces_and_fix(internal::IndexedTensorWritable<TensorNetwork>&& _base);
 

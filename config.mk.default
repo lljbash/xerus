@@ -20,20 +20,20 @@ PYTEST3 = pytest3
 #=================================================================================================
 # C++ Version
 #=================================================================================================
-# Xerus requires at least C++11 language support, however some features need support of C++14 or
-# even C++17 in order to activated.
-COMPATIBILITY = -std=c++11
+# Xerus requires at least C++11 language support. It is advised to use the c++14 or higher versions
+# though to have access to all features of the Xerus library.
+COMPATIBILITY = -std=c++14
 
 
 #=================================================================================================
 # Optimization
 #=================================================================================================
-# We suggest the use of one of the following optimization levels. The first uses basically no
-# optimization and is primarly intended for debugging purposes. The second (recommended) level
-# activates more or less all optimization options that conform with the ISO C++ Standard.
+# We suggest the use of one of the following optimization levels. The first uses -Og and is 
+# primarly intended for debugging purposes. The second (recommended) level activates more or 
+# less all optimization options that conform with the ISO C++ Standard.
 # The last level activates all optimazations available, including non-ISO C++ conform optimization
 # and optimazations that may result in a loss of numerical precicsion, use at your own risk.
-# LOW_OPTIMIZATION = TRUE               # Activates -O0
+# DEBUG_OPTIMIZATION = TRUE               # Activates -O0
 HIGH_OPTIMIZATION = TRUE                # Activates -O3 -march=native and some others
 # DANGEROUS_OPTIMIZATION = TRUE         # Activates everything of HIGH_OPTIMIZATION plus basically everything that is said to improve performance including several potentially unsafe optimizations
 
@@ -65,7 +65,7 @@ COMPILE_THREADS = 8                     # Number of threads to use during link t
 # When performing tests it is useful to ensure that all of the code in covered. This is ensured by
 # a set of macros including REQUIRE_TEST to mark lines that need to be tested. With the following
 # definition this coverage is tested.
-# DEBUG += -D XERUS_TEST_COVERAGE           # Enable coverage tests
+# ACTIVATE_CODE_COVERAGE = TRUE            # Enable coverage tests
 
 
 # You can add all kind of debuging options. In the following are some examples
@@ -134,7 +134,7 @@ LAPACK_LIBRARIES = -llapacke -llapack                       # Standard Lapack + 
 SUITESPARSE = -lcholmod -lspqr
 
 # Uncomment or add the approriate boost libraries
-BOOST_LIBS = -lboost_filesystem
+BOOST_LIBS = -lboost_filesystem -lboost_system
 
 # (optional) Uncomment if needed, iterative eigenvalue solver ARPACK-ng, see https://github.com/opencollab/arpack-ng
 # ARPACK_LIBRARIES = -larpack

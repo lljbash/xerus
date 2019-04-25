@@ -88,7 +88,7 @@ namespace xerus { namespace internal {
 		/*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 		public:
 			
-            size_t degree() const;
+            size_t order() const;
             
             
 			Tensor& component(const size_t _idx);

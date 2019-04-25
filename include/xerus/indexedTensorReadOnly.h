@@ -86,20 +86,20 @@ namespace xerus {
 			
 			/*- - - - - - - - - - - - - - - - - - - - - - - - - - Others - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 			
-			///@brief Allows cast to value_t if the degree of the current object is equal to 0.
+			///@brief Allows cast to value_t if the order of the current object is equal to 0.
 			explicit operator value_t() const;
 			
 			///@brief Checks whether _otherTensor is the tensorObejct of this IndexTensor.
 			bool uses_tensor(const tensor_type* _otherTensor) const;
 			
-			///@brief Returns the degree of the associated tensorObejct
-			size_t degree() const;
+			///@brief Returns the order of the associated tensorObejct
+			size_t order() const;
 			
-			///@brief Assignes the indices using the degree of the tensorObejct.
+			///@brief Assignes the indices using the order of the tensorObejct.
 			void assign_indices();
 			
-			///@brief Assignes the indices assuming the given degree.
-			void assign_indices(const size_t _degree);
+			///@brief Assignes the indices assuming the given order.
+			void assign_indices(const size_t _order);
 			
 			///@brief Assignes the indices using the current tensorObejct.
 			void assign_index_dimensions();
@@ -156,7 +156,7 @@ namespace xerus {
 		///@brief Returns the one-norm of the associated tensor Obejct.
 		value_t one_norm(const IndexedTensorReadOnly<Tensor>& _idxTensor);
 		
-		size_t get_eval_degree(const std::vector<Index>& _indices);
+		size_t get_eval_order(const std::vector<Index>& _indices);
 	}
 	
 	

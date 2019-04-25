@@ -32,12 +32,9 @@
 
 #include "basic.h"
 #include "tensorNetwork.h"
+#include "forwardDeclarations.h"
 
 namespace xerus {
-	template<bool isOperator> class TTNetwork;
-	typedef TTNetwork<false> TTTensor;
-	typedef TTNetwork<true> TTOperator;
-	
 	/// @brief Storage class for the performance data collected during an algorithm (typically iteration count, time and residual)
 	class PerformanceData {
 	public:

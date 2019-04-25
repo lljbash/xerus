@@ -39,7 +39,7 @@ namespace xerus {
 			for (const auto &node : _network.nodes) {
 				if (!node.erased) {
 					numNodes += 1;
-					numEdges += static_cast<double>(node.degree());
+					numEdges += static_cast<double>(node.order());
 				}
 			}
 			// if the best solution is only about twice as costly as the calculation of this heuristic, then don't bother
@@ -60,14 +60,14 @@ namespace xerus {
 						/* possible candidate (i.e. link to a later node) */
 						/* calculate n,m,r */
 						double m=1,n=1,r=1;
-						for (size_t d = 0; d < ni.degree(); ++d) {
+						for (size_t d = 0; d < ni.order(); ++d) {
 							if (ni.neighbors[d].other == j) {
 								r *= static_cast<double>(ni.neighbors[d].dimension);
 							} else {
 								m *= static_cast<double>(ni.neighbors[d].dimension);
 							}
 						}
-						for (size_t d = 0; d < nj.degree(); ++d) {
+						for (size_t d = 0; d < nj.order(); ++d) {
 							if (nj.neighbors[d].other != i) {
 								n *= static_cast<double>(nj.neighbors[d].dimension);
 							}
@@ -141,7 +141,7 @@ namespace xerus {
 			const TensorNetwork::TensorNode &nc = _network.nodes[_id3];
 			double sa=1, sb=1, sc=1; // sizes devided by the link dimensions between a,b,c
 			double sab=1, sbc=1, sac=1; // link dimensions
-			for (size_t d = 0; d < na.degree(); ++d) {
+			for (size_t d = 0; d < na.order(); ++d) {
 				if (na.neighbors[d].links(_id2)) {
 					sab *= static_cast<double>(na.neighbors[d].dimension);
 				} else if (na.neighbors[d].links(_id3)) {
@@ -150,14 +150,14 @@ namespace xerus {
 					sa *= static_cast<double>(na.neighbors[d].dimension);
 				}
 			}
-			for (size_t d = 0; d < nb.degree(); ++d) {
+			for (size_t d = 0; d < nb.order(); ++d) {
 				if (nb.neighbors[d].links(_id3)) {
 					sbc *= static_cast<double>(nb.neighbors[d].dimension);
 				} else if (!nb.neighbors[d].links(_id1)) {
 					sb *= static_cast<double>(nb.neighbors[d].dimension);
 				}
 			}
-			for (size_t d = 0; d < nc.degree(); ++d) {
+			for (size_t d = 0; d < nc.order(); ++d) {
 //                 size_t other = nc.neighbors[d].other;
 				if (!nc.neighbors[d].links(_id1) && !nc.neighbors[d].links(_id2)) {
 					sc *= static_cast<double>(nc.neighbors[d].dimension);
@@ -184,7 +184,7 @@ namespace xerus {
 			for (const auto &node : _network.nodes) {
 				if (!node.erased) {
 					numNodes += 1;
-					numEdges += node.degree();
+					numEdges += node.order();
 				}
 			}
 			// if the best solution is only about twice as costly as the calculation of this heuristic, then don't bother
@@ -193,26 +193,26 @@ namespace xerus {
 			double ourFinalCost=0;
 			std::vector<std::pair<size_t,size_t>> ourContractions;
 			while (numNodes >= 3) {
-				// find a node with lowest degree
+				// find a node with lowest order
 				size_t id1 = 0;
 				size_t currDegree=~0ul;
 				for (size_t i=0; i<_network.nodes.size(); ++i) {
 					if (!_network.nodes[i].erased) {
-						if (_network.nodes[i].degree() < currDegree) {
+						if (_network.nodes[i].order() < currDegree) {
 							id1 = i;
-							currDegree = _network.nodes[i].degree();
+							currDegree = _network.nodes[i].order();
 						}
 					}
 				}
 				
-				// find its neighbor with lowest degree
+				// find its neighbor with lowest order
 				size_t id2 = 0;
 				currDegree=~0ul;
 				for (const TensorNetwork::Link &l : _network.nodes[id1].neighbors) {
 					if (!l.external) {
-						if (_network.nodes[l.other].degree() < currDegree) {
+						if (_network.nodes[l.other].order() < currDegree) {
 							id2 = l.other;
-							currDegree = _network.nodes[l.other].degree();
+							currDegree = _network.nodes[l.other].order();
 						}
 					}
 				}
@@ -282,7 +282,7 @@ namespace xerus {
 			double numEdges=0;
 			for (const auto &node : _network.nodes) {
 				if (!node.erased) {
-					numEdges += static_cast<double>(node.degree());
+					numEdges += static_cast<double>(node.order());
 				}
 			}
 			// if the best solution is only about twice as costly as the calculation of this heuristic, then don't bother

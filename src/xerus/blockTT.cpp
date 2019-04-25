@@ -79,7 +79,7 @@ namespace xerus { namespace internal {
         _tttensor.require_correct_format();
         
         // Get components
-        for(size_t i = 0; i < _tttensor.degree(); ++i) {
+        for(size_t i = 0; i < _tttensor.order(); ++i) {
             components.push_back(_tttensor.get_component(i));
         }
         
@@ -87,14 +87,14 @@ namespace xerus { namespace internal {
         components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
     }
     
-    size_t BlockTT::degree() const {
+    size_t BlockTT::order() const {
         return components.size();
     }
     
     std::vector<size_t> BlockTT::ranks() const {
 		std::vector<size_t> res;
-		res.reserve(degree()-1);
-		for (size_t n = 1; n < degree(); ++n) {
+		res.reserve(order()-1);
+		for (size_t n = 1; n < order(); ++n) {
 			res.push_back(components[n].dimensions[0]);
 		}
 		return res;
@@ -103,19 +103,19 @@ namespace xerus { namespace internal {
     size_t BlockTT::num_components() const { return components.size(); }
 	
 	size_t BlockTT::rank(const size_t _idx) const {
-        REQUIRE(_idx+1 < degree(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree() << " components.");
+        REQUIRE(_idx+1 < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
         return components[_idx+1].dimensions[0];
     }
     
     
     Tensor& BlockTT::component(const size_t _idx) {
-        REQUIRE(_idx < degree(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree() << " components.");
+        REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
         return components[_idx];
     }
 			
     
     const Tensor& BlockTT::get_component(const size_t _idx) const {
-        REQUIRE(_idx < degree(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << degree() << " components.");
+        REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
         return components[_idx];
     }
     
@@ -145,7 +145,7 @@ namespace xerus { namespace internal {
     TTTensor BlockTT::get_average_tt() const {
         TTTensor ttRep(dimensions);
 		
-		for(size_t i = 0; i < degree(); i++) {
+		for(size_t i = 0; i < order(); i++) {
 			if(i == corePosition) {
 				ttRep.set_component(i, get_average_core());
 			} else {
@@ -205,7 +205,7 @@ namespace xerus { namespace internal {
     
     
     void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
-		REQUIRE(corePosition+1 < degree(), "Can't move core right from position " << corePosition);
+		REQUIRE(corePosition+1 < order(), "Can't move core right from position " << corePosition);
 			
 		if(P == 1) {
 			Tensor Q, R;
@@ -226,7 +226,7 @@ namespace xerus { namespace internal {
 	
 	
 	void BlockTT::move_core(const size_t _position, const double _eps, const size_t _maxRank) {
-        REQUIRE(_position < degree(), "Invalid new core position " << _position);
+        REQUIRE(_position < order(), "Invalid new core position " << _position);
 		
         while(corePosition < _position) {
             move_core_right(_eps, _maxRank);
@@ -239,7 +239,7 @@ namespace xerus { namespace internal {
     
     value_t BlockTT::move_core(const size_t _position, const size_t _maxRank) {
 		REQUIRE(_maxRank > 0, "maxRank must be larger than zero.");
-        REQUIRE(_position < degree(), "IE");
+        REQUIRE(_position < order(), "IE");
         Tensor U, S, V;
         value_t ret = 0; // corePosition == _position
 

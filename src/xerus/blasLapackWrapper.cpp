@@ -66,12 +66,20 @@ extern "C"
 namespace xerus {
 	namespace blasWrapper {
 		/// @brief stores in @a _out the transpose of the @a _m x @a _n matrix @a _in
-		void low_level_transpose(double * _out, double * _in, size_t _m, size_t _n) {
+		void low_level_transpose(double * _out, const double * _in, size_t _m, size_t _n) {
 			for (size_t i=0; i<_m; ++i) {
 				for (size_t j=0; j<_n; ++j) {
 					_out[j*_m + i] = _in[i*_n+j];
 				}
 			}
+		}
+		
+		/// @brief checks if the given double array contains NANs
+		bool contains_nan(const double * _in, size_t _n) {
+			for (size_t i=0; i<_n; ++i) {
+				if (std::isnan(_in[i])) return true;
+			}
+			return false;
 		}
 		
 		//----------------------------------------------- LEVEL I BLAS ----------------------------------------------------------
@@ -215,7 +223,7 @@ namespace xerus {
 			double work = 0;
 			lapack_int lwork = -1;
 			lapack_int min = std::min(m,n);
-			LAPACK_dgesdd( &job, &m, &n, nullptr, &m, nullptr, nullptr, &m, nullptr, &min, &work, &lwork, nullptr, &info );
+			dgesdd_( &job, &n, &m, nullptr, &n, nullptr, nullptr, &n, nullptr, &min, &work, &lwork, nullptr, &info );
 			REQUIRE(info == 0, "work array size query of dgesdd returned " << info);
 			return lapack_int(work);
 		}
@@ -227,15 +235,17 @@ namespace xerus {
 			char job = 'S';
 			lapack_int min = std::min(m,n);
 			
-			// if A = U*S*V^T, then A^T = V^T*S*U^T, so we can simply call lapack without transposing our matrices
-			// by simply changing the order of U and Vt
-			LAPACK_dgesdd( &job, &n, &m, a, &n, s, vt, &n, u, &min, work, &lwork, iwork, &info );
+			// if A = U*S*V^T, then A^T = V^T*S*U^T, so instead of transposing all input and output matrices we can simply exchange the order of U and Vt
+			dgesdd_( &job, &n, &m, a, &n, s, vt, &n, u, &min, work, &lwork, iwork, &info );
 			REQUIRE(info == 0, "dgesdd failed with info " << info);
 		}
 		
 		void svd_destructive( double* const _U, double* const _S, double* const _Vt, double* const _A, const size_t _m, const size_t _n) {
-			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
-			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
+			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<lapack_int>::max()), "Dimension to large for BLAS/Lapack");
+			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<lapack_int>::max()), "Dimension to large for BLAS/Lapack");
+			REQUIRE(_m*_n <= static_cast<size_t>(std::numeric_limits<lapack_int>::max()), "Dimension to large for BLAS/Lapack");
+			
+			REQUIRE(!contains_nan(_A, _m*_n), "Input matrix to SVD may not contain NaN");
 			
 			XERUS_PA_START;
 			lapack_int m = lapack_int(_m);
@@ -251,40 +261,50 @@ namespace xerus {
 		
 		
 		std::tuple<std::unique_ptr<double[]>, std::unique_ptr<double[]>, size_t> qc(const double* const _A, const size_t _m, const size_t _n) {
-			const std::unique_ptr<double[]> tmpA(new double[_m*_n]);
-			misc::copy(tmpA.get(), _A, _m*_n);
-			
-			return qc_destructive(tmpA.get(), _m, _n);
-		}
-		
-		
-		std::tuple<std::unique_ptr<double[]>, std::unique_ptr<double[]>, size_t> qc_destructive(double* const _A, const size_t _m, const size_t _n) {
-			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
-			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<int>::max()), "Dimension to large for BLAS/Lapack");
+			REQUIRE(_m <= static_cast<size_t>(std::numeric_limits<lapack_int>::max()), "Dimension to large for BLAS/Lapack");
+			REQUIRE(_n <= static_cast<size_t>(std::numeric_limits<lapack_int>::max()), "Dimension to large for BLAS/Lapack");
 			
 			REQUIRE(_n > 0, "Dimension n must be larger than zero");
 			REQUIRE(_m > 0, "Dimension m must be larger than zero");
 			
+			REQUIRE(!contains_nan(_A, _m*_n), "Input matrix to QC factorization may not contain NaN");
+			
 			XERUS_PA_START;
 			
-			// Maximal rank is used by Lapacke
 			const size_t maxRank = std::min(_m, _n);
 			
-			// Tmp Array for Lapacke
+			// Factors for Householder reflections
 			const std::unique_ptr<double[]> tau(new double[maxRank]);
 			
-			const std::unique_ptr<int[]> permutation(new int[_n]());
+			const std::unique_ptr<lapack_int[]> permutation(new lapack_int[_n]);
 			misc::set_zero(permutation.get(), _n); // Lapack requires the entries to be zero.
 			
+			// transpose input
+			const std::unique_ptr<double[]> tA(new double[_m*_n]);
+			low_level_transpose(tA.get(), _A, _m, _n);
+			
 			// Calculate QR factorisations with column pivoting
-			IF_CHECK(int lapackAnswer = ) LAPACKE_dgeqp3(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(_n), _A, static_cast<int>(_n), permutation.get(), tau.get());
-			REQUIRE(lapackAnswer == 0, "Unable to perform QC factorisaton (dgeqp3). Lapacke says: " << lapackAnswer );
+			lapack_int m = static_cast<lapack_int>(_m);
+			lapack_int n = static_cast<lapack_int>(_n);
+			lapack_int info = 0;
+			lapack_int lwork = -1;
+			double work_query = 0;
+			// query work array size
+			dgeqp3_(&m, &n, nullptr, &m, nullptr, nullptr, &work_query, &lwork, &info);
+			REQUIRE(info == 0, "dgeqp3 (QC) work size query failed. info = " << info);
+			lwork = lapack_int(work_query);
+			std::unique_ptr<double[]> work(new double[size_t(lwork)]);
+			
+			// perform factorization
+			dgeqp3_(&m, &n, tA.get(), &m, permutation.get(), tau.get(), work.get(), &lwork, &info);
+			REQUIRE(info == 0, "dgeqp3 (QC) failed. info = " << info);
 			
 			
 			// Determine the actual rank
 			size_t rank;
-			for (rank = 1; rank <= maxRank; ++rank) {
-				if (rank == maxRank || std::abs(_A[rank+rank*_n]) < 16*std::numeric_limits<double>::epsilon()*_A[0]) {
+			auto cutoff = 16*std::numeric_limits<double>::epsilon()*std::abs(tA[0]);
+			for (rank = 1; rank < maxRank; ++rank) {
+				if (std::abs(tA[rank*(_m+1)]) < cutoff) {
 					break;
 				}
 			}
@@ -297,29 +317,45 @@ namespace xerus {
 			// Copy the upper triangular Matrix C (rank x _n) into position
 			for (size_t col = 0; col < _n; ++col) {
 				const size_t targetCol = static_cast<size_t>(permutation[col]-1); // For Lapack numbers start at 1 (instead of 0).
-				for(size_t row = 0; row < rank && row < col+1; ++row) {
-					C[row*_n + targetCol] = _A[row*_n + col];
+				for(size_t row = 0; row < rank && row <= col; ++row) {
+					C[row*_n + targetCol] = tA[row + col*_m];
 				}
 			}
 			
 			
 			// Create orthogonal matrix Q
-			IF_CHECK(lapackAnswer = ) LAPACKE_dorgqr(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(maxRank), static_cast<int>(maxRank), _A, static_cast<int>(_n), tau.get());
-			CHECK(lapackAnswer == 0, error, "Unable to reconstruct Q from the QC factorisation. Lapacke says: " << lapackAnswer);
+			lapack_int lwork2 = -1;
+			lapack_int min = std::min(m,n);
+			dorgqr_(&m, &min, &min, nullptr, &m, nullptr, &work_query, &lwork2, &info);
+			REQUIRE(info == 0, "dorgqr_ (QC) getting work array size failed. info = " << info);
+			lwork2 = lapack_int(work_query);
+			if (lwork2 > lwork) {
+				lwork = lwork2;
+				work.reset(new double[size_t(lwork)]);
+			}
+			dorgqr_(&m, &min, &min, tA.get(), &m, tau.get(), work.get(), &lwork, &info);
+			REQUIRE(info == 0, "dorgqr_ (QC) failed. info = " << info);
 			
 			// Copy the newly created Q into position
 			std::unique_ptr<double[]> Q(new double[_m*rank]);
 			if(rank == _n) {
-				misc::copy(Q.get(), _A, _m*rank);
+				low_level_transpose(Q.get(), tA.get(), rank, _m);
 			} else {
 				for(size_t row = 0; row < _m; ++row) {
-					misc::copy(Q.get()+row*rank, _A+row*_n, rank);
+					for (size_t col = 0; col < rank; ++col) {
+						Q[row*rank + col] = tA[row + col*_m];
+					}
 				}
 			}
 			
 			XERUS_PA_END("Dense LAPACK", "QRP Factorisation", misc::to_string(_m)+"x"+misc::to_string(rank)+" * "+misc::to_string(rank)+"x"+misc::to_string(_n));
 			
 			return std::make_tuple(std::move(Q), std::move(C), rank);
+		}
+		
+		
+		std::tuple<std::unique_ptr<double[]>, std::unique_ptr<double[]>, size_t> qc_destructive(double* const _A, const size_t _m, const size_t _n) {
+			return qc(_A, _m, _n);
 		}
 		
 		
@@ -422,7 +458,6 @@ namespace xerus {
 			const std::unique_ptr<double[]> tau(new double[rank]);
 			
 			// Calculate QR factorisations
-//             LOG(Lapacke, "Call to dorgqr with parameters: " << LAPACK_ROW_MAJOR << ", " << static_cast<int>(_m)  << ", " << static_cast<int>(_n)  << ", " << _A << ", " << static_cast<int>(_n)  << ", " << tau.get());
 			IF_CHECK( int lapackAnswer = ) LAPACKE_dgeqrf(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(_n), _A, static_cast<int>(_n), tau.get());
 			CHECK(lapackAnswer == 0, error, "Unable to perform QR factorisaton. Lapacke says: " << lapackAnswer );
 			
@@ -433,7 +468,6 @@ namespace xerus {
 			}
 			
 			// Create orthogonal matrix Q (in tmpA)
-	//         LOG(Lapacke, "Call to dorgqr with parameters: " << LAPACK_ROW_MAJOR << ", " << static_cast<int>(_m)  << ", " << static_cast<int>(rank)  << ", " << static_cast<int>(rank) << ", " << _A << ", " << static_cast<int>(_n)  << ", " << tau.get());
 			IF_CHECK( lapackAnswer = ) LAPACKE_dorgqr(LAPACK_ROW_MAJOR, static_cast<int>(_m), static_cast<int>(rank), static_cast<int>(rank), _A, static_cast<int>(_n), tau.get());
 			CHECK(lapackAnswer == 0, error, "Unable to reconstruct Q from the QR factorisation. Lapacke says: " << lapackAnswer);
 			
@@ -610,10 +644,10 @@ namespace xerus {
 					
 					lapackAnswer = LAPACKE_dpotrf2(
 						LAPACK_ROW_MAJOR,
-						'U', 					// Upper triangle of A is read
-						static_cast<int>(_n),	// dimensions of A
-						tmpA.get(),				// input: A, output: cholesky factorisation
-						static_cast<int>(_n)	// LDA
+						'U', 				// Upper triangle of A is read
+						static_cast<int>(_n),		// dimensions of A
+						tmpA.get(),			// input: A, output: cholesky factorisation
+						static_cast<int>(_n)		// LDA
 					);
 					
 					XERUS_PA_END("Dense LAPACK", "Cholesky decomposition", misc::to_string(_n)+"x"+misc::to_string(_n));
@@ -627,13 +661,13 @@ namespace xerus {
 					
 					lapackAnswer = LAPACKE_dpotrs(
 						LAPACK_ROW_MAJOR,
-						'U',					// upper triangle of cholesky decomp is stored in tmpA
-						static_cast<int>(_n),	// dimensions of A
-						static_cast<int>(_nrhs),// number of rhs
-						tmpA.get(),				// input: cholesky decomp
-						static_cast<int>(_n), 	// lda
-						_x,						// input: rhs b, output: solution x
-						static_cast<int>(_nrhs)	// ldb
+						'U',				// upper triangle of cholesky decomp is stored in tmpA
+						static_cast<int>(_n),		// dimensions of A
+						static_cast<int>(_nrhs),	// number of rhs
+						tmpA.get(),			// input: cholesky decomp
+						static_cast<int>(_n), 		// lda
+						_x,				// input: rhs b, output: solution x
+						static_cast<int>(_nrhs)		// ldb
 					);
 					CHECK(lapackAnswer == 0, error, "Unable to solve Ax = b (cholesky solver). Lapacke says: " << lapackAnswer);
 					

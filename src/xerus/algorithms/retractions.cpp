@@ -92,7 +92,7 @@ namespace xerus {
 		Tensor tmp({1,1}, [](){return 1.0;});
 		leftStackUV.push_back(tmp);
 		leftStackUU.push_back(tmp);
-		for (size_t i=0; i<baseL.degree()-1; ++i) {
+		for (size_t i=0; i<baseL.order()-1; ++i) {
 			Tensor newLeft;
 			newLeft(j1,j2) = leftStackUV.back()(i1,i2) * baseL.get_component(i)(i1,r,j1) * _direction.get_component(i)(i2,r,j2);
 			leftStackUV.emplace_back(std::move(newLeft));
@@ -102,14 +102,14 @@ namespace xerus {
 		Tensor right(tmp);
 		Tensor UTV;
 		std::vector<Tensor> tmpComponents;
-		for (size_t i=baseL.degree(); i>0; --i) {
+		for (size_t i=baseL.order(); i>0; --i) {
 			const size_t currIdx = i-1;
 			std::unique_ptr<Tensor> newComponent(new Tensor);
 			const Tensor &UComp = baseL.get_component(currIdx);
 			Tensor V;
 			Tensor uuInv = pseudo_inverse(leftStackUU.back(), 1);
 			V(i1,r,j1) =  uuInv(i1,s)* leftStackUV.back()(s,i2) * _direction.get_component(currIdx)(i2,r,j2) * right(j1,j2);
-// 			if (i!=baseL.degree()) {
+// 			if (i!=baseL.order()) {
 // 				V(i1,r,j1) = V(i1,r,j1) + UComp(i1,r,s)*UTV(s,j1);
 // 			}
 			if (currIdx!=0) {
@@ -184,7 +184,7 @@ namespace xerus {
 
 	
 	TTTensor TTTangentVector::change_direction_incomplete() const {
-		TTTensor result(baseL.degree());
+		TTTensor result(baseL.order());
 		Index i1,i2,n,r1,r2;
 		for (size_t i=1; i<components.size(); ++i) {
 			const Tensor &baseComponent = baseL.get_component(i);
@@ -268,7 +268,7 @@ namespace xerus {
 	
 	void SubmanifoldRetractionI(TTTensor &_U, const TTTangentVector &_change) {
 		static const Index i1,j1,r;
-		for (size_t i=0; i<_U.degree(); ++i) { XERUS_REQUIRE_TEST;
+		for (size_t i=0; i<_U.order(); ++i) { XERUS_REQUIRE_TEST;
 			std::unique_ptr<Tensor> newComponent(new Tensor);
 			(*newComponent)(i1,r,j1) = _U.get_component(i)(i1,r,j1) + _change.components[i](i1,r,j1);
 			_U.set_component(i, std::move(*newComponent));

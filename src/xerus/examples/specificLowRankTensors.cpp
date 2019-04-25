@@ -27,8 +27,8 @@
 
 namespace xerus { namespace examples {
 	
-	TTTensor peaking_diagonals(size_t _degree, size_t _n, value_t _alpha) {
-		REQUIRE(_degree >= 2, "");
+	TTTensor peaking_diagonals(size_t _order, size_t _n, value_t _alpha) {
+		REQUIRE(_order >= 2, "");
 		REQUIRE(_n>=2, "");
 		TTTensor e1(Tensor({_n}, [](){return 1.0;}));
 		TTTensor cross(Tensor({_n,_n}, [&](const std::vector<size_t> &idx){
@@ -37,7 +37,7 @@ namespace xerus { namespace examples {
 		
 		TTTensor result(cross);
 		TTTensor buffer(e1);
-		while (result.degree() < _degree) {
+		while (result.order() < _order) {
 			result = dyadic_product(result, e1);
 			TTTensor tmp = dyadic_product(buffer, cross);
 			result += tmp;

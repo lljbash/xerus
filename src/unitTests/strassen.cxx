@@ -66,7 +66,7 @@ UNIT_TEST(Strassen, CP,
 		
 		
 		while (res > 1e-4) {
-			TTTensor ttDiff(_A.degree());
+			TTTensor ttDiff(_A.order());
 // 			bool set = false;
 			while (decomp.size() >= _r) {
 // 				ttDiff = TTTensor(*decomp.front()); //()
@@ -97,7 +97,7 @@ UNIT_TEST(Strassen, CP,
 				}
 // 			}
 			
-			if (_A.degree() == 3) {
+			if (_A.order() == 3) {
 				Tensor &tn0 = *std::static_pointer_cast<Tensor>(ttDiff.nodes[0].tensorObject);
 				Tensor &tn1 = *std::static_pointer_cast<Tensor>(ttDiff.nodes[1].tensorObject);
 				Tensor &tn2 = *std::static_pointer_cast<Tensor>(ttDiff.nodes[2].tensorObject);

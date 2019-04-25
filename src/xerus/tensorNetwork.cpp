@@ -58,8 +58,8 @@ namespace xerus {
     }
 
 
-    TensorNetwork::TensorNetwork(size_t _degree) : dimensions(std::vector<size_t>(_degree, 1)) {
-        nodes.emplace_back(std::make_unique<Tensor>(std::vector<size_t>(_degree, 1)), init_from_dimension_array());
+    TensorNetwork::TensorNetwork(size_t _order) : dimensions(std::vector<size_t>(_order, 1)) {
+        nodes.emplace_back(std::make_unique<Tensor>(std::vector<size_t>(_order, 1)), init_from_dimension_array());
     }
 
 
@@ -134,7 +134,7 @@ namespace xerus {
     void TensorNetwork::contract_unconnected_subnetworks() {
         require_valid_network();
 
-        if(degree() == 0) {
+        if(order() == 0) {
             std::set<size_t> all;
             for(size_t i = 0; i < nodes.size(); ++i) { all.emplace_hint(all.end(), i); }
             contract(all);
@@ -178,9 +178,9 @@ namespace xerus {
             if (!toContract.empty()) {
                 const size_t remaining = contract(toContract);
 
-                INTERNAL_CHECK(nodes[remaining].degree() == 0, "Internal Error.");
+                INTERNAL_CHECK(nodes[remaining].order() == 0, "Internal Error.");
 
-                // Remove contracted degree-0 tensor
+                // Remove contracted order-0 tensor
                 nodes[remaining].erased = true;
                 for(size_t i = 0; i < nodes.size(); ++i) {
                     if(!nodes[i].erased) {
@@ -220,7 +220,7 @@ namespace xerus {
 
 
     void TensorNetwork::perform_traces(const size_t _nodeId) {
-        for (size_t i = 0; i < nodes[_nodeId].degree(); ++i) {
+        for (size_t i = 0; i < nodes[_nodeId].order(); ++i) {
             const TensorNetwork::Link &link = nodes[_nodeId].neighbors[i];
             if (link.links(_nodeId)) {
                 nodes[_nodeId].tensorObject->perform_trace(i, link.indexPosition);
@@ -236,7 +236,7 @@ namespace xerus {
                     }
                 }
 
-                for(size_t j = link.indexPosition+1; j < nodes[_nodeId].degree(); ++j) {
+                for(size_t j = link.indexPosition+1; j < nodes[_nodeId].order(); ++j) {
                     const Link& otherLink = linkCopy[j];
                     if(otherLink.external) {
                         externalLinks[otherLink.indexPosition].indexPosition -= 2;
@@ -294,7 +294,7 @@ namespace xerus {
         TensorNetwork cpy(*this);
         size_t res = cpy.contract(all);
 
-        std::vector<size_t> shuffle(degree());
+        std::vector<size_t> shuffle(order());
         for(size_t i = 0; i < cpy.nodes[res].neighbors.size(); ++i) {
             INTERNAL_CHECK(cpy.nodes[res].neighbors[i].external, "Internal Error");
             shuffle[i] = cpy.nodes[res].neighbors[i].indexPosition;
@@ -311,16 +311,16 @@ namespace xerus {
     value_t TensorNetwork::operator[](const size_t _position) const {
         require_valid_network();
 
-        if (degree() == 0) {
+        if (order() == 0) {
             REQUIRE(_position == 0, "Tried to access non-existing entry of TN");
             value_t value = 1.0;
             for(const TensorNode& node : nodes) { value *= (*node.tensorObject)[0]; }
             return value;
         }
 
-        std::vector<size_t> positions(degree());
+        std::vector<size_t> positions(order());
         size_t remains = _position;
-        for(size_t i = degree(); i > 1; --i) {
+        for(size_t i = order(); i > 1; --i) {
             positions[i-1] = remains%dimensions[i-1];
             remains /= dimensions[i-1];
         }
@@ -450,8 +450,14 @@ namespace xerus {
     /*- - - - - - - - - - - - - - - - - - - - - - - - - - Miscellaneous - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
     size_t TensorNetwork::degree() const {
+        return order();
+    }
+    
+    
+    size_t TensorNetwork::order() const {
         return dimensions.size();
     }
+    
 
     size_t TensorNetwork::datasize() const {
         size_t result = 0;
@@ -497,7 +503,7 @@ namespace xerus {
 
             const TensorNode& otherNode = nodes[el.other];
             const TensorNetwork::Link& otherLink = otherNode.neighbors[el.indexPosition];
-            REQUIRE(otherNode.degree() > el.indexPosition, "External link " << n << " is inconsitent. The link points to node " << el.other << " at IP " << el.indexPosition << ", but the target node only has " << otherNode.degree() << " links.");
+            REQUIRE(otherNode.order() > el.indexPosition, "External link " << n << " is inconsitent. The link points to node " << el.other << " at IP " << el.indexPosition << ", but the target node only has " << otherNode.order() << " links.");
             REQUIRE(otherLink.external, "External link " << n << " is inconsitent. The link points to node " << el.other << " at IP " << el.indexPosition << ", but the target link says it is not external.");
             REQUIRE(otherLink.indexPosition == n, "External link " << n << " is inconsitent. The link points to node " << el.other << " at IP " << el.indexPosition << ", but the nodes link points to IP " << otherLink.indexPosition << " instead of " << n << ".");
             REQUIRE(otherLink.dimension == el.dimension, "External link " << n << " is inconsitent. The link points to node " << el.other << " at IP " << el.indexPosition << ". The dimension specified by the external link is " << el.dimension << " but the one of the target link is " << otherLink.dimension << ".");
@@ -508,7 +514,7 @@ namespace xerus {
             const TensorNode &currNode = nodes[n];
             REQUIRE(!_check_erased || !currNode.erased, "Node " << n << " is marked erased, although this was not allowed.");
             if (currNode.tensorObject) {
-                REQUIRE(currNode.degree() == currNode.tensorObject->degree(), "Node " << n << " has is inconsitent, as its tensorObject has degree " << currNode.tensorObject->degree() << " but there are " << currNode.degree() << " links.");
+                REQUIRE(currNode.order() == currNode.tensorObject->order(), "Node " << n << " has is inconsitent, as its tensorObject has order " << currNode.tensorObject->order() << " but there are " << currNode.order() << " links.");
             }
 
             // Per neighbor
@@ -522,7 +528,7 @@ namespace xerus {
                 if(!el.external) { // externals were already checked
                     REQUIRE(el.other < nodes.size(), "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". The target node does not exist, as there are only " << nodes.size() << " nodes.");
                     const TensorNode &other = nodes[el.other];
-                    REQUIRE(other.degree() > el.indexPosition, "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". Link at target does not exist as there are only " << other.degree() << " links.");
+                    REQUIRE(other.order() > el.indexPosition, "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". Link at target does not exist as there are only " << other.order() << " links.");
                     REQUIRE(!other.neighbors[el.indexPosition].external, "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". Link at target says it is external.");
                     REQUIRE(other.neighbors[el.indexPosition].other == n, "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". Link at target links to node " << other.neighbors[el.indexPosition].other << " at IP " << other.neighbors[el.indexPosition].indexPosition);
                     REQUIRE(other.neighbors[el.indexPosition].indexPosition == i, "Inconsitent Link from node " << n << " to node " << el.other << " from IP " << i << " to IP " << el.indexPosition << ". Link at target links to node " << other.neighbors[el.indexPosition].other << " at IP " << other.neighbors[el.indexPosition].indexPosition);
@@ -685,8 +691,8 @@ namespace xerus {
         Tensor& fromTensor = *nodes[_nodeA].tensorObject;
         Tensor& toTensor = *nodes[_nodeB].tensorObject;
 
-        const size_t fromDegree = fromTensor.degree();
-        const size_t toDegree = toTensor.degree();
+        const size_t fromDegree = fromTensor.order();
+        const size_t toDegree = toTensor.order();
 
         const size_t currRank = fromTensor.dimensions[fromPos];
 
@@ -869,36 +875,36 @@ namespace xerus {
             }
             fromTensor = Q;
             transR = true;
-        } else if(posA == nodes[_from].degree()-1) {
+        } else if(posA == nodes[_from].order()-1) {
             if(_allowRankReduction) {
-                calculate_qc(Q, R, fromTensor, nodes[_from].degree()-1);
+                calculate_qc(Q, R, fromTensor, nodes[_from].order()-1);
             } else {
-                calculate_qr(Q, R, fromTensor, nodes[_from].degree()-1);
+                calculate_qr(Q, R, fromTensor, nodes[_from].order()-1);
             }
             fromTensor = Q;
         } else {
-            std::vector<size_t> forwardShuffle(nodes[_from].degree());
-            std::vector<size_t> backwardShuffle(nodes[_from].degree());
+            std::vector<size_t> forwardShuffle(nodes[_from].order());
+            std::vector<size_t> backwardShuffle(nodes[_from].order());
 
             for(size_t i = 0; i < posA; ++i) {
                 forwardShuffle[i] = i;
                 backwardShuffle[i] = i;
             }
 
-            for(size_t i = posA; i+1 < nodes[_from].degree(); ++i) {
+            for(size_t i = posA; i+1 < nodes[_from].order(); ++i) {
                 forwardShuffle[i+1] = i;
                 backwardShuffle[i] = i+1;
             }
 
-            forwardShuffle[posA] = nodes[_from].degree()-1;
-            backwardShuffle[nodes[_from].degree()-1] = posA;
+            forwardShuffle[posA] = nodes[_from].order()-1;
+            backwardShuffle[nodes[_from].order()-1] = posA;
 
             reshuffle(fromTensor, fromTensor, forwardShuffle);
 
             if(_allowRankReduction) {
-                calculate_qc(Q, R, fromTensor, nodes[_from].degree()-1);
+                calculate_qc(Q, R, fromTensor, nodes[_from].order()-1);
             } else {
-                calculate_qr(Q, R, fromTensor, nodes[_from].degree()-1);
+                calculate_qr(Q, R, fromTensor, nodes[_from].order()-1);
             }
 
             reshuffle(fromTensor, Q, backwardShuffle);
@@ -907,19 +913,19 @@ namespace xerus {
         if( posB == 0 ) {
             xerus::contract(toTensor, R, transR, toTensor, false, 1);
 
-        } else if( posB == nodes[_to].degree()-1 ) {
+        } else if( posB == nodes[_to].order()-1 ) {
             xerus::contract(toTensor, toTensor, false, R, !transR, 1);
 
         } else {
-            std::vector<size_t> forwardShuffle(nodes[_to].degree());
-            std::vector<size_t> backwardShuffle(nodes[_to].degree());
+            std::vector<size_t> forwardShuffle(nodes[_to].order());
+            std::vector<size_t> backwardShuffle(nodes[_to].order());
 
             for(size_t i = 0; i < posB; ++i) {
                 forwardShuffle[i] = i+1;
                 backwardShuffle[i+1] = i;
             }
 
-            for(size_t i = posB+1; i < nodes[_to].degree(); ++i) {
+            for(size_t i = posB+1; i < nodes[_to].order(); ++i) {
                 forwardShuffle[i] = i;
                 backwardShuffle[i] = i;
             }
@@ -943,7 +949,7 @@ namespace xerus {
     void TensorNetwork::fix_mode(const size_t _mode, const size_t _slatePosition) {
         require_valid_network();
 
-        REQUIRE(_mode < degree(), "Invalid dimension to remove");
+        REQUIRE(_mode < order(), "Invalid dimension to remove");
         REQUIRE(_slatePosition < dimensions[_mode], "Invalide _slatePosition to choose");
 
         const size_t extNode = externalLinks[_mode].other;
@@ -985,7 +991,7 @@ namespace xerus {
     void TensorNetwork::remove_slate(const size_t _mode, const size_t _slatePosition) {
         require_valid_network();
 
-        REQUIRE(_mode < degree(), "invalid dimension to remove a slate from");
+        REQUIRE(_mode < order(), "invalid dimension to remove a slate from");
         REQUIRE(_slatePosition < dimensions[_mode], "invalide slate position to choose");
         REQUIRE(dimensions[_mode] > 0, "removing the last possible slate from this index position would result a dimension of size 0");
 
@@ -1003,7 +1009,7 @@ namespace xerus {
 
 
     void TensorNetwork::resize_mode(const size_t _mode, const size_t _newDim, const size_t _cutPos) {
-        REQUIRE(_mode < degree(), "Invalid dimension given for resize_mode");
+        REQUIRE(_mode < order(), "Invalid dimension given for resize_mode");
         require_valid_network();
 
         const size_t extNode = externalLinks[_mode].other;
@@ -1071,10 +1077,10 @@ namespace xerus {
 
         REQUIRE(!node1.erased, "It appears node1 = " << _nodeId1 << "  was already contracted?");
         REQUIRE(!node2.erased, "It appears node2 = " << _nodeId2 << "  was already contracted?");
-        INTERNAL_CHECK(externalLinks.size() == degree(), "Internal Error: " << externalLinks.size() << " != " << degree());
+        INTERNAL_CHECK(externalLinks.size() == order(), "Internal Error: " << externalLinks.size() << " != " << order());
 
         std::vector<TensorNetwork::Link> newLinks;
-        newLinks.reserve(node1.degree() + node2.degree());
+        newLinks.reserve(node1.order() + node2.order());
 
         if (!node1.tensorObject) {
             INTERNAL_CHECK(!node2.tensorObject, "Internal Error.");
@@ -1103,7 +1109,7 @@ namespace xerus {
             //   1. the number of links between the two nodes,
             //   2. determine whether node1 is separated (ownlinks-commonlinks) or transposed separated (commonlinks-ownlinks)
             //   3. determine the links of the resulting tensor (first half)
-            if(node1.degree() > 1) {
+            if(node1.order() > 1) {
                 uint_fast8_t switches = 0;
                 bool previous = node1.neighbors[0].links(_nodeId2);
                 for (const Link& l : node1.neighbors) {
@@ -1138,7 +1144,7 @@ namespace xerus {
             //   2. whether any self-links exist
             //   3. whether the second node is separated
             //   4. determine the links of the resulting tensor (second half)
-            if(node2.degree() > 1 && contractedDimCount > 0) {
+            if(node2.order() > 1 && contractedDimCount > 0) {
                 bool previous = node2.neighbors[0].links(_nodeId1);
                 uint_fast8_t switches = 0;
                 size_t lastPosOfCommon = 0;
@@ -1183,10 +1189,10 @@ namespace xerus {
 
             // reshuffle first node
             if (!separated1) {
-                std::vector<size_t> shuffle(node1.degree());
+                std::vector<size_t> shuffle(node1.order());
                 size_t pos = 0;
 
-                for (size_t d = 0; d < node1.degree(); ++d) {
+                for (size_t d = 0; d < node1.order(); ++d) {
                     if (!node1.neighbors[d].links(_nodeId2)) {
                         shuffle[d] = pos++;
                     }
@@ -1198,7 +1204,7 @@ namespace xerus {
                     }
                 }
 
-                INTERNAL_CHECK(pos == node1.degree(), "IE");
+                INTERNAL_CHECK(pos == node1.order(), "IE");
                 reshuffle(*node1.tensorObject, *node1.tensorObject, shuffle);
 
                 matchingOrder = true;
@@ -1206,12 +1212,12 @@ namespace xerus {
 
             // reshuffle second node
             if (!separated2) {
-                std::vector<size_t> shuffle(node2.degree());
+                std::vector<size_t> shuffle(node2.order());
                 size_t pos = 0;
 
                 if (matchingOrder) {
                     // Add common links in order as they appear in node2 to avoid both nodes changing to the opposite link order
-                    for (size_t d = 0; d < node2.degree(); ++d) {
+                    for (size_t d = 0; d < node2.order(); ++d) {
                         if (node2.neighbors[d].links(_nodeId1)) {
                             shuffle[d] = pos++;
                         }
@@ -1224,13 +1230,13 @@ namespace xerus {
                     }
                 }
 
-                for (size_t d = 0; d < node2.degree(); ++d) {
+                for (size_t d = 0; d < node2.order(); ++d) {
                     if (!node2.neighbors[d].links(_nodeId1)) {
                         shuffle[d] = pos++;
                     }
                 }
 
-                INTERNAL_CHECK(pos == node2.degree(), "IE");
+                INTERNAL_CHECK(pos == node2.order(), "IE");
                 reshuffle(*node2.tensorObject, *node2.tensorObject, shuffle);
             }
 
@@ -1304,7 +1310,7 @@ namespace xerus {
             const size_t c = *idItr; TensorNode &nc = nodes[c];
             double sa  = 1, sb  = 1, sc  = 1; // sizes devided by the link dimensions between a,b,c
             double sab = 1, sbc = 1, sac = 1; // link dimensions
-            for (size_t d = 0; d < na.degree(); ++d) {
+            for (size_t d = 0; d < na.order(); ++d) {
                 if (na.neighbors[d].links(b)) {
                     sab *= static_cast<double>(na.neighbors[d].dimension);
                 } else if (na.neighbors[d].links(c)) {
@@ -1313,14 +1319,14 @@ namespace xerus {
                     sa *= static_cast<double>(na.neighbors[d].dimension);
                 }
             }
-            for (size_t d = 0; d < nb.degree(); ++d) {
+            for (size_t d = 0; d < nb.order(); ++d) {
                 if (nb.neighbors[d].links(c)) {
                     sbc *= static_cast<double>(nb.neighbors[d].dimension);
                 } else if (!nb.neighbors[d].links(a)) {
                     sb *= static_cast<double>(nb.neighbors[d].dimension);
                 }
             }
-            for (size_t d = 0; d < nc.degree(); ++d) {
+            for (size_t d = 0; d < nc.order(); ++d) {
                 if (!nc.neighbors[d].links(a) && !nc.neighbors[d].links(b)) {
                     sc *= static_cast<double>(nc.neighbors[d].dimension);
                 }
@@ -1384,23 +1390,23 @@ namespace xerus {
                 graphLayout << "\tN"<<i<<" [label=\"N"<<i<<"\", shape=circle, fixedsize=shape, height=0.45];" << std::endl;
             } else {
                 graphLayout << "\tN"<<i<<" [label=\"";
-                for(size_t k=0; k+1 < nodes[i].degree(); ++k) {
-                    if(nodes[i].degree()/2 == k) {
-                        if(nodes[i].degree()%2 == 0) {
+                for(size_t k=0; k+1 < nodes[i].order(); ++k) {
+                    if(nodes[i].order()/2 == k) {
+                        if(nodes[i].order()%2 == 0) {
                         graphLayout << "<i"<<k<<"> "<<i<<"| ";
                         } else {
                             graphLayout << "<i"<<k<<"> N"<<i<<"| ";
                         }
-                    } else if(nodes[i].degree()%2 == 0 && nodes[i].degree()/2 == k+1) {
+                    } else if(nodes[i].order()%2 == 0 && nodes[i].order()/2 == k+1) {
                         graphLayout << "<i"<<k<<"> N| ";
                     } else {
                         graphLayout << "<i"<<k<<"> | ";
                     }
                 }
-                if(nodes[i].degree() <= 2) {
-                    graphLayout << "<i"<<nodes[i].degree()-1<<"> N"<<i<<"\", shape=record, fixedsize=shape, height=0.45, style=\"rounded,filled\"];" << std::endl;
+                if(nodes[i].order() <= 2) {
+                    graphLayout << "<i"<<nodes[i].order()-1<<"> N"<<i<<"\", shape=record, fixedsize=shape, height=0.45, style=\"rounded,filled\"];" << std::endl;
                 } else {
-                    graphLayout << "<i"<<nodes[i].degree()-1<<">\", shape=record, fixedsize=shape, height=0.45, style=\"rounded,filled\"];" << std::endl;
+                    graphLayout << "<i"<<nodes[i].order()-1<<">\", shape=record, fixedsize=shape, height=0.45, style=\"rounded,filled\"];" << std::endl;
                 }
 
                 // Add all links to nodes with smaller index and externals

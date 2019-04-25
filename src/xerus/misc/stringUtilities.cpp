@@ -41,37 +41,27 @@ namespace xerus {
 			return ""; 
 		}
 
-		std::string normalize_pathname(const std::string &_name) {
-			std::vector<std::string> oldpath = explode(_name,'/');
-			std::vector<std::string *> newpath;
-			for (std::string &f : oldpath) {
-				if (f.empty()) { continue; }
-				if (f==".." && !newpath.empty() && *newpath.back() != "..") {
-					newpath.pop_back();
-				} else {
-					newpath.push_back(&f);
-				}
-			}
-			std::string ret;
-			for (std::string *f : newpath) {
-				ret += *f;
-				ret += '/';
-			}
-			if (!ret.empty()) { ret.pop_back(); }
-			return ret;
-		}
-
+		
 		std::vector<std::string> explode(const std::string& _string, const char _delim) {
 			std::vector<std::string> result;
-			std::istringstream iss(_string);
+			
+			const std::string::size_type length = _string.length();
+			std::string::size_type pos, lastPos = 0;
 
-			std::string token;
-			while(std::getline(iss, token, _delim)) {
-				result.push_back(std::move(token));
+			while(lastPos < length + 1) {
+				pos = _string.find(_delim, lastPos);
+				if(pos == std::string::npos) { pos = length; }
+
+				if(pos != lastPos) {
+					result.emplace_back(_string, lastPos, pos-lastPos);
+				}
+
+				lastPos = pos + 1;
 			}
-
-			return result;
+			
+			return result; 
 		}
+		
 
 		void replace(std::string& _string, const std::string& _search, const std::string& _replace) {
 			size_t pos = 0;
@@ -81,6 +71,7 @@ namespace xerus {
 			}
 		}
 		
+		
 		std::string trim(const std::string& _string, const std::string& whitespace) {
 			const size_t strBegin = _string.find_first_not_of(whitespace);
 			if (strBegin == std::string::npos) {
@@ -89,6 +80,7 @@ namespace xerus {
 			const size_t strEnd = _string.find_last_not_of(whitespace);
 			return _string.substr(strBegin, strEnd - strBegin + 1);
 		}
+		
 
 		std::string reduce(const std::string& _string, const std::string& whitespace, const std::string& fill) {
 			// Trim first

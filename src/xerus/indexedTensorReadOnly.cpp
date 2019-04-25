@@ -58,7 +58,7 @@ namespace xerus {
 		
 		template<class tensor_type>
 		IndexedTensorReadOnly<tensor_type>::operator value_t() const {
-			REQUIRE(degree() == 0, "cannot cast tensors of degree > 0 to value_t. did you mean frob_norm() or similar?");
+			REQUIRE(order() == 0, "cannot cast tensors of order > 0 to value_t. did you mean frob_norm() or similar?");
 			return (*tensorObjectReadOnly)[0];
 		}
 		
@@ -68,24 +68,24 @@ namespace xerus {
 		}
 		
 		template<class tensor_type>
-		size_t IndexedTensorReadOnly<tensor_type>::degree() const {
-			return tensorObjectReadOnly->degree();
+		size_t IndexedTensorReadOnly<tensor_type>::order() const {
+			return tensorObjectReadOnly->order();
 		}
 		
 		template<class tensor_type>
 		void IndexedTensorReadOnly<tensor_type>::assign_indices() {
-			assign_indices(degree());
+			assign_indices(order());
 		}
 		
 		template<class tensor_type>
-		void IndexedTensorReadOnly<tensor_type>::assign_indices(const size_t _degree) {
+		void IndexedTensorReadOnly<tensor_type>::assign_indices(const size_t _order) {
 			if(!indicesAssigned) {
 				size_t dimensionCount = 0;
 				for(size_t i = 0; i < indices.size(); ++i) {
 					Index& idx = indices[i];
 					
 					// Set span
-					idx.set_span(_degree);
+					idx.set_span(_order);
 					
 					dimensionCount += idx.span;
 					
@@ -106,8 +106,8 @@ namespace xerus {
 					IF_CHECK(idx.flags[Index::Flag::ASSINGED] = true;)
 				}
 				
-				REQUIRE(dimensionCount >= _degree, "Order determined by Indices is to small. Order according to the indices " << dimensionCount << ", according to the tensor " << _degree);
-				REQUIRE(dimensionCount <= _degree, "Order determined by Indices is to large. Order according to the indices " << dimensionCount << ", according to the tensor " << _degree);
+				REQUIRE(dimensionCount >= _order, "Order determined by Indices is to small. Order according to the indices " << dimensionCount << ", according to the tensor " << _order);
+				REQUIRE(dimensionCount <= _order, "Order determined by Indices is to large. Order according to the indices " << dimensionCount << ", according to the tensor " << _order);
 
 				misc::erase(indices, [](const Index& _idx) { return _idx.span == 0; });
 				indicesAssigned = true;
@@ -130,8 +130,8 @@ namespace xerus {
 				}
 			}
 			
-			REQUIRE(dimensionCount >= degree(), "Order determined by Indices is to small. Order according to the indices " << dimensionCount << ", according to the tensor " << degree());
-			REQUIRE(dimensionCount <= degree(), "Order determined by Indices is to large. Order according to the indices " << dimensionCount << ", according to the tensor " << degree());
+			REQUIRE(dimensionCount >= order(), "Order determined by Indices is to small. Order according to the indices " << dimensionCount << ", according to the tensor " << order());
+			REQUIRE(dimensionCount <= order(), "Order determined by Indices is to large. Order according to the indices " << dimensionCount << ", according to the tensor " << order());
 		}
 		
 		
@@ -338,13 +338,13 @@ namespace xerus {
 			return _idxTensor.tensorObjectReadOnly->one_norm();
 		}
 		
-		size_t get_eval_degree(const std::vector<Index>& _indices) {
-			size_t degree = 0;
+		size_t get_eval_order(const std::vector<Index>& _indices) {
+			size_t order = 0;
 			for(const Index& idx : _indices) {
 				INTERNAL_CHECK(idx.flags[Index::Flag::ASSINGED], "Internal Error");
-				if(!idx.fixed() && misc::count(_indices, idx) != 2) { degree += idx.span; }
+				if(!idx.fixed() && misc::count(_indices, idx) != 2) { order += idx.span; }
 			}
-			return degree;
+			return order;
 		}
 	} // namespace internal
 } // namespace xerus

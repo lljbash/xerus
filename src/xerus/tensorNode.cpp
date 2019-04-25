@@ -71,7 +71,7 @@ namespace xerus {
         return s;
     }
 
-    size_t TensorNetwork::TensorNode::degree() const noexcept {
+    size_t TensorNetwork::TensorNode::order() const noexcept {
         return neighbors.size();
     }
 

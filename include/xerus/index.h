@@ -105,10 +105,10 @@ namespace xerus {
 		Index& operator=(const Index&) = default;
 		
 		/// @brief Returns the span this index actually represents in a tensor of given order.
-		void set_span(const size_t _degree);
+		void set_span(const size_t _order);
 		
 		/// @brief Returns the span this index actually represents in a tensor of given order.
-		size_t actual_span(const size_t _degree) const;
+		size_t actual_span(const size_t _order) const;
 		
 		/// @brief Checks whether the Index represents a fixed number.
 		bool fixed() const;
@@ -138,14 +138,14 @@ namespace xerus {
 		
 		/** @brief: Allow the creation of Indices covering all but x dimensions using the and operator. 
 		 * E.g. A() = B(i&0) * C(i&0), defines A as the full contraction between B and C,
-		 * indifferent of the actual degree of B and C.
+		 * indifferent of the actual order of B and C.
 		 * @param _span Number of dimensions NOT to be covered by this index.
 		 */
 		Index operator&(const size_t _span) const;
 		
 		/** @brief: Allow the creation of Indices covering an x-th fraction of the indices. 
 		 * E.g. A(i&0) = B(i/2, j/2) * C(j&0), defines A as the contraction between the symmetric matrification
-		 * of B and the vectorisation of C, indifferent of the actual degree of B and C.
+		 * of B and the vectorisation of C, indifferent of the actual order of B and C.
 		 * @param _span the fraction of the dimensions to be covered by this index.
 		 */
 		Index operator/(const size_t _span) const;

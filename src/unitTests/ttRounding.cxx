@@ -25,62 +25,62 @@
 using namespace xerus;
 
 static misc::UnitTest tt_round("TT", "TTTensor_Rounding", [](){
-    Index i,j,k;
-    
-    Tensor A1 = Tensor::random({2});
-    Tensor B1;
-    TTTensor TTA1(A1, 1e-14);
-    B1(i) = TTA1(i);
-    TEST(approx_equal(B1,A1, 1e-14));
-    
-    TTA1.round(1e-14);
-    B1(i) = TTA1(i);
-    TEST(approx_equal(B1,A1, 1e-14));
-    
-    TTA1.round(1);
-    B1(i) = TTA1(i);
-    TEST(approx_equal(B1,A1, 1e-14));
-    
-    
-    Tensor A2 = Tensor::random({2,2});
-    Tensor B2;
-    TTTensor TTA2(A2, 1e-14);
-    B2(j,i) = TTA2(j,i);
-    TEST(approx_equal(B2,A2, 1e-14));
-    
-    TTA2.round(1e-14);
-    B2(j,i) = TTA2(j,i);
-    TEST(approx_equal(B2,A2, 1e-14));
-    
-    TTA2.round(2);
-    B2(j,i) = TTA2(j,i);
-    TEST(approx_equal(B2,A2, 1e-14));
-    
-    
-    Tensor A3 = Tensor::random({2,7});
-    Tensor B3;
-    TTTensor TTA3(A3, 1e-14);
-    B3(j,i) = TTA3(j,i);
-    TEST(approx_equal(B3,A3, 1e-14));
-    
-    TTA3.round(1e-14);
-    B3(j,i) = TTA3(j,i);
-    TEST(approx_equal(B3,A3, 1e-14));
-    
-    TTA3.round(2);
-    B3(j,i) = TTA3(j,i);
-    TEST(approx_equal(B3,A3, 1e-14));
-    
-    
-    Tensor A4 = Tensor::random({2,2,2,2,2,2,2,2});
+	Index i,j,k;
+
+	Tensor A1 = Tensor::random({2});
+	Tensor B1;
+	TTTensor TTA1(A1, 1e-14);
+	B1(i) = TTA1(i);
+	TEST(approx_equal(B1,A1, 1e-14));
+
+	TTA1.round(1e-14);
+	B1(i) = TTA1(i);
+	TEST(approx_equal(B1,A1, 1e-14));
+
+	TTA1.round(1);
+	B1(i) = TTA1(i);
+	TEST(approx_equal(B1,A1, 1e-14));
+
+
+	Tensor A2 = Tensor::random({2,2});
+	Tensor B2;
+	TTTensor TTA2(A2, 1e-14);
+	B2(j,i) = TTA2(j,i);
+	TEST(approx_equal(B2,A2, 1e-14));
+
+	TTA2.round(1e-14);
+	B2(j,i) = TTA2(j,i);
+	TEST(approx_equal(B2,A2, 1e-14));
+
+	TTA2.round(2);
+	B2(j,i) = TTA2(j,i);
+	TEST(approx_equal(B2,A2, 1e-14));
+
+
+	Tensor A3 = Tensor::random({2,7});
+	Tensor B3;
+	TTTensor TTA3(A3, 1e-14);
+	B3(j,i) = TTA3(j,i);
+	TEST(approx_equal(B3,A3, 1e-14));
+
+	TTA3.round(1e-14);
+	B3(j,i) = TTA3(j,i);
+	TEST(approx_equal(B3,A3, 1e-14));
+
+	TTA3.round(2);
+	B3(j,i) = TTA3(j,i);
+	TEST(approx_equal(B3,A3, 1e-14));
+
+
+	Tensor A4 = Tensor::random({2,2,2,2,2,2,2,2});
 	for (double eps = 1e-3; eps < 1.0; eps*=1.2) {
 		TTTensor B4(A4);
 		B4.round(eps);
 		MTEST(approx_equal(A4, B4, eps), eps << " vs " << frob_norm(A4-Tensor(B4))/frob_norm(A4));
 	}
-    
-    
-    Tensor A5 = Tensor::random({5,6,3,1,4,2,8,1});
+
+
+	Tensor A5 = Tensor::random({5,6,3,1,4,2,8,1});
 	for (double eps = 1e-3; eps < 1.0; eps*=1.2) {
 		TTTensor B5(A5);
 		B5.round(eps);
@@ -94,7 +94,8 @@ static misc::UnitTest tt_noround("TT", "no_rounding", [](){
 	TTTensor a = TTTensor::random({2,2,2,2,2,2,2}, {2,2,2,2,2,2});
 	TTTensor b(a);
 	a.round(2);
-	TEST(approx_equal(Tensor(a),Tensor(b)));
+	MTEST(approx_equal(Tensor(a),Tensor(b), 1e-14), frob_norm(a-b));
+	
 	TTTensor c = TTTensor::random({2,2,2,2,2,2,2}, {2,2,2,2,2,2});
 	a(i&0) = a(i&0) + 0.0*c(i&0);
 	LOG(unit_test, a.ranks());
