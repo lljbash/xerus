@@ -32,4 +32,4 @@ void expose_htnetwork(module& m);
 /* void expose_leastSquaresAlgorithms(module& m); */
 /* void expose_recoveryAlgorithms(module& m); */
 
-/* void expose_misc(module& m); */
+void expose_misc(module& m);
