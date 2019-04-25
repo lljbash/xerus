@@ -51,9 +51,9 @@ void expose_tensor(module& m) {
         arg("repr")=Tensor::Representation::Sparse,
         arg("init")=Tensor::Initialisation::Zero
     )
-    .def(init<const TensorNetwork&>())
-    .def(init<const Tensor &>())
-    /* .def(init<const Tensor::DimensionTuple&, const std::function<value_t(std::vector<size_t>)>>()) */
+    .def(init<TensorNetwork>())
+    .def(init<Tensor>())
+    .def(init<Tensor::DimensionTuple, std::function<value_t(std::vector<size_t>)>>())
     .def_static("from_function", +[](const Tensor::DimensionTuple& _dim, const std::function<value_t(std::vector<size_t>)> _f){
         LOG(warning, "Deprecation warning: `from_function` is deprecated and will be removed in Xerus v5.0.0. Use the `Tensor` constructor instead.");
         return Tensor(_dim, _f);
@@ -190,14 +190,14 @@ arg("dim")
 //    .def("__call__", +[](Tensor *_this, const std::vector<Index> &_idx){
 //         return  new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(_idx)));
 //    }, return_value_policy::take_ownership ) //TODO check this
-		.def("__call__", +[](Tensor *_this, args _args){
-    		 std::vector<Index> idx;
-    		 idx.reserve(_args.size());
-    		 for (size_t i=0; i<_args.size(); ++i) {
-    			   idx.push_back(*(_args[i].cast<Index *>()));
-    		 }
-				 return new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(idx)));
-		}, return_value_policy::take_ownership ) //TODO check this
+    .def("__call__", +[](Tensor *_this, args _args){
+         std::vector<Index> idx;
+         idx.reserve(_args.size());
+         for (size_t i=0; i<_args.size(); ++i) {
+               idx.push_back(*(_args[i].cast<Index *>()));
+         }
+             return new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(idx)));
+    }, return_value_policy::take_ownership ) //TODO check this
     .def("__str__", &Tensor::to_string)
     .def(self * value_t())
     .def(value_t() * self)
@@ -221,5 +221,6 @@ arg("dim")
     .def("__setitem__", +[](Tensor &_this, std::vector<size_t> _i, value_t _val) {
         _this[_i] = _val;
     })
+    // .def("__float__", [](const Tensor &_self){ return value_t(_self); })  //TODO: does not work! use implicitly_convertible<Tensor, internal::IndexedTensorReadOnly<TensorNetwork>>();
     ;
 }
