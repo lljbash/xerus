@@ -23,7 +23,7 @@ using namespace xerus;
 
 
 void expose_indexedTensors(module& m);
-/* void expose_factorizations(module& m); */
+void expose_factorizations(module& m);
 void expose_tensor(module& m);
 void expose_tensorNetwork(module& m);
 void expose_ttnetwork(module& m);
