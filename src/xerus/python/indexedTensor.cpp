@@ -31,6 +31,7 @@ void expose_indexedTensors(module& m) {
 		"helper class to define objects to be used in indexed expressions"
 	)
 		.def(init())
+		.def(init<int64_t>())
 		.def("__pow__", &Index::operator^, "i**d changes the index i to span d indices in the current expression")
 		.def("__xor__", &Index::operator^, "i^d changes the index i to span d indices in the current expression")
 		.def("__div__", &Index::operator/, "i/n changes the index i to span 1/n of all the indices of the current object")

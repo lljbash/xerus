@@ -18,7 +18,7 @@ PYBIND11_MODULE(xerus, m) {
     expose_ttnetwork(m);
     expose_htnetwork(m);
 
-    /* expose_leastSquaresAlgorithms(m); */
+    expose_leastSquaresAlgorithms(m);
     /* expose_recoveryAlgorithms(m); */
 
     expose_misc(m);
