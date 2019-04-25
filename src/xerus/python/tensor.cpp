@@ -36,6 +36,14 @@ void expose_tensor(module& m) {
             strides_from_dimensions_and_item_size(t.dimensions, sizeof(value_t))  /* Strides (in bytes) for each index */
         );
     })
+    .def(pickle(
+        [](const Tensor &_self) { // __getstate__
+            return bytes(misc::serialize(_self));
+        },
+        [](bytes _bytes) { // __setstate__
+            return misc::deserialize<Tensor>(_bytes);
+        }
+    ))
     .def(init<>(), "constructs an empty Tensor")
     .def(init<Tensor::DimensionTuple, Tensor::Representation, Tensor::Initialisation>(),
         "constructs a Tensor with the given dimensions",
