@@ -78,6 +78,7 @@ void expose_tensor(module& m) {
         return _A.dimensions;
     })
     .def("degree", &Tensor::degree)
+    .def("order", &Tensor::order)
     .def_readonly("factor", &Tensor::factor)
     .def_readonly("size", &Tensor::size)
     .def("one_norm", &Tensor::one_norm)
