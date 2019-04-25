@@ -8,6 +8,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
+#include <pybind11/eval.h>
 // #include <pybind11/numpy.h>
 #include "xerus.h"
 #include "xerus/misc/internal.h"  // REQUIRE
@@ -21,7 +22,7 @@ using namespace xerus;
 #define returnsDocstr "\n\nReturns\n-------\n"
 
 
-/* void expose_indexedTensors(module& m); */
+void expose_indexedTensors(module& m);
 /* void expose_factorizations(module& m); */
 void expose_tensor(module& m);
 void expose_tensorNetwork(module& m);

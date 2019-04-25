@@ -77,7 +77,7 @@ void expose_ttnetwork(module& m) {
         .def("ranks", &TTOperator::ranks)
         .def("rank", &TTOperator::rank)
 //      .def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
-        .def_static("random",
+        .def_static("random", //TODO check error throwing python crashes when error from xerus is thrown
             +[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
                 return xerus::TTOperator::random(_dim, _rank);
             })
