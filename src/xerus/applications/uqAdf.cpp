@@ -640,7 +640,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
     }
     
 
-    TTTensor uq_ra_adf_iv(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
+    TTTensor uq_ra_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
         REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
         REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 
