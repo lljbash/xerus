@@ -30,10 +30,11 @@ void expose_indexedTensors(module& m) {
 	class_<Index>(m,"Index",
 		"helper class to define objects to be used in indexed expressions"
 	)
-		.def(init<int64_t>())
+		.def(init())
 		.def("__pow__", &Index::operator^, "i**d changes the index i to span d indices in the current expression")
 		.def("__xor__", &Index::operator^, "i^d changes the index i to span d indices in the current expression")
 		.def("__div__", &Index::operator/, "i/n changes the index i to span 1/n of all the indices of the current object")
+		.def("__truediv__", &Index::operator/, "i/n changes the index i to span 1/n of all the indices of the current object")
 		.def("__and__", &Index::operator&, "i&d changes the index i to span all but d indices of the current object")
 		.def("__str__", static_cast<std::string (*)(const Index &)>(&misc::to_string<Index>))
 	;
@@ -45,12 +46,8 @@ void expose_indexedTensors(module& m) {
 		"  while i<n:\n"
 		"    yield Index()\n"
 		"    i += 1\n"
-	, m.attr("__dict__")); //TODO check this
+	,m.attr("__dict__")); //TODO check this
 
-//	implicitly_convertible<internal::IndexedTensorReadOnly<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>(); //TODO check this!
-//	implicitly_convertible<internal::IndexedTensorWritable<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>(); //TODO check this!
-//	implicitly_convertible<internal::IndexedTensorMoveable<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>(); //TODO check this!
-//	implicitly_convertible<internal::IndexedTensor<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();         //TODO check this!
 	// NOTE in the following all __mul__ variants are defined for the ReadOnly indexed Tensors, even if they are meant for
 	//		the moveable indexed tensors. boost will take care of the proper matching that way. if IndexedTensorMoveable
 	//		defined an __mul__ function on its own it would overwrite all overloaded variants of the readonly indexed tensors
@@ -148,4 +145,9 @@ void expose_indexedTensors(module& m) {
 				std::move(_lhs) = std::move(_rhs);
 			})
 	;
+
+	implicitly_convertible<internal::IndexedTensorReadOnly<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();
+  implicitly_convertible<internal::IndexedTensorWritable<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();
+  implicitly_convertible<internal::IndexedTensorMoveable<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();
+	implicitly_convertible<internal::IndexedTensor<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();
 }

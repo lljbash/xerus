@@ -6,7 +6,7 @@ void expose_tensorNetwork(module& m) {
         .def(init<Tensor>())
         .def(init<const TensorNetwork &>())
         .def_readonly("dimensions", &TensorNetwork::dimensions)
-        .def("degree", &TensorNetwork::degree)
+        .def("order", &TensorNetwork::order)
         .def("datasize", &TensorNetwork::datasize)
         .def_readonly("nodes", &TensorNetwork::nodes)
         .def("node", +[](TensorNetwork &_this, size_t _i) {
@@ -53,7 +53,7 @@ void expose_tensorNetwork(module& m) {
 
     class_<TensorNetwork::TensorNode>(m, "TensorNode")
         .def("size", &TensorNetwork::TensorNode::size)
-        .def("degree", &TensorNetwork::TensorNode::degree)
+        .def("order", &TensorNetwork::TensorNode::order)
         /* .def_readonly("erased", &TensorNetwork::TensorNode::erased) // internal */
         /* .def("erase", &TensorNetwork::TensorNode::erase) // internal */
         .def_property_readonly("tensorObject", +[](TensorNetwork::TensorNode &_this)->object {
