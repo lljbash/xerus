@@ -75,6 +75,14 @@ class TestTensor(unittest.TestCase):
 		self.assertAlmostEqual(ten_init_dirac[1,1,1,1], 1)
 		self.assertAlmostEqual(ten_init_dirac[1,1,1,0], 0)
 
+	def test_cast_tensor_0(self):
+		a = xe.Tensor([])
+		self.assertEqual(float(a), 0)
+
+	def test_cast_tensor_1(self):
+		a = xe.Tensor.ones([])
+		self.assertEqual(float(a), 1)
+
 	def test_reinterpret_dimensions(self):
 		T = xe.Tensor.random([2,3,4,5])
 		T_new = T.dense_copy()
