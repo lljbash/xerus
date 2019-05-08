@@ -7,18 +7,19 @@ void expose_recoveryAlgorithms(module& m) {
         .def(init<const SinglePointMeasurementSet&>())
         .def_readwrite("positions", &SinglePointMeasurementSet::positions)
         .def_readwrite("measuredValues", &SinglePointMeasurementSet::measuredValues)
-        .def("add", &SinglePointMeasurementSet::add)
+        .def("add", overload_cast<const std::vector<size_t>&, const value_t>(&SinglePointMeasurementSet::add))
+        .def("add", overload_cast<const std::vector<size_t>&, const value_t, const value_t>(&SinglePointMeasurementSet::add))
         .def("size", &SinglePointMeasurementSet::size)
         .def("order", &SinglePointMeasurementSet::order)
         .def("norm_2", &SinglePointMeasurementSet::norm_2)
-        .def("sort", &SinglePointMeasurementSet::sort, arg("positionsOnly")=false)
-        .def("measure", static_cast<void (SinglePointMeasurementSet::*)(const Tensor &)>(&SinglePointMeasurementSet::measure), arg("solution"))
-        .def("measure", static_cast<void (SinglePointMeasurementSet::*)(const TensorNetwork &)>(&SinglePointMeasurementSet::measure), arg("solution"))
+        .def("sort", &SinglePointMeasurementSet::sort)
+        .def("measure", overload_cast<const Tensor &>(&SinglePointMeasurementSet::measure), arg("solution"))
+        .def("measure", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::measure), arg("solution"))
         .def("measure", +[](SinglePointMeasurementSet &_this, const std::function<double(const std::vector<size_t>)> _f) {
             _this.measure(_f);
         })
-        .def("test", static_cast<double (SinglePointMeasurementSet::*)(const Tensor &) const>(&SinglePointMeasurementSet::test), arg("solution"))
-        .def("test", static_cast<double (SinglePointMeasurementSet::*)(const TensorNetwork &) const>(&SinglePointMeasurementSet::test), arg("solution"))
+        .def("test", overload_cast<const Tensor &>(&SinglePointMeasurementSet::test, const_), arg("solution"))
+        .def("test", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::test, const_), arg("solution"))
         .def("test", +[](SinglePointMeasurementSet &_this, const std::function<double(const std::vector<size_t>)> _f) -> double {
             return _this.test(_f);
         })
@@ -55,15 +56,15 @@ void expose_recoveryAlgorithms(module& m) {
         .def("size", &RankOneMeasurementSet::size)
         .def("order", &RankOneMeasurementSet::order)
         .def("norm_2", &RankOneMeasurementSet::norm_2)
-        .def("sort", &RankOneMeasurementSet::sort, arg("positionsOnly")=false)
+        .def("sort", &RankOneMeasurementSet::sort)
         .def("normalize", &RankOneMeasurementSet::normalize)
-        .def("measure", static_cast<void (RankOneMeasurementSet::*)(const Tensor &)>(&RankOneMeasurementSet::measure), arg("solution"))
-        .def("measure", static_cast<void (RankOneMeasurementSet::*)(const TensorNetwork &)>(&RankOneMeasurementSet::measure), arg("solution"))
+        .def("measure", overload_cast<const Tensor &>(&RankOneMeasurementSet::measure), arg("solution"))
+        .def("measure", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::measure), arg("solution"))
         .def("measure", +[](RankOneMeasurementSet &_this, const std::function<double(const std::vector<Tensor>)> _f) {
             _this.measure(_f);
         })
-        .def("test", static_cast<double (RankOneMeasurementSet::*)(const Tensor &) const>(&RankOneMeasurementSet::test), arg("solution"))
-        .def("test", static_cast<double (RankOneMeasurementSet::*)(const TensorNetwork &) const>(&RankOneMeasurementSet::test), arg("solution"))
+        .def("test", overload_cast<const Tensor &>(&RankOneMeasurementSet::test, const_), arg("solution"))
+        .def("test", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::test, const_), arg("solution"))
         .def("test", +[](RankOneMeasurementSet &_this, const std::function<double(const std::vector<Tensor>)> _f) -> double {
             return _this.test(_f);
         })
@@ -107,29 +108,29 @@ void expose_recoveryAlgorithms(module& m) {
     ;
 
     m.def("uq_ra_adf", +[](const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
-            return uq::uq_ra_adf(_measurements, _basisType, _dimensions, _targetEps, _maxItr);
-            }, arg("measurements"), arg("polynombasis"), arg("dimensions"), arg("targeteps"), arg("maxitr")
-       );
+        return uq::uq_ra_adf(_measurements, _basisType, _dimensions, _targetEps, _maxItr);
+        }, arg("measurements"), arg("polynombasis"), arg("dimensions"), arg("targeteps"), arg("maxitr")
+    );
 
     m.def("uq_ra_adf", +[](const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
-            return uq::uq_ra_adf(_positions, _solutions, _dimensions, _targetEps, _maxItr);
-            }, arg("positions"), arg("solutions"), arg("dimensions"), arg("targeteps"), arg("maxitr")
-       );
+        return uq::uq_ra_adf(_positions, _solutions, _dimensions, _targetEps, _maxItr);
+        }, arg("positions"), arg("solutions"), arg("dimensions"), arg("targeteps"), arg("maxitr")
+    );
 
     m.def("uq_ra_adf", +[](const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr){
-            return uq::uq_ra_adf(_positions, _solutions, _weights, _dimensions, _targetEps, _maxItr);
-            }, arg("positions"), arg("solutions"), arg("weights"), arg("dimensions"), arg("targeteps"), arg("maxitr")
-       );
+        return uq::uq_ra_adf(_positions, _solutions, _weights, _dimensions, _targetEps, _maxItr);
+        }, arg("positions"), arg("solutions"), arg("weights"), arg("dimensions"), arg("targeteps"), arg("maxitr")
+    );
 
     m.def("uq_ra_adf", +[](TTTensor& _x, const uq::UQMeasurementSet& _measurements, const uq::PolynomBasis _basisType, const double _targetEps, const size_t _maxItr){
-            return uq::uq_ra_adf(_x, _measurements, _basisType, _targetEps, _maxItr);
-            }, arg("initial guess"), arg("measurements"), arg("polynombasis"), arg("targeteps"), arg("maxitr")
-       );
+        return uq::uq_ra_adf(_x, _measurements, _basisType, _targetEps, _maxItr);
+        }, arg("initial guess"), arg("measurements"), arg("polynombasis"), arg("targeteps"), arg("maxitr")
+    );
 
     m.def("uq_tt_evaluate", +[](const TTTensor& _x, const std::vector<double>& _parameters, const uq::PolynomBasis _basisType) {
-            return uq::evaluate(_x, _parameters, _basisType);
-            }, arg("x"), arg("parameters"), arg("basisType")
-       );
+        return uq::evaluate(_x, _parameters, _basisType);
+        }, arg("x"), arg("parameters"), arg("basisType")
+    );
 
     enum_<uq::PolynomBasis>(m, "PolynomBasis")
         .value("Hermite", uq::PolynomBasis::Hermite)
