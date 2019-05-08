@@ -31,7 +31,7 @@ void expose_tensor(module& m) {
             t.get_dense_data(),                    /* Pointer to buffer */
             sizeof(value_t),                       /* Size of one scalar */
             format_descriptor<value_t>::format(),  /* Python struct-style format descriptor */
-            t.degree(),                            /* Number of dimensions */
+            t.order(),                             /* Number of dimensions */
             t.dimensions,                          /* Buffer dimensions */
             strides_from_dimensions_and_item_size(t.dimensions, sizeof(value_t))  /* Strides (in bytes) for each index */
         );
@@ -112,7 +112,7 @@ void expose_tensor(module& m) {
         +[](std::vector<size_t> _dimLhs, std::vector<size_t> _dimRhs) {
         return xerus::Tensor::random_orthogonal(_dimLhs, _dimRhs);
         })
-    .def_static("ones", &Tensor::ones, 
+    .def_static("ones", &Tensor::ones,
          "Constructs a tensor of given dimensions that is equal to 1 everywhere."
           parametersDocstr "dim : list or tuple of int",
     arg("dim")
