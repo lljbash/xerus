@@ -143,6 +143,7 @@ void expose_indexedTensors(module& m) {
             +[](internal::IndexedTensor<Tensor> &_lhs, internal::IndexedTensorReadOnly<TensorNetwork> &_rhs) {
                 std::move(_lhs) = std::move(_rhs);
             })
+        .def_readonly("indices", &internal::IndexedTensor<Tensor>::indices)
     ;
 
     implicitly_convertible<internal::IndexedTensorReadOnly<Tensor>, internal::IndexedTensorMoveable<TensorNetwork>>();
