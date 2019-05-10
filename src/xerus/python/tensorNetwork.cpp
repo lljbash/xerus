@@ -5,6 +5,12 @@ void expose_tensorNetwork(module& m) {
         .def(init<>())
         .def(init<Tensor>())
         .def(init<const TensorNetwork &>())
+        .def("__float__", [](const TensorNetwork &_self){
+                if (_self.order() != 0) {
+                    throw value_error("order must be 0");
+                }
+                return value_t(_self());
+        })
         .def_readonly("dimensions", &TensorNetwork::dimensions)
         .def("order", &TensorNetwork::order)
         .def("datasize", &TensorNetwork::datasize)

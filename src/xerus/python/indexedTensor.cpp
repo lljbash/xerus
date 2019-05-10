@@ -88,7 +88,7 @@ void expose_indexedTensors(module& m) {
                 return new internal::IndexedTensorMoveable<TensorNetwork>(std::move(_l) / _r);
             }, return_value_policy::take_ownership)
         .def("frob_norm", static_cast<value_t (*)(const IndexedTensorReadOnly<TensorNetwork> &)>(&frob_norm<TensorNetwork>))
-        .def("__float__", [](const IndexedTensorReadOnly<TensorNetwork> &_self){ return value_t(_self); })  //TODO
+        .def("__float__", [](const IndexedTensorReadOnly<TensorNetwork> &_self){ return value_t(_self); })
     ;
 
     class_<internal::IndexedTensorWritable<TensorNetwork>, internal::IndexedTensorReadOnly<TensorNetwork>>(m,"IndexedTensorNetworkWriteable");
@@ -128,7 +128,7 @@ void expose_indexedTensors(module& m) {
                 return new internal::IndexedTensorMoveable<Tensor>(std::move(_l) / _r);
             }, return_value_policy::take_ownership)
         .def("frob_norm", static_cast<value_t (*)(const IndexedTensorReadOnly<Tensor> &)>(&frob_norm<Tensor>))
-        //.def(float_(self)) // cast to double TODO check again
+        .def("__float__", [](const IndexedTensorReadOnly<Tensor> &_self){ return value_t(_self); })
     ;
     class_<internal::IndexedTensorWritable<Tensor>, internal::IndexedTensorReadOnly<Tensor>>(m,"IndexedTensorWriteable")
     ;

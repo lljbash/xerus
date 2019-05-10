@@ -82,6 +82,12 @@ void expose_tensor(module& m) {
 
         return result;
     })
+    .def("__float__", [](const Tensor &_self){
+            if (_self.order() != 0) {
+                throw value_error("order must be 0");
+            }
+            return value_t(_self());
+    })
     .def_property_readonly("dimensions", +[](Tensor &_A) {
         return _A.dimensions;
     })
