@@ -10,10 +10,10 @@
 #include <pybind11/functional.h>
 #include <pybind11/eval.h>
 // #include <pybind11/numpy.h>
+// #undef NDEBUG
 #include "xerus.h"
 #include "xerus/misc/internal.h"  // REQUIRE
 #pragma GCC diagnostic pop
-
 
 
 using namespace pybind11;

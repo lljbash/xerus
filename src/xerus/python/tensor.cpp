@@ -45,14 +45,14 @@ void expose_tensor(module& m) {
         }
     ))
     .def(init<>(), "constructs an empty Tensor")
+    .def(init<Tensor>())
+    .def(init<TensorNetwork>())
     .def(init<Tensor::DimensionTuple, Tensor::Representation, Tensor::Initialisation>(),
         "constructs a Tensor with the given dimensions",
         arg("dim"),
         arg("repr")=Tensor::Representation::Sparse,
         arg("init")=Tensor::Initialisation::Zero
     )
-    .def(init<TensorNetwork>())
-    .def(init<Tensor>())
     .def(init<Tensor::DimensionTuple, std::function<value_t(std::vector<size_t>)>>())
     .def_static("from_function", +[](const Tensor::DimensionTuple& _dim, const std::function<value_t(std::vector<size_t>)> _f){
         LOG(warning, "Deprecation warning: `from_function` is deprecated and will be removed in Xerus v5.0.0. Use the `Tensor` constructor instead.");

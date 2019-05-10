@@ -217,12 +217,12 @@ build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so | lib
 python2: build/python2/xerus.so
 python3: build/python3/xerus.so
 
-build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
 	@:$(call check_defined, PYTHON2_CONFIG BOOST_PYTHON2, include and link paths)
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
 
-build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
+build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
 	@:$(call check_defined, PYTHON3_CONFIG BOOST_PYTHON3, include and link paths)
 	mkdir -p $(dir $@)
 	@# -fpermissive is needed because of a bug in the definition of BOOST_PYTHON_MODULE_INIT in <boost/python/module_init.h>
