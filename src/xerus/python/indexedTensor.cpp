@@ -37,17 +37,11 @@ void expose_indexedTensors(module& m) {
         .def("__div__", &Index::operator/, "i/n changes the index i to span 1/n of all the indices of the current object")
         .def("__truediv__", &Index::operator/, "i/n changes the index i to span 1/n of all the indices of the current object")
         .def("__and__", &Index::operator&, "i&d changes the index i to span all but d indices of the current object")
-        .def("__str__", static_cast<std::string (*)(const Index &)>(&misc::to_string<Index>))
+        // .def("__str__", static_cast<std::string (*)(const Index &)>(&misc::to_string<Index>))
+        .def("__repr__", static_cast<std::string (*)(const Index &)>(&misc::to_string<Index>))
     ;
     implicitly_convertible<int64_t, Index>();
-    exec(
-        "def indices(n=1):\n"
-        "  \"\"\"Create n distinct indices.\"\"\"\n"
-        "  i = 0\n"
-        "  while i<n:\n"
-        "    yield Index()\n"
-        "    i += 1\n"
-    ,m.attr("__dict__")); //TODO check this
+    m.def("indices", [](const size_t n) -> std::vector<Index> { return std::vector<Index>(n); });
 
     // NOTE in the following all __mul__ variants are defined for the ReadOnly indexed Tensors, even if they are meant for
     //      the moveable indexed tensors. boost will take care of the proper matching that way. if IndexedTensorMoveable
@@ -58,9 +52,9 @@ void expose_indexedTensors(module& m) {
 #define ADD_MOVE_AND_RESULT_PTR(name, op, lhs_type, rhs_type, res_type) \
     .def(name, \
             +[](lhs_type &_l, rhs_type &_r) -> res_type* { \
-                LOG(pydebug, "python wrapper: " name);\
+                LOG(pydebug, "python wrapper: " name "(" #lhs_type ", " #rhs_type ")");\
                 return new res_type(std::move(_l) op std::move(_r)); \
-            }, return_value_policy::take_ownership)
+            }, keep_alive<0, 1>(), keep_alive<0, 2>(), return_value_policy::take_ownership)
 
     class_<internal::IndexedTensorReadOnly<TensorNetwork>>(m,"IndexedTensorNetworkReadOnly")
         ADD_MOVE_AND_RESULT_PTR("__add__", +, IndexedTensorReadOnly<TensorNetwork>, IndexedTensorReadOnly<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>)
@@ -72,21 +66,9 @@ void expose_indexedTensors(module& m) {
         ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>)
         ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorMoveable<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>)
         ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<TensorNetwork>, IndexedTensorReadOnly<Tensor>, IndexedTensorMoveable<TensorNetwork>)
-        .def("__mul__",
-            +[](internal::IndexedTensorReadOnly<TensorNetwork> &_l, value_t _r) -> internal::IndexedTensorReadOnly<TensorNetwork>* {
-                LOG(pydebug, "mul TN ro * scalar");
-                return new internal::IndexedTensorMoveable<TensorNetwork>(std::move(_l) * _r);
-            }, return_value_policy::take_ownership)
-        .def("__rmul__",
-            +[](value_t _r, internal::IndexedTensorReadOnly<TensorNetwork> &_l) -> internal::IndexedTensorReadOnly<TensorNetwork>* {
-                LOG(pydebug, "mul TN scalar * ro");
-                return new internal::IndexedTensorMoveable<TensorNetwork>(std::move(_l) * _r);
-            }, return_value_policy::take_ownership)
-        .def("__div__",
-            +[](internal::IndexedTensorReadOnly<TensorNetwork> &_l, value_t _r) -> internal::IndexedTensorReadOnly<TensorNetwork>* {
-                LOG(pydebug, "div TN ro / scalar");
-                return new internal::IndexedTensorMoveable<TensorNetwork>(std::move(_l) / _r);
-            }, return_value_policy::take_ownership)
+        ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<TensorNetwork>, value_t, IndexedTensorReadOnly<TensorNetwork>)
+        ADD_MOVE_AND_RESULT_PTR("__rmul__", *, IndexedTensorReadOnly<TensorNetwork>, value_t, IndexedTensorReadOnly<TensorNetwork>)
+        ADD_MOVE_AND_RESULT_PTR("__div__", /, IndexedTensorReadOnly<TensorNetwork>, value_t, IndexedTensorReadOnly<TensorNetwork>)
         .def("frob_norm", static_cast<value_t (*)(const IndexedTensorReadOnly<TensorNetwork> &)>(&frob_norm<TensorNetwork>))
         .def("__float__", [](const IndexedTensorReadOnly<TensorNetwork> &_self){ return value_t(_self); })
     ;
@@ -112,21 +94,9 @@ void expose_indexedTensors(module& m) {
         ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<Tensor>, IndexedTensorReadOnly<Tensor>, IndexedTensorMoveable<TensorNetwork>)
         ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<Tensor>, IndexedTensorReadOnly<TensorNetwork>, IndexedTensorMoveable<TensorNetwork>)
         ADD_MOVE_AND_RESULT_PTR("__div__", /, IndexedTensorReadOnly<Tensor>, IndexedTensorReadOnly<Tensor>, IndexedTensorMoveable<Tensor>)
-        .def("__mul__",
-            +[](internal::IndexedTensorReadOnly<Tensor> &_l, value_t _r) -> internal::IndexedTensorReadOnly<Tensor>* {
-                LOG(pydebug, "mul ro * scalar");
-                return new internal::IndexedTensorMoveable<Tensor>(std::move(_l) * _r);
-            }, return_value_policy::take_ownership)
-        .def("__rmul__",
-            +[](value_t _r, internal::IndexedTensorReadOnly<Tensor> &_l) -> internal::IndexedTensorReadOnly<Tensor>* {
-                LOG(pydebug, "mul scalar * ro");
-                return new internal::IndexedTensorMoveable<Tensor>(std::move(_l) * _r);
-            }, return_value_policy::take_ownership)
-        .def("__div__",
-            +[](internal::IndexedTensorReadOnly<Tensor> &_l, value_t _r) -> internal::IndexedTensorReadOnly<Tensor>* {
-                LOG(pydebug, "div ro / scalar");
-                return new internal::IndexedTensorMoveable<Tensor>(std::move(_l) / _r);
-            }, return_value_policy::take_ownership)
+        ADD_MOVE_AND_RESULT_PTR("__mul__", *, IndexedTensorReadOnly<Tensor>, value_t, IndexedTensorReadOnly<Tensor>)
+        ADD_MOVE_AND_RESULT_PTR("__rmul__", *, IndexedTensorReadOnly<Tensor>, value_t, IndexedTensorReadOnly<Tensor>)
+        ADD_MOVE_AND_RESULT_PTR("__div__", /, IndexedTensorReadOnly<Tensor>, value_t, IndexedTensorMoveable<Tensor>)
         .def("frob_norm", static_cast<value_t (*)(const IndexedTensorReadOnly<Tensor> &)>(&frob_norm<Tensor>))
         .def("__float__", [](const IndexedTensorReadOnly<Tensor> &_self){ return value_t(_self); })
     ;

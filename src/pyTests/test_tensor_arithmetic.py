@@ -14,6 +14,7 @@ class TestTensorArithmetic(unittest.TestCase):
 		A = xe.Tensor.random([10,10])
 		B = xe.TensorNetwork()
 		i,j,k = xe.indices(3)
+		B(i,j,k) << A(i,j) * xe.TensorNetwork(xe.Tensor.ones([10]))(k)
 		B(i,j,k) << A(i,j) * xe.Tensor.ones([10])(k)
 		xe.Tensor(B)
 
