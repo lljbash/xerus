@@ -16,6 +16,14 @@ void expose_tensorNetwork(module& m) {
         /* .def("__call__", +[](TensorNetwork &_this, const std::vector<Index> &_idx){ */
         /*     return  new xerus::internal::IndexedTensor<TensorNetwork>(std::move(_this(_idx))); */
         /* }, return_value_policy<manage_new_object, with_custodian_and_ward_postcall<0, 1>>() ) */
+        .def("__call__", +[](TensorNetwork& _this, args _args){
+            std::vector<Index> idx;
+            idx.reserve(_args.size());
+            for (size_t i=0; i<_args.size(); ++i) {
+                idx.push_back(*(_args[i].cast<Index *>()));
+            }
+            return new xerus::internal::IndexedTensor<TensorNetwork>(std::move(_this(idx)));
+        }, return_value_policy::take_ownership )
         .def(self * value_t())
         .def(value_t() * self)
         .def(self / value_t())
@@ -28,9 +36,7 @@ void expose_tensorNetwork(module& m) {
         .def("__getitem__", +[](TensorNetwork &_this, std::vector<size_t> _idx) {
             return _this[_idx];
         })
-        /* .def("reshuffle_nodes", +[](TensorNetwork &_this, boost::python::object _f) { //TODO */
-        /*     _this.reshuffle_nodes(_f); */
-        /* }) */
+        .def("reshuffle_nodes", &TensorNetwork::reshuffle_nodes, arg("function"), "reshuffle the nodes according to the given function")
         .def("require_valid_network", +[](TensorNetwork &_this) {
             _this.require_valid_network();
         })
@@ -73,7 +79,4 @@ void expose_tensorNetwork(module& m) {
         .def_readonly("external", &TensorNetwork::Link::external)
         .def("links", &TensorNetwork::Link::links)
     ;
-
-
-    /* variable_argument_member_to_tuple_wrapper("TensorNetwork.__call__", "TensorNetworkCallOperator"); */
 }

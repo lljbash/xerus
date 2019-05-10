@@ -187,17 +187,17 @@ arg("dim")
     .def("ensure_own_data_and_apply_factor", &Tensor::ensure_own_data_and_apply_factor)
     .def_static("multiIndex_to_position", &Tensor::multiIndex_to_position)
     .def_static("position_to_multiIndex", &Tensor::position_to_multiIndex)
-//    .def("__call__", +[](Tensor *_this, const std::vector<Index> &_idx){
-//         return  new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(_idx)));
-//    }, return_value_policy::take_ownership ) //TODO check this
-    .def("__call__", +[](Tensor *_this, args _args){
-         std::vector<Index> idx;
-         idx.reserve(_args.size());
-         for (size_t i=0; i<_args.size(); ++i) {
-               idx.push_back(*(_args[i].cast<Index *>()));
-         }
-             return new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(idx)));
-    }, return_value_policy::take_ownership ) //TODO check this
+    /* .def("__call__", +[](Tensor *_this, const std::vector<Index> &_idx){ */
+    /*     return  new xerus::internal::IndexedTensor<Tensor>(std::move((*_this)(_idx))); */
+    /* }, keep_alive<0,1>(), return_value_policy::take_ownership ) */
+    .def("__call__", +[](Tensor& _this, args _args){
+        std::vector<Index> idx;
+        idx.reserve(_args.size());
+        for (size_t i=0; i<_args.size(); ++i) {
+              idx.push_back(*(_args[i].cast<Index *>()));
+        }
+        return new xerus::internal::IndexedTensor<Tensor>(std::move(_this(idx)));
+    }, return_value_policy::take_ownership )
     .def("__str__", &Tensor::to_string)
     .def(self * value_t())
     .def(value_t() * self)

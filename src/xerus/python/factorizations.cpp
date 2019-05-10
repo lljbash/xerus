@@ -39,7 +39,7 @@ void expose_factorizations(module& m) {
     ;
 	m.def("SVD", +[](IndexedTensor<Tensor> &_rhs, size_t _maxRank, double _eps)->TensorFactorisation*{
 		return new SVD(std::move(_rhs), _maxRank, _eps);
-	}, keep_alive<0,1>(), return_value_policy::take_ownership, // result is treated as a new object TODO check return value policy
+	}, keep_alive<0,1>(), return_value_policy::take_ownership, // result is treated as a new object
 															   // but the argument will not be destroyed before the result is destroyed
 		arg("source"), arg("maxRank")=std::numeric_limits<size_t>::max(), arg("eps")=EPSILON
 	);
@@ -47,24 +47,24 @@ void expose_factorizations(module& m) {
 	class_<QR, TensorFactorisation>(m,"QR_temporary").def_readonly("input", &QR::input);
 	m.def("QR", +[](IndexedTensor<Tensor>& _rhs)->TensorFactorisation*{
         return new QR(std::move(_rhs));
-	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object TODO check return value policy
+	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object
 	);                                        // but the argument will not be destroyed before the result is destroyed
 
 	class_<RQ, TensorFactorisation>(m,"RQ_temporary").def_readonly("input", &RQ::input);
 	m.def("RQ", +[](IndexedTensor<Tensor> &_rhs)->TensorFactorisation*{
 		return new RQ(std::move(_rhs));
-	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object TODO check return value policy
+	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object
 	);	 	 	 	 	 	 	 	 	 	  // but the argument will not be destroyed before the result is destroyed
 
 	class_<QC, TensorFactorisation>(m,"QC_temporary").def_readonly("input", &QC::input);
 	m.def("QC", +[](IndexedTensor<Tensor> &_rhs)->TensorFactorisation*{
 		return new QC(std::move(_rhs));
-	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object TODO check return value policy
+	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object
 	);																				// but the argument will not be destroyed before the result is destroyed
 
 	class_<CQ, TensorFactorisation>(m,"CQ_temporary").def_readonly("input", &CQ::input);
 	m.def("CQ", +[](IndexedTensor<Tensor> &_rhs)->TensorFactorisation*{
 		return new CQ(std::move(_rhs));
-	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object TODO check return value policy
+	}, keep_alive<0,1>(), return_value_policy::take_ownership // result is treated as a new object
 	);	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 // but the argument will not be destroyed before the result is destroyed
 }
