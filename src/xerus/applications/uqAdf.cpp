@@ -128,6 +128,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 
 		void shuffle_sets() {
+			LOG(uqADF, "Shuffle sets");
 			sets = std::vector<std::vector<size_t>>(P);
 			controlSet.clear();
 
@@ -148,13 +149,13 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					setWeights[k] += weights[j];  // HIER
 				}
 			}
-		 LOG(uqADF, "Set weights " << std::scientific << setWeights);
+			LOG(uqADF, "Set weights " << std::scientific << setWeights);
 
 			double testWeight = 0.0;
 			for(const auto j : controlSet) {
 				testWeight += weights[j];  // HIER
 			}
-		 LOG(uqADF, "Test weights " << std::scientific << testWeight);
+			LOG(uqADF, "Test weights " << std::scientific << testWeight);
 
 			calc_solution_norms();
 		}
@@ -244,7 +245,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				LOG(uqADF, "Set size: " << N);
 
 				shuffle_sets();
-		}
+			}
 
 
 		void calc_left_stack(const size_t _position) {
