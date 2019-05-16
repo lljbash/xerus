@@ -29,7 +29,16 @@
 #include <xerus/misc/math.h>
 #include <xerus/misc/internal.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <boost/circular_buffer.hpp>
+#pragma GCC diagnostic pop
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -40,6 +49,8 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 	template<size_t P>
 	class InternalSolver {
+		// Minimizes \sum_i w_i 0.5 \norm{A_i x - b_i}^2
+		// where w_i are weights, A_i are evaluations at positions and b_i are solutions.
 		const size_t N;
 		const size_t d;
 
@@ -73,8 +84,8 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		internal::BlockTT x;
 
 		std::vector<std::vector<Tensor>> rightStack;  // From corePosition 1 to d-1
-		std::vector<std::vector<Tensor>> leftIsStack;
-		std::vector<std::vector<Tensor>> leftOughtStack;
+		std::vector<std::vector<Tensor>> leftIsStack;  // The "left part" of (A_i^T (A_i x))
+		std::vector<std::vector<Tensor>> leftOughtStack;  // The "left part" of (solutions[i] * (A_i x))
 
 		double rankEps;
 		boost::circular_buffer<std::vector<size_t>> prevRanks;
@@ -130,6 +141,20 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					controlSet.push_back(j);
 				}
 			}
+
+			std::vector<double> setWeights(2,0);
+			for(size_t k = 0; k < sets.size(); ++k) {
+				for(const auto j : sets[k]) {
+					setWeights[k] += weights[j];  // HIER
+				}
+			}
+		 LOG(uqADF, "Set weights " << std::scientific << setWeights);
+
+			double testWeight = 0.0;
+			for(const auto j : controlSet) {
+				testWeight += weights[j];  // HIER
+			}
+		 LOG(uqADF, "Test weights " << std::scientific << testWeight);
 
 			calc_solution_norms();
 		}
@@ -428,6 +453,24 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			return std::make_tuple(optResidual, testResidual, setResiduals);
 		}
 
+		double calc_res(const size_t _corePosition, const size_t _setId) const {
+			REQUIRE(_corePosition == x.corePosition, "Invalid corePosition");
+			REQUIRE(_corePosition == 0, "Invalid corePosition");
+			double res = 0.0;
+			auto core = x.get_component(_corePosition);
+			core.fix_mode(2, _setId);
+
+			Tensor tmp;
+			for(const auto j : sets[_setId]) {
+				contract(tmp, core, rightStack[1][j], 1);
+				tmp.reinterpret_dimensions({x.dimensions[0]});
+				tmp -= solutions[j];
+				const double resSqr = misc::sqr(frob_norm(tmp));
+
+				res += weights[j] * resSqr;  // HIER
+			}
+			return std::sqrt(res)/optNorm;
+		}
 
 		void update_core(const size_t _corePosition) {
 			const Index left, right, ext, p;
@@ -438,11 +481,22 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 				const auto normAProjGrad = calculate_norm_A_projGrad(delta, _corePosition, setId);
 				const value_t PyR = misc::sqr(frob_norm(delta));
 
+				value_t res = 0.0, new_res = 0.0;
+				if (_corePosition == 0) {
+					res = calc_res(_corePosition, setId);
+				}
 				if (PyR > 0) {
 					// Actual update
-					x.component(_corePosition)(left, ext, p, right) = x.component(_corePosition)(left, ext, p, right)-((PyR/misc::sqr(normAProjGrad))*delta)(left, ext, right)*Tensor::dirac({P}, setId)(p);
+					x.component(_corePosition)(left, ext, p, right) = x.component(_corePosition)(left, ext, p, right) - ((PyR/misc::sqr(normAProjGrad))*delta)(left, ext, right)*Tensor::dirac({P}, setId)(p);
 				} else {
 					LOG(uqADF, "Warning: vanishing gradient on set " << setId);
+				}
+				if (_corePosition == 0) {
+					new_res = calc_res(_corePosition, setId);
+					if (new_res > res) {
+						LOG(uqADF, "Warning: relative residuum increased by " << std::scientific << (new_res - res)/res);
+					}
+					REQUIRE(new_res - res < res, "IE: relative increase in residuum by more than 1: " << std::scientific << (new_res - res)/res);
 				}
 			}
 		}
@@ -475,6 +529,9 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
 			initialResiduum = optResidual; /* TODO: inefficient */
 
+			const Index l,e,r,p;
+			const Tensor ones = Tensor::ones({P});
+			Tensor newCore;
 			for(size_t iteration = 0; maxIterations == 0 || iteration < maxIterations; ++iteration) {
 				std::tie(optResidual, testResidual, setResiduals) = calc_residuals(0);
 				residuals.push_back(optResidual);
@@ -520,6 +577,11 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					update_core(corePosition);
 
 					x.move_core_right(rankEps, std::min(maxRank, prevRanks[1][corePosition]+1));
+
+					REQUIRE(x.corePosition == corePosition+1, "IE");
+					newCore(l,e,p,r) = x.get_average_core()(l,e,r) * ones(p);
+					x.set_component(corePosition+1, newCore);
+
 					calc_left_stack(corePosition);
 				}
 
@@ -530,6 +592,11 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 					update_core(corePosition);
 
 					x.move_core_left(rankEps, std::min(maxRank, prevRanks[1][corePosition-1]+1));
+
+					REQUIRE(x.corePosition == corePosition-1, "IE");
+					newCore(l,e,p,r) = x.get_average_core()(l,e,r) * ones(p);
+					x.set_component(corePosition-1, newCore);
+
 					calc_right_stack(corePosition);
 				}
 
