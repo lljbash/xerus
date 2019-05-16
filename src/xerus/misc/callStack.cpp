@@ -25,8 +25,8 @@
 #include <xerus/misc/callStack.h>
 
 #ifndef XERUS_NO_FANCY_CALLSTACK
-    #include <execinfo.h>
-    
+	#include <execinfo.h>
+	
 	// workaround for deliberately incompatible bfd.h header files on some systems.
 	#ifndef PACKAGE
 		#define PACKAGE
@@ -34,16 +34,16 @@
 	#ifndef PACKAGE_VERSION
 		#define PACKAGE_VERSION
 	#endif
-    #include <bfd.h>
-    #include <dlfcn.h>
-    #include <unistd.h>
+	#include <bfd.h>
+	#include <dlfcn.h>
+	#include <unistd.h>
 	#include <iostream>
-    #include <sstream>
-    #include <memory>
-    #include <map>
-    #include <vector>
-    #include <xerus/misc/stringFromTo.h>
-    #include <xerus/misc/stringUtilities.h>
+	#include <sstream>
+	#include <memory>
+	#include <map>
+	#include <vector>
+	#include <xerus/misc/stringFromTo.h>
+	#include <xerus/misc/stringUtilities.h>
 
 namespace xerus { namespace misc { namespace internal {
 	/**

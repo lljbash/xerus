@@ -26,32 +26,32 @@
 
 // TODO get_copy() wrapper in python correct manner
 BOOST_PYTHON_MODULE(xerus) {
-    using namespace xerus;
+	using namespace xerus;
 
-    import_array(); // for numpy
+	import_array(); // for numpy
 
-    bool show_user_defined = true;
-    bool show_signatures = false;
-    docstring_options doc_options(show_user_defined, show_signatures);
+	bool show_user_defined = true;
+	bool show_signatures = false;
+	docstring_options doc_options(show_user_defined, show_signatures);
 
-    // xerus version
-    scope().attr("VERSION_MAJOR") = VERSION_MAJOR;
-    scope().attr("VERSION_MINOR") = VERSION_MINOR;
-    scope().attr("VERSION_REVISION") = VERSION_REVISION;
-    scope().attr("VERSION_COMMIT") = VERSION_COMMIT;
+	// xerus version
+	scope().attr("VERSION_MAJOR") = VERSION_MAJOR;
+	scope().attr("VERSION_MINOR") = VERSION_MINOR;
+	scope().attr("VERSION_REVISION") = VERSION_REVISION;
+	scope().attr("VERSION_COMMIT") = VERSION_COMMIT;
 
-    VECTOR_TO_PY(size_t, "IntegerVector");
-    VECTOR_TO_PY(double, "DoubleVector");
+	VECTOR_TO_PY(size_t, "IntegerVector");
+	VECTOR_TO_PY(double, "DoubleVector");
 
-    expose_indexedTensors();
-    expose_factorizations();
-    expose_tensor();
-    expose_tensorNetwork();
-    expose_ttnetwork();
-    expose_htnetwork();
+	expose_indexedTensors();
+	expose_factorizations();
+	expose_tensor();
+	expose_tensorNetwork();
+	expose_ttnetwork();
+	expose_htnetwork();
 
-    expose_leastSquaresAlgorithms();
-    expose_recoveryAlgorithms();
+	expose_leastSquaresAlgorithms();
+	expose_recoveryAlgorithms();
 
-    expose_misc();
+	expose_misc();
 }

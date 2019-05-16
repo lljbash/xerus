@@ -27,7 +27,7 @@
 #include <xerus/misc/internal.h>
 
 namespace xerus {
-    namespace misc {
+	namespace misc {
 		std::string exec(const std::string & _cmd) {
 			FILE* pipe = popen(_cmd.c_str(), "r");
 			REQUIRE(pipe, "could not start " << _cmd);

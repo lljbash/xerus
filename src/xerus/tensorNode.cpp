@@ -27,57 +27,57 @@
 
 namespace xerus {
 
-    TensorNetwork::TensorNode::TensorNode() : erased(true) { }
+	TensorNetwork::TensorNode::TensorNode() : erased(true) { }
 
-    TensorNetwork::TensorNode::TensorNode(const TensorNetwork::TensorNode&  _other) : tensorObject(_other.tensorObject ? new Tensor(*_other.tensorObject) : nullptr), neighbors(_other.neighbors), erased(_other.erased) { }
+	TensorNetwork::TensorNode::TensorNode(const TensorNetwork::TensorNode&  _other) : tensorObject(_other.tensorObject ? new Tensor(*_other.tensorObject) : nullptr), neighbors(_other.neighbors), erased(_other.erased) { }
 
-    TensorNetwork::TensorNode::TensorNode(      std::unique_ptr<Tensor>&& _tensorObject) : tensorObject(std::move(_tensorObject)), neighbors(), erased(false) {}
+	TensorNetwork::TensorNode::TensorNode(      std::unique_ptr<Tensor>&& _tensorObject) : tensorObject(std::move(_tensorObject)), neighbors(), erased(false) {}
 
-    TensorNetwork::TensorNode::TensorNode(std::unique_ptr<Tensor>&& _tensorObject, std::vector<Link> _neighbors) : tensorObject(std::move(_tensorObject)), neighbors(std::move(_neighbors)), erased(false) {}
+	TensorNetwork::TensorNode::TensorNode(std::unique_ptr<Tensor>&& _tensorObject, std::vector<Link> _neighbors) : tensorObject(std::move(_tensorObject)), neighbors(std::move(_neighbors)), erased(false) {}
 
-    TensorNetwork::TensorNode::~TensorNode() = default;
+	TensorNetwork::TensorNode::~TensorNode() = default;
 
-    TensorNetwork::TensorNode& TensorNetwork::TensorNode::operator=(const TensorNetwork::TensorNode&  _other) {
-        if(_other.tensorObject) {
-            if(tensorObject) {
-                *tensorObject = *_other.tensorObject;
-            } else {
-                tensorObject.reset( new Tensor(*_other.tensorObject));
-            }
-        } else {
-            tensorObject.reset();
-        }
-        neighbors = _other.neighbors;
-        erased = _other.erased;
-        return *this;
-    }
+	TensorNetwork::TensorNode& TensorNetwork::TensorNode::operator=(const TensorNetwork::TensorNode&  _other) {
+		if(_other.tensorObject) {
+			if(tensorObject) {
+				*tensorObject = *_other.tensorObject;
+			} else {
+				tensorObject.reset( new Tensor(*_other.tensorObject));
+			}
+		} else {
+			tensorObject.reset();
+		}
+		neighbors = _other.neighbors;
+		erased = _other.erased;
+		return *this;
+	}
 
-    TensorNetwork::TensorNode& TensorNetwork::TensorNode::operator=( TensorNetwork::TensorNode&& _other) noexcept {
-        tensorObject = std::move(_other.tensorObject);
-        neighbors = std::move(_other.neighbors);
-        erased = _other.erased;
-        return *this;
-    }
+	TensorNetwork::TensorNode& TensorNetwork::TensorNode::operator=( TensorNetwork::TensorNode&& _other) noexcept {
+		tensorObject = std::move(_other.tensorObject);
+		neighbors = std::move(_other.neighbors);
+		erased = _other.erased;
+		return *this;
+	}
 
-    TensorNetwork::TensorNode TensorNetwork::TensorNode::strippped_copy() const {
-        return TensorNetwork::TensorNode(std::unique_ptr<Tensor>(), neighbors);
-    }
+	TensorNetwork::TensorNode TensorNetwork::TensorNode::strippped_copy() const {
+		return TensorNetwork::TensorNode(std::unique_ptr<Tensor>(), neighbors);
+	}
 
-    size_t TensorNetwork::TensorNode::size() const noexcept {
-        size_t s = 1;
-        for (const Link &l : neighbors) {
-            s *= l.dimension;
-        }
-        return s;
-    }
+	size_t TensorNetwork::TensorNode::size() const noexcept {
+		size_t s = 1;
+		for (const Link &l : neighbors) {
+			s *= l.dimension;
+		}
+		return s;
+	}
 
-    size_t TensorNetwork::TensorNode::order() const noexcept {
-        return neighbors.size();
-    }
+	size_t TensorNetwork::TensorNode::order() const noexcept {
+		return neighbors.size();
+	}
 
-    void TensorNetwork::TensorNode::erase() noexcept {
-        erased = true;
-        neighbors.clear();
-        tensorObject.reset();
-    }
+	void TensorNetwork::TensorNode::erase() noexcept {
+		erased = true;
+		neighbors.clear();
+		tensorObject.reset();
+	}
 } // namespace xerus

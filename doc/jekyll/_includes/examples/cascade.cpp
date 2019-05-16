@@ -60,7 +60,7 @@ TTOperator create_operator(const size_t _order) {
 		Sstar(j, k)*Tensor::dirac({1, 3}, 0)(i, l) 
 		+   L(j, k)*Tensor::dirac({1, 3}, 1)(i, l) 
 		+   I(j, k)*Tensor::dirac({1, 3}, 2)(i, l);
-    
+	
 	A.set_component(0, comp); 
 	
 	// Create middle components
@@ -80,7 +80,7 @@ TTOperator create_operator(const size_t _order) {
 		  I(j, k)*Tensor::dirac({3, 1}, 0)(i, l) 
 		+ M(j, k)*Tensor::dirac({3, 1}, 1)(i, l) 
 		+ S(j, k)*Tensor::dirac({3, 1}, 2)(i, l);
-    
+	
 	A.set_component(_order-1, comp);
 	
 	return A;
@@ -105,10 +105,10 @@ std::vector<TTTensor> implicit_euler(const TTOperator& _A, TTTensor _x,
 	std::vector<TTTensor> results;
 	TTTensor nextX = _x;
 	results.push_back(_x);
-    
+	
 	for(size_t i = 0; i < _n; ++i) {
 		ourALS(op, nextX, _x);
-        
+		
 		// Normalize
 		double norm = one_norm(nextX);
 		nextX /= norm;
