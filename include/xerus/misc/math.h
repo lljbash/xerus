@@ -37,6 +37,12 @@ namespace xerus {
 			return (T(0) < _value) - (_value < T(0));
 		}
 		
+		///@brief: Calculates the absolute value of _value.
+		template<class T> 
+		constexpr T abs(const T _value) noexcept {
+			return (_value < 0 ) ? -_value : _value;
+		}
+		
 		
 		///@brief: Calculates _a*_a.
 		template<class T>

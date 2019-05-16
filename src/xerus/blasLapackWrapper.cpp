@@ -644,10 +644,10 @@ namespace xerus {
 					
 					lapackAnswer = LAPACKE_dpotrf2(
 						LAPACK_ROW_MAJOR,
-						'U', 					// Upper triangle of A is read
-						static_cast<int>(_n),	// dimensions of A
-						tmpA.get(),				// input: A, output: cholesky factorisation
-						static_cast<int>(_n)	// LDA
+						'U', 				// Upper triangle of A is read
+						static_cast<int>(_n),		// dimensions of A
+						tmpA.get(),			// input: A, output: cholesky factorisation
+						static_cast<int>(_n)		// LDA
 					);
 					
 					XERUS_PA_END("Dense LAPACK", "Cholesky decomposition", misc::to_string(_n)+"x"+misc::to_string(_n));
@@ -661,13 +661,13 @@ namespace xerus {
 					
 					lapackAnswer = LAPACKE_dpotrs(
 						LAPACK_ROW_MAJOR,
-						'U',					// upper triangle of cholesky decomp is stored in tmpA
-						static_cast<int>(_n),	// dimensions of A
-						static_cast<int>(_nrhs),// number of rhs
-						tmpA.get(),				// input: cholesky decomp
-						static_cast<int>(_n), 	// lda
-						_x,						// input: rhs b, output: solution x
-						static_cast<int>(_nrhs)	// ldb
+						'U',				// upper triangle of cholesky decomp is stored in tmpA
+						static_cast<int>(_n),		// dimensions of A
+						static_cast<int>(_nrhs),	// number of rhs
+						tmpA.get(),			// input: cholesky decomp
+						static_cast<int>(_n), 		// lda
+						_x,				// input: rhs b, output: solution x
+						static_cast<int>(_nrhs)		// ldb
 					);
 					CHECK(lapackAnswer == 0, error, "Unable to solve Ax = b (cholesky solver). Lapacke says: " << lapackAnswer);
 					
