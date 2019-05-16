@@ -28,7 +28,7 @@
 #include <fstream>
 
 #ifdef XERUS_LOG_BUFFER
-    #include <fstream>
+	#include <fstream>
 #endif
 
 #include <xerus/misc/namedLogger.h>

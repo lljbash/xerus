@@ -63,7 +63,7 @@ void expose_htnetwork(module& m) {
 				arg("ranks"), arg("epsilon")=EPSILON
 		)
 		.def("round", static_cast<void (HTTensor::*)(double)>(&HTTensor::round))
- 		.def("round", static_cast<void (HTTensor::*)(size_t)>(&HTTensor::round))
+		.def("round", static_cast<void (HTTensor::*)(size_t)>(&HTTensor::round))
 
 		.def("soft_threshold", static_cast<void (HTTensor::*)(const double, const bool)>(&HTTensor::soft_threshold),
 			arg("tau"), arg("preventZero")=false
@@ -74,13 +74,13 @@ void expose_htnetwork(module& m) {
 		.def("move_core", &HTTensor::move_core,arg("position"), arg("keepRank")=false)
 		.def("assume_core_position", &HTTensor::assume_core_position)
 		.def("canonicalize_root", &HTTensor::canonicalize_root)
-    .def(self + self)
-    .def(self - self)
-    .def(self * value_t())
-    .def(value_t() * self)
-    .def(self / value_t())
-    .def(self += self)
-    .def(self -= self)
+	.def(self + self)
+	.def(self - self)
+	.def(self * value_t())
+	.def(value_t() * self)
+	.def(self / value_t())
+	.def(self += self)
+	.def(self -= self)
 	;
 
 //	def("entrywise_product", static_cast<TTTensor (*)(const TTTensor&, const TTTensor&)>(&entrywise_product));
@@ -95,7 +95,7 @@ void expose_htnetwork(module& m) {
 		.def(init<Tensor::DimensionTuple>())
 		.def(init<size_t>())
 		.def(init<const HTOperator &>())
-    .def("get_component", &HTOperator::get_component)
+	.def("get_component", &HTOperator::get_component)
 		.def("set_component", &HTOperator::set_component)
 		.def_readonly("canonicalized", &HTOperator::canonicalized)
 		.def_readonly("corePosition", &HTOperator::corePosition)

@@ -144,12 +144,12 @@ namespace xerus {
 																		 the matrix of Ritz vectors. See remark 1 below.
 																		 = 'A': compute NEV Ritz vectors;
 																		 = 'S': compute some of the Ritz vectors, specified
-															 	 	 	 by the logical array select. */
+																		 by the logical array select. */
 				select.get(),										// Logical array of dimension NCV.
 				_ev,											// On exit, _ev contains the Ritz value approximations to the eigenvalues of A*z = lambda*B*z.
 				_x, 											/* On exit, _x contains the B-orthonormal Ritz vectors of the
 																		 eigensystem A*z = lambda*B*z corresponding to the Ritz
-														 	 	 	 	 value approximations. */
+																		 value approximations. */
 				static_cast<int>(_n),		  // The leading dimension of the array Z.
 				sigma,										// If IPARAM(7) = 3,4,5 represents the shift. Not referenced if IPARAM(7) = 1 or 2.
 				// Same as above
@@ -259,12 +259,12 @@ namespace xerus {
 																		 the matrix of Ritz vectors. See remark 1 below.
 																		 = 'A': compute NEV Ritz vectors;
 																		 = 'S': compute some of the Ritz vectors, specified
-															 	 	 	 by the logical array select. */
+																		 by the logical array select. */
 				select.get(),										// Logical array of dimension NCV.
 				_ev,											// On exit, _ev contains the Ritz value approximations to the eigenvalues of A*z = lambda*B*z.
 				_x, 											/* On exit, _x contains the B-orthonormal Ritz vectors of the
 																		 eigensystem A*z = lambda*B*z corresponding to the Ritz
-														 	 	 	 	 value approximations. */
+																		 value approximations. */
 				static_cast<int>(_n),		  // The leading dimension of the array Z.
 				sigma,										// If IPARAM(7) = 3,4,5 represents the shift. Not referenced if IPARAM(7) = 1 or 2.
 				// Same as above

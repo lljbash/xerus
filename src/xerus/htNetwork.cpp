@@ -842,7 +842,7 @@ namespace xerus {
 
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - -  Basic arithmetics - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-    // TODO why sparse?
+	// TODO why sparse?
 	template<bool isOperator>
 	HTNetwork<isOperator>& HTNetwork<isOperator>::operator+=(const HTNetwork<isOperator>& _other) {
 		REQUIRE(dimensions == _other.dimensions, "The dimensions in HT sum must coincide. Given " << dimensions << " vs " << _other.dimensions);
@@ -1280,7 +1280,7 @@ namespace xerus {
 
 			// store TN specific data
 			write_to_stream<bool>(_stream, _obj.canonicalized, _format);
-            write_to_stream<size_t>(_stream, _obj.corePosition, _format);
+			write_to_stream<size_t>(_stream, _obj.corePosition, _format);
 
 
 			// save rest of TN
@@ -1297,7 +1297,7 @@ namespace xerus {
 
 			// load TN specific data
 			read_from_stream<bool>(_stream, _obj.canonicalized, _format);
-            read_from_stream<size_t>(_stream, _obj.corePosition, _format);
+			read_from_stream<size_t>(_stream, _obj.corePosition, _format);
 
 
 			// load rest of TN

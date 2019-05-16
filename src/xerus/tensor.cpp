@@ -1432,7 +1432,7 @@ namespace xerus {
 		
 		size_t lhsSize, rhsSize, full_rank;
 		std::tie(lhsSize, rhsSize, full_rank) = calculate_factorization_sizes(_input, _splitPos);
-        _maxRank = _maxRank == 0 ? full_rank : _maxRank;
+		_maxRank = _maxRank == 0 ? full_rank : _maxRank;
 		
 		std::unique_ptr<value_t[]> tmpS(new value_t[full_rank]);
 		
@@ -1467,7 +1467,7 @@ namespace xerus {
 			blasWrapper::svd(_U.override_dense_data(), tmpS.get(), _Vt.override_dense_data(), _input.get_unsanitized_dense_data(), lhsSize, rhsSize);
 		}
 		
-        size_t rank = full_rank;
+		size_t rank = full_rank;
 
 		// Find rank due to the Epsilon (NOTE the scaling factor can be ignored, as it does not change the ratios).
 		// For the total error to be < _eps, the sum of discarded singular value squares must be smaller than _eps times the norm, squared
@@ -1493,7 +1493,7 @@ namespace xerus {
 		_U.resize_mode(_U.order()-1, rank);
 		_Vt.resize_mode(0, rank);
 
-        return std::sqrt(error);
+		return std::sqrt(error);
 	}
 	
 	
@@ -1634,23 +1634,23 @@ namespace xerus {
 			}
 			
 		} else { // Dense A
-            if(_B.is_dense()) {
-                blasWrapper::solve_least_squares(
-                    _X.override_dense_data(), 
-                    _A.get_unsanitized_dense_data(), m, n, 
-                    _B.get_unsanitized_dense_data(), p);
-            } else {
-                LOG_ONCE(warning, "Sparse RHS not yet implemented (casting to dense)"); //TODO
-                
-                Tensor Bcpy(_B);
-                Bcpy.factor = 1.0;
-                Bcpy.use_dense_representation();
-                
-                blasWrapper::solve_least_squares(
-                    _X.override_dense_data(), 
-                    _A.get_unsanitized_dense_data(), m, n, 
-                    Bcpy.get_unsanitized_dense_data(), p);
-            }
+			if(_B.is_dense()) {
+				blasWrapper::solve_least_squares(
+					_X.override_dense_data(), 
+					_A.get_unsanitized_dense_data(), m, n, 
+					_B.get_unsanitized_dense_data(), p);
+			} else {
+				LOG_ONCE(warning, "Sparse RHS not yet implemented (casting to dense)"); //TODO
+				
+				Tensor Bcpy(_B);
+				Bcpy.factor = 1.0;
+				Bcpy.use_dense_representation();
+				
+				blasWrapper::solve_least_squares(
+					_X.override_dense_data(), 
+					_A.get_unsanitized_dense_data(), m, n, 
+					Bcpy.get_unsanitized_dense_data(), p);
+			}
 		}
 		
 		// Propagate the constant factor
