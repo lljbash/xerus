@@ -52,7 +52,10 @@ namespace xerus { namespace misc {
 			tests = new std::map<std::string, std::map<std::string, std::function<void()>>>();
 		}
 		if (tests->count(_group) > 0 && (*tests)[_group].count(_name) > 0) {
-			LOG(error, "Unit test '" << _group << "::" << _name << "' defined multiple times!");
+			std::cerr << "ERROR: Unit test '" << _group << ":" << _name << "' defined multiple times!" << std::endl;
+			while ((*tests)[_group].count(_name) > 0) {
+				_name += "_";
+			}
 		}
 		(*tests)[_group][_name] = _f;
 	}
