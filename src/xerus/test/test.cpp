@@ -31,8 +31,6 @@
 #include <sstream>
 
 #include <string.h> // for strsignal
-#include <sys/stat.h>
-#include <sys/mman.h> // For mlockall
 
 #include <xerus/misc/standard.h>
 #include <xerus/misc/exceptions.h>
