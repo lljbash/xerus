@@ -29,7 +29,7 @@
 #include <xerus/misc/internal.h>
 
 namespace xerus {
-    namespace internal {
+	namespace internal {
 		
 		template<double (*scoreFct)(double, double, double, double, double)>
 		void greedy_heuristic(double &_bestCost, std::vector<std::pair<size_t,size_t>> &_contractions, TensorNetwork _network) {
@@ -379,6 +379,6 @@ namespace xerus {
 // 			,&greedy_best_of_three_heuristic
 			,&exchange_heuristic
 		};
-    } // namespace internal
+	} // namespace internal
 
 } // namespace xerus

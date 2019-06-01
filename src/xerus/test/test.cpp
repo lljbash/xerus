@@ -31,8 +31,6 @@
 #include <sstream>
 
 #include <string.h> // for strsignal
-#include <sys/stat.h>
-#include <sys/mman.h> // For mlockall
 
 #include <xerus/misc/standard.h>
 #include <xerus/misc/exceptions.h>
@@ -52,7 +50,10 @@ namespace xerus { namespace misc {
 			tests = new std::map<std::string, std::map<std::string, std::function<void()>>>();
 		}
 		if (tests->count(_group) > 0 && (*tests)[_group].count(_name) > 0) {
-			LOG(error, "Unit test '" << _group << "::" << _name << "' defined multiple times!");
+			std::cerr << "ERROR: Unit test '" << _group << ":" << _name << "' defined multiple times!" << std::endl;
+			while ((*tests)[_group].count(_name) > 0) {
+				_name += "_";
+			}
 		}
 		(*tests)[_group][_name] = _f;
 	}
@@ -81,7 +82,7 @@ namespace xerus { namespace misc {
 			std::cerr << "| Test has thrown an uncaught xerus::generic_error():" << std::endl;
 			std::cerr << e.what() << std::endl;
 			::xerus::misc::UnitTest::passed = false;
-		}/* catch (const std::exception &e) {
+		} catch (const std::exception &e) {
 			std::cout << u8"\033[1;31m\u2717 \033[0m" << std::endl;
 			std::cerr << "| Test has thrown an uncaught std::exception:" << std::endl;
 			std::cerr << e.what() << std::endl;
@@ -90,7 +91,7 @@ namespace xerus { namespace misc {
 			std::cout << u8"\033[1;31m\u2717 \033[0m" << std::endl;
 			std::cerr << "| Test has thrown an uncaught unknown exception..." << std::endl;
 			::xerus::misc::UnitTest::passed = false;
-		}*/
+		}
 		std::chrono::microseconds::rep time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
 		
 		if (::xerus::misc::UnitTest::passed) { 
@@ -138,9 +139,6 @@ int main(int argc, char* argv[]) {
 	signal(SIGILL,xerus::misc::internal::catch_signals);
 	signal(SIGSEGV,xerus::misc::internal::catch_signals);
 	
-	// Prevent swap usage
-	mlockall(MCL_CURRENT | MCL_FUTURE);
-	
 	//Calculate complete time
 	std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 	
@@ -150,8 +148,8 @@ int main(int argc, char* argv[]) {
 	std::cout << "###############################################################################" << std::endl;
 	// No unittests defined (ie. the map tests does not exist!)
 	if (!xerus::misc::UnitTest::tests) {
-		std::cout << "no unittests defined.\n";
-		std::cout << "use the macro UNIT_TEST(group, testname, ...) to define unittests inside the sourcecode." << std::endl;
+		std::cout << "No unittests defined.\n";
+		std::cout << "Create xerus::misc::UnitTest objects to define unittests inside the sourcecode." << std::endl;
 		return 0;
 	}
 	

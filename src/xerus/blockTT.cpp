@@ -38,60 +38,60 @@
 namespace xerus { namespace internal {
 	const Index BlockTT::left, BlockTT::right, BlockTT::ext, BlockTT::p, BlockTT::r1, BlockTT::r2;
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - Constructors - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-    
-    BlockTT::BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim) :
-        P(_blockDim),
-        corePosition(_blockPosition), 
-        blockPosition(_blockPosition), 
-        dimensions(_dimensions) 
-    {
-        REQUIRE(_dimensions.size() == _ranks.size()+1, "_dimensions.size() != _ranks.size()+1");
-        REQUIRE(_blockPosition < _dimensions.size(), "_blockPosition >= _dimensions.size()");
+	
+	BlockTT::BlockTT(const std::vector<size_t>& _dimensions, const std::vector<size_t>& _ranks, const size_t _blockPosition, const size_t _blockDim) :
+		P(_blockDim),
+		corePosition(_blockPosition), 
+		blockPosition(_blockPosition), 
+		dimensions(_dimensions) 
+	{
+		REQUIRE(_dimensions.size() == _ranks.size()+1, "_dimensions.size() != _ranks.size()+1");
+		REQUIRE(_blockPosition < _dimensions.size(), "_blockPosition >= _dimensions.size()");
 
-        const auto numComponents = _dimensions.size();
-        for(size_t i = 0; i < numComponents; ++i) {
-            std::vector<size_t> cmpDims;
-            if (i == _blockPosition) {
-                cmpDims.reserve(4);
-                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
-                cmpDims.push_back(_dimensions[i]);
-                cmpDims.push_back(_blockDim);
-                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
-            }
-            else {
-                cmpDims.reserve(3);
-                cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
-                cmpDims.push_back(_dimensions[i]);
-                cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
-            }
+		const auto numComponents = _dimensions.size();
+		for(size_t i = 0; i < numComponents; ++i) {
+			std::vector<size_t> cmpDims;
+			if (i == _blockPosition) {
+				cmpDims.reserve(4);
+				cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+				cmpDims.push_back(_dimensions[i]);
+				cmpDims.push_back(_blockDim);
+				cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+			}
+			else {
+				cmpDims.reserve(3);
+				cmpDims.push_back((i>0) ? _ranks[i-1] : 1);
+				cmpDims.push_back(_dimensions[i]);
+				cmpDims.push_back((i<numComponents-1) ? _ranks[i] : 1);
+			}
 
-            components.emplace_back(cmpDims);
-        }
-    }
+			components.emplace_back(cmpDims);
+		}
+	}
 
-    BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) :
-        P(_blockDim), 
-        corePosition(_blockPosition), 
-        blockPosition(_blockPosition), 
-        dimensions(_tttensor.dimensions) 
-    {
-        REQUIRE(_tttensor.canonicalized && _tttensor.corePosition == _blockPosition, "Invalid core Position");
-        _tttensor.require_correct_format();
-        
-        // Get components
-        for(size_t i = 0; i < _tttensor.order(); ++i) {
-            components.push_back(_tttensor.get_component(i));
-        }
-        
-        // Create block
-        components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
-    }
-    
-    size_t BlockTT::order() const {
-        return components.size();
-    }
-    
-    std::vector<size_t> BlockTT::ranks() const {
+	BlockTT::BlockTT(const TTTensor& _tttensor, const size_t _blockPosition, const size_t _blockDim) :
+		P(_blockDim), 
+		corePosition(_blockPosition), 
+		blockPosition(_blockPosition), 
+		dimensions(_tttensor.dimensions) 
+	{
+		REQUIRE(_tttensor.canonicalized && _tttensor.corePosition == _blockPosition, "Invalid core Position");
+		_tttensor.require_correct_format();
+		
+		// Get components
+		for(size_t i = 0; i < _tttensor.order(); ++i) {
+			components.push_back(_tttensor.get_component(i));
+		}
+		
+		// Create block
+		components[_blockPosition](left, ext, p, right) = components[_blockPosition](left, ext, right)*Tensor::ones({_blockDim})(p);
+	}
+	
+	size_t BlockTT::order() const {
+		return components.size();
+	}
+	
+	std::vector<size_t> BlockTT::ranks() const {
 		std::vector<size_t> res;
 		res.reserve(order()-1);
 		for (size_t n = 1; n < order(); ++n) {
@@ -100,50 +100,50 @@ namespace xerus { namespace internal {
 		return res;
 	}
 
-    size_t BlockTT::num_components() const { return components.size(); }
+	size_t BlockTT::num_components() const { return components.size(); }
 	
 	size_t BlockTT::rank(const size_t _idx) const {
-        REQUIRE(_idx+1 < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
-        return components[_idx+1].dimensions[0];
-    }
-    
-    
-    Tensor& BlockTT::component(const size_t _idx) {
-        REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
-        return components[_idx];
-    }
+		REQUIRE(_idx+1 < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
+		return components[_idx+1].dimensions[0];
+	}
+	
+	
+	Tensor& BlockTT::component(const size_t _idx) {
+		REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
+		return components[_idx];
+	}
 			
-    
-    const Tensor& BlockTT::get_component(const size_t _idx) const {
-        REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
-        return components[_idx];
-    }
-    
-    
-    void BlockTT::set_component(const size_t _idx, const Tensor& _T) {
-        REQUIRE(_idx == corePosition, "Illegal index " << _idx <<" as core position is " << corePosition << ".");
-        REQUIRE(components[_idx].dimensions == _T.dimensions, "Invalid dimensions given: " << components[_idx].dimensions << " vs " << _T.dimensions);
-        components[_idx] = _T;
-    }
-    
-    
-    Tensor BlockTT::get_core(const size_t _blockPos) const {
-        REQUIRE(_blockPos < P, "IE");
-        Tensor coreCmp = components[corePosition];
-        coreCmp.fix_mode(2, _blockPos);
-        return coreCmp;
-    }
-    
-    
-    Tensor BlockTT::get_average_core() const {
-        Tensor coreCmp;
-        coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
-        return coreCmp;
-    }
-    
-    
-    TTTensor BlockTT::get_average_tt() const {
-        TTTensor ttRep(dimensions);
+	
+	const Tensor& BlockTT::get_component(const size_t _idx) const {
+		REQUIRE(_idx < order(), "Illegal index " << _idx <<" in TTNetwork::component, as there are onyl " << order() << " components.");
+		return components[_idx];
+	}
+	
+	
+	void BlockTT::set_component(const size_t _idx, const Tensor& _T) {
+		REQUIRE(_idx == corePosition, "Illegal index " << _idx <<" as core position is " << corePosition << ".");
+		REQUIRE(components[_idx].dimensions == _T.dimensions, "Invalid dimensions given: " << components[_idx].dimensions << " vs " << _T.dimensions);
+		components[_idx] = _T;
+	}
+	
+	
+	Tensor BlockTT::get_core(const size_t _blockPos) const {
+		REQUIRE(_blockPos < P, "IE");
+		Tensor coreCmp = components[corePosition];
+		coreCmp.fix_mode(2, _blockPos);
+		return coreCmp;
+	}
+	
+	
+	Tensor BlockTT::get_average_core() const {
+		Tensor coreCmp;
+		coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
+		return coreCmp;
+	}
+	
+	
+	TTTensor BlockTT::get_average_tt() const {
+		TTTensor ttRep(dimensions);
 		
 		for(size_t i = 0; i < order(); i++) {
 			if(i == corePosition) {
@@ -154,34 +154,34 @@ namespace xerus { namespace internal {
 		}
 		
 		return ttRep;
-    }
-            
-    
-    value_t BlockTT::frob_norm() const {
-        return components[corePosition].frob_norm();
-    }
-    value_t frob_norm(const BlockTT& _x) { return _x.frob_norm(); }
-    
-    
-    size_t BlockTT::dofs() const {
-        size_t numDofs = 0;
-        
-        for(const auto& comp : components) {
-            numDofs += comp.size;
-        }
-        
-        for(const auto r : ranks()) {
-            numDofs -= r*r;
-        }
-        
+	}
+			
+	
+	value_t BlockTT::frob_norm() const {
+		return components[corePosition].frob_norm();
+	}
+	value_t frob_norm(const BlockTT& _x) { return _x.frob_norm(); }
+	
+	
+	size_t BlockTT::dofs() const {
+		size_t numDofs = 0;
+		
+		for(const auto& comp : components) {
+			numDofs += comp.size;
+		}
+		
+		for(const auto r : ranks()) {
+			numDofs -= r*r;
+		}
+		
 
-        REQUIRE(corePosition == 0, "IE");
-        numDofs -= components[0].size - misc::sqr(components[1].dimensions[0]);
-        
-        return numDofs;
-    }
-    
-    
+		REQUIRE(corePosition == 0, "IE");
+		numDofs -= components[0].size - misc::sqr(components[1].dimensions[0]);
+		
+		return numDofs;
+	}
+	
+	
 	void BlockTT::move_core_left(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition > 0, "Can't move core left from position " << corePosition);
 		
@@ -201,10 +201,10 @@ namespace xerus { namespace internal {
 		}
 		corePosition--;
 		blockPosition--;
-    }
-    
-    
-    void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
+	}
+	
+	
+	void BlockTT::move_core_right(const double _eps, const size_t _maxRank) {
 		REQUIRE(corePosition+1 < order(), "Can't move core right from position " << corePosition);
 			
 		if(P == 1) {
@@ -222,89 +222,89 @@ namespace xerus { namespace internal {
 		}
 		corePosition++;
 		blockPosition++;
-    }
+	}
 	
 	
 	void BlockTT::move_core(const size_t _position, const double _eps, const size_t _maxRank) {
-        REQUIRE(_position < order(), "Invalid new core position " << _position);
+		REQUIRE(_position < order(), "Invalid new core position " << _position);
 		
-        while(corePosition < _position) {
-            move_core_right(_eps, _maxRank);
-        }
-        
-        while(corePosition > _position) {
-            move_core_left(_eps, _maxRank);
-        }
-    }
-    
-    value_t BlockTT::move_core(const size_t _position, const size_t _maxRank) {
+		while(corePosition < _position) {
+			move_core_right(_eps, _maxRank);
+		}
+		
+		while(corePosition > _position) {
+			move_core_left(_eps, _maxRank);
+		}
+	}
+	
+	value_t BlockTT::move_core(const size_t _position, const size_t _maxRank) {
 		REQUIRE(_maxRank > 0, "maxRank must be larger than zero.");
-        REQUIRE(_position < order(), "IE");
-        Tensor U, S, V;
-        value_t ret = 0; // corePosition == _position
+		REQUIRE(_position < order(), "IE");
+		Tensor U, S, V;
+		value_t ret = 0; // corePosition == _position
 
-        while(corePosition < _position) { // To right
-            const Tensor& X = components[corePosition];
-            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+		while(corePosition < _position) { // To right
+			const Tensor& X = components[corePosition];
+			ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
 
-            components[corePosition] = U;
-            components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
-            corePosition++;
-            blockPosition++;
-        }
+			components[corePosition] = U;
+			components[corePosition+1](left, ext, p, right) = S(left, r1)*V(r1, p, r2)*components[corePosition+1](r2, ext, right);
+			corePosition++;
+			blockPosition++;
+		}
 
-        while(corePosition > _position) { // To left
-            const Tensor X = reshuffle(components[corePosition], {0,2,1,3});
-            ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
+		while(corePosition > _position) { // To left
+			const Tensor X = reshuffle(components[corePosition], {0,2,1,3});
+			ret = calculate_svd(U, S, V, X, 2, _maxRank, .0);
 
-            components[corePosition] = V;
-            components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
-            corePosition--;
-            blockPosition--;
-        }
+			components[corePosition] = V;
+			components[corePosition-1](left, ext, p, right) = components[corePosition-1](left, ext, r1)*U(r1, p, r2)*S(r2, right);
+			corePosition--;
+			blockPosition--;
+		}
 
-        return ret;
-    }
-    
-    void BlockTT::average_core() {
-        Tensor coreCmp;
-        coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
-        components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
-    }
-    
+		return ret;
+	}
+	
+	void BlockTT::average_core() {
+		Tensor coreCmp;
+		coreCmp(left, ext, right) = (1.0/double(P))*components[corePosition](left, ext, p, right)*Tensor::ones({P})(p);
+		components[corePosition](left, ext, p, right) = coreCmp(left, ext, right)*Tensor::ones({P})(p);
+	}
+	
 
-    void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format) {
-        if(_format == misc::FileFormat::TSV) {
-            _stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
-        }
-        // storage version number
-        xerus::misc::write_to_stream<size_t>(_stream, 1, _format);
-        
-        xerus::misc::write_to_stream<size_t>(_stream, _obj.P, _format);
-        xerus::misc::write_to_stream<size_t>(_stream, _obj.corePosition, _format);
-        xerus::misc::write_to_stream<size_t>(_stream, _obj.blockPosition, _format);
-        xerus::misc::write_to_stream<std::vector<size_t>>(_stream, _obj.dimensions, _format);
-        xerus::misc::write_to_stream<std::vector<xerus::Tensor>>(_stream, _obj.components, _format);
-    }
-    
-    
-    void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format) {
-        size_t ver = xerus::misc::read_from_stream<size_t>(_stream, _format);
-        REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
+	void stream_writer(std::ostream& _stream, const BlockTT &_obj, misc::FileFormat _format) {
+		if(_format == misc::FileFormat::TSV) {
+			_stream << std::setprecision(std::numeric_limits<value_t>::digits10 + 1);
+		}
+		// storage version number
+		xerus::misc::write_to_stream<size_t>(_stream, 1, _format);
+		
+		xerus::misc::write_to_stream<size_t>(_stream, _obj.P, _format);
+		xerus::misc::write_to_stream<size_t>(_stream, _obj.corePosition, _format);
+		xerus::misc::write_to_stream<size_t>(_stream, _obj.blockPosition, _format);
+		xerus::misc::write_to_stream<std::vector<size_t>>(_stream, _obj.dimensions, _format);
+		xerus::misc::write_to_stream<std::vector<xerus::Tensor>>(_stream, _obj.components, _format);
+	}
+	
+	
+	void stream_reader(std::istream& _stream, BlockTT &_obj, const misc::FileFormat _format) {
+		size_t ver = xerus::misc::read_from_stream<size_t>(_stream, _format);
+		REQUIRE(ver == 1, "Unknown stream version to open (" << ver << ")");
 
-        _obj.P = xerus::misc::read_from_stream<size_t>(_stream, _format);
-        _obj.corePosition  = xerus::misc::read_from_stream<size_t>(_stream, _format);
-        _obj.blockPosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
-        _obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
-        _obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
-    }
-    
+		_obj.P = xerus::misc::read_from_stream<size_t>(_stream, _format);
+		_obj.corePosition  = xerus::misc::read_from_stream<size_t>(_stream, _format);
+		_obj.blockPosition = xerus::misc::read_from_stream<size_t>(_stream, _format);
+		_obj.dimensions = xerus::misc::read_from_stream<std::vector<size_t>>(_stream, _format);
+		_obj.components = xerus::misc::read_from_stream<std::vector<Tensor>>(_stream, _format);
+	}
+	
 
-    bool BlockTT::all_entries_valid() const {
-        for (const auto& comp : components) {
-            if (! comp.all_entries_valid()) { return false; }
-        }
-        return true;
-    }
+	bool BlockTT::all_entries_valid() const {
+		for (const auto& comp : components) {
+			if (! comp.all_entries_valid()) { return false; }
+		}
+		return true;
+	}
 
 } } // namespace xerus

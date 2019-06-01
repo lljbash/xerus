@@ -53,7 +53,7 @@ namespace xerus { namespace uq {
 			return legendre_evaluation(_value, _basisSize);
 		}
 	}
-    
+	
 	Tensor hermite_evaluation(const double _v, const size_t _basisSize) {
 		Tensor p({_basisSize});
 		for (unsigned i = 0; i < _basisSize; ++i) {
@@ -186,7 +186,7 @@ namespace xerus { namespace uq {
 	}
 	
 	
-    void UQMeasurementSet::add(const std::vector<double>& _paramVec, const Tensor& _solution) {
+	void UQMeasurementSet::add(const std::vector<double>& _paramVec, const Tensor& _solution) {
 		parameterVectors.push_back(_paramVec);
 		solutions.push_back(_solution);
 	}
@@ -204,7 +204,7 @@ namespace xerus { namespace uq {
 	
 	
 // 				initial_guess(const Tensor& _mean, const UQMeasurementSet& _measurments, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions)
-    TTTensor 	initial_guess(const Tensor& _mean, const std::vector<std::vector<double>>& _parameterVectors, const std::vector<Tensor>& _solutions, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions){
+	TTTensor 	initial_guess(const Tensor& _mean, const std::vector<std::vector<double>>& _parameterVectors, const std::vector<Tensor>& _solutions, const PolynomBasis _polyBasis, const std::vector<size_t>& _dimensions){
 		REQUIRE(_parameterVectors.size() > 0, "Need at least one measurment.");
 		REQUIRE(_parameterVectors.size() == _solutions.size(), "Invalid measurments.");
 		REQUIRE(_dimensions.front() == _solutions.front().dimensions.front(), "Inconsitend measurments and dimensions.");

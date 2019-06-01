@@ -62,11 +62,11 @@ void expose_ttnetwork() {
 				return boost::python::make_tuple(result.first, result.second);
 			}, arg("position"))
 
- 		.def("round", static_cast<void (TTTensor::*)(const std::vector<size_t>&, double)>(&TTTensor::round),
- 			(arg("ranks"), arg("epsilon")=EPSILON)
- 		)
+		.def("round", static_cast<void (TTTensor::*)(const std::vector<size_t>&, double)>(&TTTensor::round),
+			(arg("ranks"), arg("epsilon")=EPSILON)
+		)
 		.def("round", static_cast<void (TTTensor::*)(double)>(&TTTensor::round))
- 		.def("round", static_cast<void (TTTensor::*)(size_t)>(&TTTensor::round))
+		.def("round", static_cast<void (TTTensor::*)(size_t)>(&TTTensor::round))
 		.def("soft_threshold", static_cast<void (TTTensor::*)(const double)>(&TTTensor::soft_threshold),
 			(arg("tau"))
 		)

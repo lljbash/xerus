@@ -52,6 +52,7 @@
 #include <numpy/ndarrayobject.h>
 #pragma GCC diagnostic pop
 #include "xerus.h"
+#include "xerus/blockTT.h"
 #include "xerus/misc/internal.h"
 
 using namespace boost::python;
@@ -75,6 +76,7 @@ void expose_indexedTensors();
 void expose_tensorNetwork();
 void expose_ttnetwork();
 void expose_htnetwork();
+void expose_blocktt();
 
 void expose_leastSquaresAlgorithms();
 void expose_recoveryAlgorithms();

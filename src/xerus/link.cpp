@@ -25,21 +25,21 @@
 #include <xerus/tensorNetwork.h>
 
 namespace xerus {
-    TensorNetwork::Link::Link(const size_t _other, const size_t _indexPos, const size_t _dim, const bool _external) noexcept
-        : other(_other), indexPosition(_indexPos), dimension(_dim), external(_external) {}
+	TensorNetwork::Link::Link(const size_t _other, const size_t _indexPos, const size_t _dim, const bool _external) noexcept
+		: other(_other), indexPosition(_indexPos), dimension(_dim), external(_external) {}
 
-    bool TensorNetwork::Link::links(const size_t _other) const noexcept { return !external && other == _other; }
+	bool TensorNetwork::Link::links(const size_t _other) const noexcept { return !external && other == _other; }
 
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - External functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+	/*- - - - - - - - - - - - - - - - - - - - - - - - - - External functions - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
-    std::ostream &operator<<(std::ostream &_out, const xerus::TensorNetwork::Link &_rhs) {
-        _out << "L{";
-        if (_rhs.external) {
-            _out << "ext";
-        } else {
-            _out << _rhs.other;
-        }
-        _out << " (" << _rhs.indexPosition << "), dim " << _rhs.dimension << "}";
-        return _out;
-    }
+	std::ostream &operator<<(std::ostream &_out, const xerus::TensorNetwork::Link &_rhs) {
+		_out << "L{";
+		if (_rhs.external) {
+			_out << "ext";
+		} else {
+			_out << _rhs.other;
+		}
+		_out << " (" << _rhs.indexPosition << "), dim " << _rhs.dimension << "}";
+		return _out;
+	}
 } // namespace xerus
