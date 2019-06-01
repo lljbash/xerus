@@ -54,8 +54,7 @@ namespace xerus { namespace misc {
 		
 		for (boost::filesystem::directory_iterator itr(_path), end; itr != end; ++itr) {
 			if(!boost::filesystem::is_regular_file(itr->path())) { continue;}
-			const auto file = itr->path().filename().string();
-			files.emplace(file);
+			files.emplace(itr->path().filename().string());
 		}
 		
 		return files;
@@ -68,8 +67,7 @@ namespace xerus { namespace misc {
 		
 		for (boost::filesystem::directory_iterator itr(_path), end; itr != end; ++itr) {
 			if(!boost::filesystem::is_directory(itr->path())) { continue;}
-			const auto file = itr->path().filename().string();
-			files.emplace(file);
+			files.emplace(itr->path().filename().string());
 		}
 		
 		return files;
@@ -95,7 +93,7 @@ namespace xerus { namespace misc {
 
 	std::string read_file(const std::string& _path) {
 		REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
-		std::ifstream fileStream(_path, std::ifstream::in);
+		std::ifstream fileStream(_path, std::ifstream::in | std::ifstream::binary);
 		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
 		
 		std::string contents;
@@ -112,13 +110,12 @@ namespace xerus { namespace misc {
 		std::ifstream fileStream(_path, std::ifstream::in);
 		CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
 		
-		std::vector<std::string> lines(1);
+		std::string line;
+		std::vector<std::string> lines;
 		
-		while(getline(fileStream, lines.back())) {
-			lines.emplace_back();
+		while(getline(fileStream, line)) {
+			lines.emplace_back(std::move(line));
 		}
-		lines.pop_back();
-		
 		return lines;
 	}
 	
@@ -148,7 +145,7 @@ namespace xerus { namespace misc {
 	#if __cplusplus >= 201402L
 	
 		std::ifstream open_file_read(const std::string& _path) {
-			REQUIRE(boost::filesystem::exists(_path), "File " << _path << " does not exist.");
+			REQUIRE(file_exists(_path), "File " << _path << " does not exist.");
 			std::ifstream fileStream(_path, std::ifstream::in);
 			CHECK(fileStream.is_open() && !fileStream.fail(), error, "Could not properly (read) open the file " << _path);
 			return fileStream;
