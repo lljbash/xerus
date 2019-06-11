@@ -9,7 +9,8 @@ RUN python3 -c'import sys; raise SystemExit("{0}.{1}".format(*sys.version_info) 
 # Install Xerus
 RUN git clone https://git.hemio.de/xerus/xerus.git
 WORKDIR "/tmp/xerus/"
-RUN git checkout development && \
+RUN git checkout vmc && \
+	git pull && \
 	cp ./docker/xerus/config.mk . && \
 	mkdir -p /usr/local/lib && \
 	mkdir -p /usr/local/include && \

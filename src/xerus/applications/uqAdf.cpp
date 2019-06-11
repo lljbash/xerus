@@ -635,7 +635,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 		TTTensor x(_dimensions);
 
-		Tensor mean = sample_mean(_measurments.solutions);
+		Tensor mean = sample_mean(_measurments.solutions);  /* TODO: weights */
 
 		// Set mean
 		mean.reinterpret_dimensions({1, x.dimensions[0], 1});
@@ -659,7 +659,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 		TTTensor x(_dimensions);
 
-		Tensor mean = sample_mean(_solutions);
+		Tensor mean = sample_mean(_solutions);  /* TODO: weights */
 
 		// Set mean
 		mean.reinterpret_dimensions({1, x.dimensions[0], 1});
@@ -683,7 +683,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 		TTTensor x(_dimensions);
 
-		Tensor mean = sample_mean(_solutions);
+		Tensor mean = sample_mean(_solutions);  /* TODO: weights */
 
 		// Set mean
 		mean.reinterpret_dimensions({1, x.dimensions[0], 1});
