@@ -27,13 +27,13 @@
 
 void expose_htnetwork(module& m) {
 	class_<HTTensor, TensorNetwork>(m,"HTTensor")
+		.def(init<const HTTensor &>())
 		.def(init<const Tensor&>())
 		.def(init<const Tensor&, value_t>())
 		.def(init<const Tensor&, value_t, size_t>())
 		.def(init<const Tensor&, value_t, TensorNetwork::RankTuple>())
 		.def(init<Tensor::DimensionTuple>())
 		.def(init<size_t>())
-		.def(init<const HTTensor &>())
 		.def("get_component", &HTTensor::get_component)
 		.def("set_component", &HTTensor::set_component)
 		.def_readonly("canonicalized", &HTTensor::canonicalized)

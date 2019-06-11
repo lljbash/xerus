@@ -2,13 +2,13 @@
 
 void expose_ttnetwork(module& m) {
 	class_<TTTensor, TensorNetwork>(m, "TTTensor")
+		.def(init<const TTTensor &>())
 		.def(init<const Tensor&>())
 		.def(init<const Tensor&, value_t>())
 		.def(init<const Tensor&, value_t, size_t>())
 		.def(init<const Tensor&, value_t, TensorNetwork::RankTuple>())
 		.def(init<Tensor::DimensionTuple>())
 		.def(init<size_t>())
-		.def(init<const TTTensor &>())
 		.def("get_component", &TTTensor::get_component)
 		.def("set_component", &TTTensor::set_component)
 		.def_readonly("canonicalized", &TTTensor::canonicalized)
