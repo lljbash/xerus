@@ -202,14 +202,14 @@ shared: build/libxerus_misc.so build/libxerus.so
 .PHONY: libxerus_misc_dependencies
 libxerus_misc_dependencies:
 	@:$(call check_defined, BOOST_LIBS, include and link paths)
-build/libxerus_misc.so: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_SOURCES)
+build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES) | libxerus_misc_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) $(BOOST_LIBS) -o build/libxerus_misc.so
 
 .PHONY: libxerus_dependencies
 libxerus_dependencies:
 	@:$(call check_defined, SUITESPARSE LAPACK_LIBRARIES BLAS_LIBRARIES, include and link paths)
-build/libxerus.so: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
+build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so | libxerus_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
@@ -231,7 +231,7 @@ build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
 
 static: build/libxerus_misc.a build/libxerus.a
 
-build/libxerus_misc.a: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_OBJECTS)
+build/libxerus_misc.a: $(MINIMAL_DEPS) $(MISC_OBJECTS) | libxerus_misc_dependencies
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
@@ -239,7 +239,7 @@ else
 	ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
 endif
 
-build/libxerus.a: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_OBJECTS)
+build/libxerus.a: $(MINIMAL_DEPS) $(XERUS_OBJECTS) | libxerus_dependencies
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus.a $(XERUS_OBJECTS)
@@ -283,7 +283,7 @@ install:
 	@printf "Cannot install xerus: INSTALL_LIB_PATH not set.  Please set the path in config file.\n"
 endif
 
-$(TEST_NAME): libxerus_misc_dependencies libxerus_dependencies $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
+$(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a | libxerus_misc_dependencies libxerus_dependencies
 	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(BOOST_LIBS) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
 build/print_boost_version: src/print_boost_version.cpp
@@ -319,13 +319,13 @@ endif
 .PHONY: test_python2_dependencies
 test_python2_dependencies:
 	@:$(call check_defined, PYTEST2, pytest executable)
-test_python2: test_python2_dependencies build/libxerus.so build/python2/xerus.so
+test_python2: build/libxerus.so build/python2/xerus.so | test_python2_dependencies
 	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
 
 .PHONY: test_python3_dependencies
 test_python3_dependencies:
 	@:$(call check_defined, PYTEST3, pytest executable)
-test_python3: test_python3_dependencies build/libxerus.so build/python3/xerus.so
+test_python3: build/libxerus.so build/python3/xerus.so | test_python3_dependencies
 	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 
