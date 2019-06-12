@@ -1,7 +1,26 @@
 import unittest
 import numpy as np
 import xerus as xe
-import pickle
+try:
+	# python2
+	# Here cPickle has to be used instead of pickle and a protocol version newer 2.0 has to be used.
+	# From the documentation:
+	#
+	#    Note that only the cPickle module is supported on Python 2.7.
+	#    The second argument to dumps is also crucial: it selects the pickle protocol version 2,
+	#    since the older version 1 is not supported. Newer versions are also fine - for instance,
+	#    specify -1 to always use the latest available version. 
+	#
+	#    Beware: failure to follow these instructions will cause important pybind11 memory 
+	#    allocation routines to be skipped during unpickling, which will likely lead to memory 
+	#    corruption and/or segmentation faults.
+	import cPickle
+	assert '2.0' in cPickle.compatible_formats
+	dumps = lambda o: cPickle.dumps(o, protocol=-1)
+	loads = cPickle.loads
+except ImportError:
+	# python3
+	from pickle import dumps, loads
 
 
 def generate_random_tttensors(num_tests, max_order, max_dimension, max_rank, random):
@@ -23,8 +42,8 @@ def __test_tensor(A):
 	name = "test_pickle_" + "-".join(map(str, A.dimensions))
 
 	def test_pickle(self):
-		bytes = pickle.dumps(A)
-		Au = pickle.loads(bytes)
+		bytes = dumps(A)
+		Au = loads(bytes)
 		self.assertEqual(Au.dimensions, A.dimensions)
 		self.assertLessEqual(xe.frob_norm(A-Au), 1e-16)
 

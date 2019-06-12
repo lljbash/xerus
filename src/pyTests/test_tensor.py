@@ -40,6 +40,8 @@ class TestTensor(unittest.TestCase):
 		a = xe.Tensor()
 		xe.Tensor(a)
 
+		xe.Tensor(xe.TTTensor([2]))
+
 		# xe.Tensor(tensor_network)
 
 	def test_create_tensors(self):
