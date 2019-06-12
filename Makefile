@@ -220,7 +220,7 @@ python3: build/python3/xerus.so
 build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
 	@:$(call check_defined, PYTHON2_CONFIG BOOST_PYTHON2, include and link paths)
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include -I 3rdParty/pybind11/include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
 
 build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
 	@:$(call check_defined, PYTHON3_CONFIG BOOST_PYTHON3, include and link paths)
