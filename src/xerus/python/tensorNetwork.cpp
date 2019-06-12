@@ -29,7 +29,7 @@ void expose_tensorNetwork(module& m) {
 				idx.push_back(*(_args[i].cast<Index *>()));
 			}
 			return new xerus::internal::IndexedTensor<TensorNetwork>(std::move(_this(idx)));
-		}, return_value_policy::take_ownership )
+		}, keep_alive<0, 1>(), return_value_policy::take_ownership )
 		.def(self * value_t())
 		.def(value_t() * self)
 		.def(self / value_t())
