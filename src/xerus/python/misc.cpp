@@ -33,7 +33,6 @@ void expose_misc(module& m) {
 		.value("TSV", misc::FileFormat::TSV)
 	;
 
-	//TODO: overload_cast
 	/* m.def("save_to_file", static_cast<void (*)(const Tensor&)>(&misc::save_to_file), arg("object"), arg("filename"), arg("format")=misc::FileFormat::BINARY); */
 	/* m.def("save_to_file", static_cast<void (*)(const TTTensor&)>(&misc::save_to_file), arg("object"), arg("filename"), arg("format")=misc::FileFormat::BINARY); */
 	/* m.def("save_to_file", static_cast<void (*)(const TTOperator&)>(&misc::save_to_file), arg("object"), arg("filename"), arg("format")=misc::FileFormat::BINARY); */

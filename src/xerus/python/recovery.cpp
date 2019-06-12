@@ -7,19 +7,25 @@ void expose_recoveryAlgorithms(module& m) {
 		.def(init<const SinglePointMeasurementSet&>())
 		.def_readwrite("positions", &SinglePointMeasurementSet::positions)
 		.def_readwrite("measuredValues", &SinglePointMeasurementSet::measuredValues)
-		.def("add", overload_cast<const std::vector<size_t>&, const value_t>(&SinglePointMeasurementSet::add))
-		.def("add", overload_cast<const std::vector<size_t>&, const value_t, const value_t>(&SinglePointMeasurementSet::add))
+		/* .def("add", overload_cast<const std::vector<size_t>&, const value_t>(&SinglePointMeasurementSet::add)) */
+		.def("add", static_cast<void (SinglePointMeasurementSet::*)(const std::vector<size_t>&, const value_t)>(&SinglePointMeasurementSet::add))
+		/* .def("add", overload_cast<const std::vector<size_t>&, const value_t, const value_t>(&SinglePointMeasurementSet::add)) */
+		.def("add", static_cast<void (SinglePointMeasurementSet::*)(const std::vector<size_t>&, const value_t, const value_t)>(&SinglePointMeasurementSet::add))
 		.def("size", &SinglePointMeasurementSet::size)
 		.def("order", &SinglePointMeasurementSet::order)
 		.def("norm_2", &SinglePointMeasurementSet::norm_2)
 		.def("sort", &SinglePointMeasurementSet::sort)
-		.def("measure", overload_cast<const Tensor &>(&SinglePointMeasurementSet::measure), arg("solution"))
-		.def("measure", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::measure), arg("solution"))
+		/* .def("measure", overload_cast<const Tensor &>(&SinglePointMeasurementSet::measure), arg("solution")) */
+		.def("measure", static_cast<void (SinglePointMeasurementSet::*)(const Tensor&)>(&SinglePointMeasurementSet::measure), arg("solution"))
+		/* .def("measure", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::measure), arg("solution")) */
+		.def("measure", static_cast<void (SinglePointMeasurementSet::*)(const TensorNetwork&)>(&SinglePointMeasurementSet::measure), arg("solution"))
 		.def("measure", +[](SinglePointMeasurementSet &_this, const std::function<double(const std::vector<size_t>)> _f) {
 			_this.measure(_f);
 		})
-		.def("test", overload_cast<const Tensor &>(&SinglePointMeasurementSet::test, const_), arg("solution"))
-		.def("test", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::test, const_), arg("solution"))
+		/* .def("test", overload_cast<const Tensor &>(&SinglePointMeasurementSet::test, const_), arg("solution")) */
+		.def("test", static_cast<double (SinglePointMeasurementSet::*)(const Tensor&) const>(&SinglePointMeasurementSet::test), arg("solution"))
+		/* .def("test", overload_cast<const TensorNetwork &>(&SinglePointMeasurementSet::test, const_), arg("solution")) */
+		.def("test", static_cast<double (SinglePointMeasurementSet::*)(const TensorNetwork&) const>(&SinglePointMeasurementSet::test), arg("solution"))
 		.def("test", +[](SinglePointMeasurementSet &_this, const std::function<double(const std::vector<size_t>)> _f) -> double {
 			return _this.test(_f);
 		})
@@ -58,13 +64,17 @@ void expose_recoveryAlgorithms(module& m) {
 		.def("norm_2", &RankOneMeasurementSet::norm_2)
 		.def("sort", &RankOneMeasurementSet::sort)
 		.def("normalize", &RankOneMeasurementSet::normalize)
-		.def("measure", overload_cast<const Tensor &>(&RankOneMeasurementSet::measure), arg("solution"))
-		.def("measure", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::measure), arg("solution"))
+		/* .def("measure", overload_cast<const Tensor &>(&RankOneMeasurementSet::measure), arg("solution")) */
+		.def("measure", static_cast<void (RankOneMeasurementSet::*)(const Tensor&)>(&RankOneMeasurementSet::measure), arg("solution"))
+		/* .def("measure", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::measure), arg("solution")) */
+		.def("measure", static_cast<void (RankOneMeasurementSet::*)(const TensorNetwork&)>(&RankOneMeasurementSet::measure), arg("solution"))
 		.def("measure", +[](RankOneMeasurementSet &_this, const std::function<double(const std::vector<Tensor>)> _f) {
 			_this.measure(_f);
 		})
-		.def("test", overload_cast<const Tensor &>(&RankOneMeasurementSet::test, const_), arg("solution"))
-		.def("test", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::test, const_), arg("solution"))
+		/* .def("test", overload_cast<const Tensor &>(&RankOneMeasurementSet::test, const_), arg("solution")) */
+		.def("test", static_cast<double (RankOneMeasurementSet::*)(const Tensor&) const>(&RankOneMeasurementSet::test), arg("solution"))
+		/* .def("test", overload_cast<const TensorNetwork &>(&RankOneMeasurementSet::test, const_), arg("solution")) */
+		.def("test", static_cast<double (RankOneMeasurementSet::*)(const TensorNetwork&) const>(&RankOneMeasurementSet::test), arg("solution"))
 		.def("test", +[](RankOneMeasurementSet &_this, const std::function<double(const std::vector<Tensor>)> _f) -> double {
 			return _this.test(_f);
 		})
