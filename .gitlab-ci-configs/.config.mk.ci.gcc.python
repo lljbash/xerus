@@ -8,10 +8,7 @@ PYTHON3_CONFIG = `python3-config --cflags --ldflags`
 PYTEST2 = pytest
 PYTEST3 = pytest-3
 
-STRICT_WARNINGS = TRUE
-# DEBUG += -D XERUS_TEST_COVERAGE                 # Enable coverage tests
-
- DEBUG += -g                # Adds debug symbols
+DEBUG += -g                # Adds debug symbols
 
 #=================================================================================================
 # External libraries
