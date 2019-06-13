@@ -57,7 +57,7 @@ void expose_misc(module& m) {
 		// determine type stored in the file
 		std::ifstream in(_filename);
 		if (!in) {
-			throw value_error("IOError");  //TODO...
+			throw std::runtime_error("could not read file '" + _filename + "'");
 		}
 		std::string classname;
 		in >> classname; // "Xerus"
