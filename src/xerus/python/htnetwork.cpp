@@ -27,6 +27,14 @@
 
 void expose_htnetwork(module& m) {
 	class_<HTTensor, TensorNetwork>(m,"HTTensor")
+		.def(pickle(
+			[](const HTTensor &_self) { // __getstate__
+				return bytes(misc::serialize(_self));
+			},
+			[](bytes _bytes) { // __setstate__
+				return misc::deserialize<HTTensor>(_bytes);
+			}
+		))
 		.def(init<const HTTensor &>())
 		.def(init<const Tensor&>())
 		.def(init<const Tensor&, value_t>())

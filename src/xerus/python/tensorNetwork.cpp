@@ -2,6 +2,14 @@
 
 void expose_tensorNetwork(module& m) {
 	class_<TensorNetwork>(m, "TensorNetwork")
+		.def(pickle(
+			[](const TensorNetwork &_self) { // __getstate__
+				return bytes(misc::serialize(_self));
+			},
+			[](bytes _bytes) { // __setstate__
+				return misc::deserialize<TensorNetwork>(_bytes);
+			}
+		))
 		.def(init<>())
 		.def(init<Tensor>())
 		.def(init<const TensorNetwork &>())

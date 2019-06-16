@@ -2,6 +2,14 @@
 
 void expose_ttnetwork(module& m) {
 	class_<TTTensor, TensorNetwork>(m, "TTTensor")
+		.def(pickle(
+			[](const TTTensor &_self) { // __getstate__
+				return bytes(misc::serialize(_self));
+			},
+			[](bytes _bytes) { // __setstate__
+				return misc::deserialize<TTTensor>(_bytes);
+			}
+		))
 		.def(init<const TTTensor &>())
 		.def(init<const Tensor&>())
 		.def(init<const Tensor&, value_t>())
