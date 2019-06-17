@@ -58,8 +58,17 @@ XERUS_SOURCES = $(wildcard src/xerus/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/algorithms/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/applications/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/examples/*.cpp)
+# XERUS_SOURCES = $(wildcard src/xerus/**/*.cpp)
+
+XERUS_INCLUDES =  $(wildcard include/xerus/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/algorithms/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/applications/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/examples/*.h)
+# XERUS_INCLUDES = $(wildcard include/xerus/**/*.h)
 
 MISC_SOURCES = $(wildcard src/xerus/misc/*.cpp)
+
+MISC_INCLUDES = $(wildcard include/xerus/misc/*.h)
 
 PYTHON_SOURCES = $(wildcard src/xerus/python/*.cpp)
 
@@ -202,14 +211,14 @@ shared: build/libxerus_misc.so build/libxerus.so
 .PHONY: libxerus_misc_dependencies
 libxerus_misc_dependencies:
 	@:$(call check_defined, BOOST_LIBS, include and link paths)
-build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES) | libxerus_misc_dependencies
+build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES) $(MISC_INCLUDES) | libxerus_misc_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) $(BOOST_LIBS) -o build/libxerus_misc.so
 
 .PHONY: libxerus_dependencies
 libxerus_dependencies:
 	@:$(call check_defined, SUITESPARSE LAPACK_LIBRARIES BLAS_LIBRARIES, include and link paths)
-build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so | libxerus_dependencies
+build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) $(XERUS_INCLUDES) build/libxerus_misc.so | libxerus_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
