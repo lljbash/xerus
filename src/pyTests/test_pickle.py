@@ -39,14 +39,13 @@ def generate_random_tttensors(num_tests, max_order=10, max_dimension=10, max_ran
 
 
 def generate_random_httensors(num_tests, max_order=10, max_dimension=10, max_rank=4, random=None):
-	orders = random.randint(low=2, high=max_order+1, size=num_tests)  #TODO: change `low=1` back when possible
+	# orders = random.randint(low=1, high=max_order+1, size=num_tests)
+	orders = random.randint(low=2, high=max_order+1, size=num_tests)  #TODO: change back to `low=1` when core_move-bug is fixed
 	dimensions = [random.randint(low=1, high=max_dimension, size=order) for order in orders]
 	# A perfect binary tree with `order` leaves has depth `log2(order)` and `sum(2**k for k in range(log2(order))) = 2*order-1` nodes.
 	# With exception of the root every node has one link to its parent. This results in `2*order - 2` links.
 	ranks = [random.randint(low=1, high=max_rank, size=2*(order-1)) for order in orders]
-	print( xe.HTTensor([6]) )
 	for dim, rk in zip(dimensions, ranks):
-		print("5:", dim, rk)
 		yield xe.HTTensor.random(dim.tolist(), rk.tolist())
 
 
