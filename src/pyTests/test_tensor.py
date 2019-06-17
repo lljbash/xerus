@@ -1,8 +1,22 @@
-import unittest
+import sys, unittest
+from contextlib import contextmanager
 from itertools import product
 ranges = lambda *args: product(*[range(arg) for arg in args])
 import xerus as xe
 import numpy as np
+
+
+# class assertNotRaises(object):
+#     def __init__(self, exc_type=Exception, msg=None):
+#         self.exc_type = exc_type
+#         self.msg = " : " + msg if msg is not None else ""
+#         self.exception = None
+#     def __enter__(self): return self
+#     def __exit__(self, exc_type, exc_value, traceback):
+#         self.exception = exc_value
+#         if isinstance(exc_value, self.exc_type):
+#             text = "{} raised" + self.msg
+#             raise AssertionError(text.format(exc_type.__name__)) from None
 
 
 class TestTensor(unittest.TestCase):
@@ -20,6 +34,38 @@ class TestTensor(unittest.TestCase):
 		# xe.Initialisation.None  #TODO: syntax error
 
 		xe.Tensor
+
+
+	@contextmanager
+	def assertNotRaises(self, exc_type=Exception, msg=None):
+		try:
+			yield None
+		except exc_type as e:
+			text = "{} raised" + (" : "+msg if msg is not None else "")
+			if sys.version_info >= (3, 0):
+				raise self.failureException(text.format(e.__class__.__name__)) from None
+			else:
+				raise self.failureException(text.format(e.__class__.__name__))
+
+	def test_construction(self):
+		with self.assertNotRaises(msg="Order-0 TT"):
+			A = xe.TTTensor([])
+		with self.assertNotRaises(msg="Order-1 TT"):
+			A = xe.TTTensor([6])
+		with self.assertNotRaises(msg="Order-1 random TT"):
+			A = xe.TTTensor.random([6], [])
+		with self.assertNotRaises(msg="Order-0 HT"):
+			A = xe.HTTensor([])
+		with self.assertNotRaises(msg="Order-1 HT"):
+			A = xe.HTTensor([6])
+		with self.assertNotRaises(msg="Order-1 random HT"):
+			A = xe.HTTensor.random([6], [])
+
+	def test_core_move(self):
+		with self.assertNotRaises():
+			A = xe.HTTensor([6])
+			A.move_core(0)
+
 
 	def test_create_tensors_simple(self):
 		xe.Tensor()
