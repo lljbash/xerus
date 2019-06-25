@@ -28,7 +28,6 @@
 
 namespace xerus {
     namespace misc {
-
         ///@brief: Returns the time since epoche in microseconds.
         size_t uTime();
 

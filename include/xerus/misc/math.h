@@ -76,7 +76,7 @@ namespace xerus {
 		///@brief: Checks whether the relative difference between @a _a and @a _b (i.e. |a-b|/(|a|/2+|b|/2)) is smaller than @a _eps.
 		template<class T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type = true>
 		bool approx_equal(T _a, T _b, T _eps = 4*std::numeric_limits<T>::epsilon()) noexcept {
-			return std::abs(_a-_b) <= _eps*0.5*(std::abs(_a+_b)) || std::abs(_a-_b) < std::numeric_limits<T>::min();
+			return 2.0*std::abs(_a-_b) <= _eps*(std::abs(_a+_b)) || std::abs(_a-_b) < std::numeric_limits<T>::min();
 		}
 		
 		

@@ -1164,13 +1164,13 @@ namespace xerus {
 	
 	void Tensor::ensure_own_data() {
 		if(is_dense()) {
-			if(!denseData.unique()) {
+			if(!denseData.unique()) { // TODO NOT THREADSAFE!
 				value_t* const oldDataPtr = denseData.get();
 				denseData.reset(new value_t[size], internal::array_deleter_vt);
 				misc::copy(denseData.get(), oldDataPtr, size);
 			}
 		} else {
-			if(!sparseData.unique()) {
+			if(!sparseData.unique()) { // TODO NOT THREADSAFE!
 				sparseData.reset(new std::map<size_t, value_t>(*sparseData));
 			}
 		}
@@ -1179,11 +1179,11 @@ namespace xerus {
 	
 	void Tensor::ensure_own_data_no_copy() {
 		if(is_dense()) {
-			if(!denseData.unique()) {
+			if(!denseData.unique()) { // TODO NOT THREADSAFE!
 				denseData.reset(new value_t[size], internal::array_deleter_vt);
 			}
 		} else {
-			if(!sparseData.unique()) {
+			if(!sparseData.unique()) { // TODO NOT THREADSAFE!
 				sparseData.reset(new std::map<size_t, value_t>());
 			}
 		}

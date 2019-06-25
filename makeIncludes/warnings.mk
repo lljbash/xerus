@@ -6,6 +6,7 @@
 WARNINGS += -Wall						# Show "all" warnings
 WARNINGS += -Wextra						# Show more warnings
 WARNINGS += -pedantic						# Strict ISO C++ checks (warn everywhere the ISO says there should be a warning)
+WARNINGS += -ftemplate-backtrace-limit=0			# Show arbitrary depth in template instantiations
 
 
 # Additionall Warnings not aktivated by any level
