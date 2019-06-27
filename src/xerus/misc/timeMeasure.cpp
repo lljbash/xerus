@@ -27,14 +27,14 @@
 
 namespace xerus {
 		namespace misc {
-		size_t uTime() {
-			return static_cast<size_t>(std::chrono::duration_cast<std::chrono::microseconds>
-				(std::chrono::steady_clock::now().time_since_epoch()).count());
+		uint64 uTime() {
+			return static_cast<uint64>(std::chrono::duration_cast<std::chrono::microseconds>
+				(std::chrono::system_clock::now().time_since_epoch()).count());
 		}
 
-		size_t mTime() {
-			return static_cast<size_t>(std::chrono::duration_cast<std::chrono::milliseconds>
-				(std::chrono::steady_clock::now().time_since_epoch()).count());
+		uint64 mTime() {
+			return static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>
+				(std::chrono::system_clock::now().time_since_epoch()).count());
 		}
 	} // namespace misc
 } // namespace xerus

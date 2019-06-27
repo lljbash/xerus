@@ -29,9 +29,9 @@
 namespace xerus {
     namespace misc {
         ///@brief: Returns the time since epoche in microseconds.
-        size_t uTime();
+        uint64 uTime();
 
         ///@brief: Returns the time since epoche in milliseconds.
-        size_t mTime();
+        uint64 mTime();
     }
 }
