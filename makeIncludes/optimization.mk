@@ -37,7 +37,7 @@ endif
 ifdef DEBUG_OPTIMIZATION
 	DEBUG += -D DEBUG_OPTIMIZATION
 	ifndef USE_CLANG
-		OPTIMIZE += -Og
+		OPTIMIZE += -Og -fno-inline -ggdb
 	endif
 else ifdef HIGH_OPTIMIZATION
 	DEBUG += -D HIGH_OPTIMIZATION

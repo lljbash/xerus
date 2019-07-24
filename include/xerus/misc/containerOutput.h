@@ -86,11 +86,11 @@ namespace xerus { namespace misc {
 	
 	
 	///@brief Allow to pipe std::maps to ostreams.
-	template<class T, class U>
-	std::ostream& operator<<(std::ostream& _out, const std::map<T,U>& _set) {
-		if(_set.size() == 0) { _out << "{ }"; return _out; }
+	template<class T, class U, class... rest_t>
+	std::ostream& operator<<(std::ostream& _out, const std::map<T, U, rest_t...>& _map) {
+		if(_map.size() == 0) { _out << "{ }"; return _out; }
 		_out << "{ ";
-		for(const auto& item : _set) {  _out << "(" << item.first << ", " << item.second << "), "; }
+		for(const auto& item : _map) {  _out << "(" << item.first << ", " << item.second << "), "; }
 		_out << "\b\b }";
 		return _out;
 	}

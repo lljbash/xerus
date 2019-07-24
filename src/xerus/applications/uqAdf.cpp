@@ -645,7 +645,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 
 		for(size_t i=0; i < _measurments.parameterVectors.size(); ++i) {
-		  REQUIRE(_x.order() <= _measurments.parameterVectors[i].size(), "Parameter vector for sample " << i << " to short: " << _measurments.parameterVectors[i]);
+		  REQUIRE(_x.order() <= _measurments.parameterVectors[i].size()+1, "Parameter vector for sample " << i << " to short: " << _measurments.parameterVectors[i]);
 		  for(size_t j=0; j < _measurments.parameterVectors[i].size(); ++j) {
 			if(_measurments.parameterVectors[i][j] > 1 || _measurments.parameterVectors[i][j] < -1) {
 			  std::cout << "i=" << i << ", sample=" << _measurments.parameterVectors[i] << std::endl;

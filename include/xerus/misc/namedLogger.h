@@ -57,14 +57,14 @@ namespace xerus {
 			
 			// If the LOG_BUFFER is active there is the additional option only to print the log if an error occurs.
 			#ifdef XERUS_LOG_BUFFER
-				enum {
+				enum LogLvl {
 					NOT_LOGGING = 0,
 					LOGGING_ON_ERROR = 1,
 					LOGGING_FULL = 2,
 					LOGGING_EXCEPTION = 3
 				};
 			#else
-				enum {
+				enum LogLvl {
 					NOT_LOGGING = 0,
 					LOGGING_FULL = 2,
 					LOGGING_EXCEPTION = 3

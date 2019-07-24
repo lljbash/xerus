@@ -63,7 +63,6 @@ namespace xerus { namespace misc {
 			return count;
 		}
 		
-		
 		///@brief: Checks whether an arbitary container contains a certain element.
 		template<template<class, class...> class container_t, class item_t, class... rest_t,
 			typename std::enable_if<sfinae::has_find<container_t<item_t, rest_t...>, item_t>::value, int>::type = 0>
@@ -195,7 +194,16 @@ namespace xerus { namespace misc {
 	inline void erase(container_t<item_t, rest_t...>& _container, const rule_t& _rule) {
 		_container.erase(std::remove_if(_container.begin(), _container.end(), _rule), _container.end());
 	}
-} } // namespaces xerus::misc
-
-
+	
+	///@brief: Erases a single element specified by @a _rule from the vector @a _vector by swaping with the last item (destroying the order).
+	template<class rule_t, class item_t, class... rest_t>
+	inline void swap_erase_single(std::vector<item_t, rest_t...>& _vector, const rule_t& _rule) {
+		const auto foundItr = std::find_if(_vector.begin(), _vector.end(), _rule);
+		if(foundItr != _vector.end()) {
+			if(foundItr+1 != _vector.end()) { std::iter_swap(foundItr, _vector.rbegin()); }
+			_vector.pop_back();
+		}
+	}
+	
+}} // namespaces xerus::misc
 
