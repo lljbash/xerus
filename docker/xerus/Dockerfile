@@ -3,18 +3,18 @@ USER root
 WORKDIR "/tmp/"
 
 # Check Python versions
-RUN python -c'import sys; raise SystemExit("{0}.{1}".format(*sys.version_info) != "2.7")'
-RUN python3 -c'import sys; raise SystemExit("{0}.{1}".format(*sys.version_info) != "3.5")'
+RUN python  -c'import sys; version = "{0}.{1}".format(*sys.version_info); print("python2-version:", version); raise SystemExit(version != "2.7")'
+RUN python3 -c'import sys; version = "{0}.{1}".format(*sys.version_info); print("python3-version:", version); raise SystemExit(version != "3.6")'
 
 # Install Xerus
 RUN git clone https://git.hemio.de/xerus/xerus.git
 WORKDIR "/tmp/xerus/"
-RUN git checkout development && \
+RUN git checkout pybind11 && \
 	cp ./docker/xerus/config.mk . && \
 	mkdir -p /usr/local/lib && \
 	mkdir -p /usr/local/include && \
 	mkdir -p /usr/local/lib/python2.7/site-packages && \
-	mkdir -p /usr/local/lib/python3.5/site-packages && \
+	mkdir -p /usr/local/lib/python3.6/site-packages && \
 	make install -j $(cat /tmp/NCORES_1)
 
 RUN mkdir -p $(python -m site --user-site) && \

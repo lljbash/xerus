@@ -1,6 +1,6 @@
 FROM firemarmot/xerus AS xerus
 
-FROM quay.io/fenicsproject/stable:2017.1.0
+FROM quay.io/fenicsproject/stable:current
 USER root
 WORKDIR "/tmp/"
 
@@ -27,8 +27,8 @@ RUN apt-get -y install \
     python3-numpy
 
 # Check Python versions
-RUN python -c'import sys; raise SystemExit("{0}.{1}".format(*sys.version_info) != "2.7")'
-RUN python3 -c'import sys; raise SystemExit("{0}.{1}".format(*sys.version_info) != "3.5")'
+RUN python  -c'from __future__ import print_function; import sys; version = "{0}.{1}".format(*sys.version_info); print("python2-version:", version)'
+RUN python3 -c'import sys; version = "{0}.{1}".format(*sys.version_info); print("python3-version:", version)'
 
 # Clean apt
 RUN apt-get clean && \

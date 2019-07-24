@@ -1,11 +1,12 @@
 CXX = g++
+
+PYTHON2_CONFIG = `python-config --cflags --ldflags`
+PYTHON3_CONFIG = `python3-config --cflags --ldflags`
+
 COMPATIBILITY = -std=c++17
 COMPILE_THREADS = 8                       # Number of threads to use during link time optimization.
 HIGH_OPTIMIZATION = TRUE                  # Activates -O3 -march=native and some others
 OTHER += -fopenmp
-
-PYTHON2_CONFIG = `python-config --cflags --ldflags`
-PYTHON3_CONFIG = `python3-config --cflags --ldflags`
 
 LOGGING += -D XERUS_LOG_INFO              # Information that is not linked to any unexpected behaviour but might nevertheless be of interest.
 LOGGING += -D XERUS_LOGFILE               # Use 'error.log' file instead of cerr
@@ -20,6 +21,3 @@ BLAS_LIBRARIES = -lopenblas -lgfortran    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack     # Standard Lapack + Lapacke libraries
 SUITESPARSE = -L/usr/local/lib/suitesparse -lcholmod -lspqr
 BOOST_LIBS = -lboost_filesystem
-
-BOOST_PYTHON2 = -lboost_python-py27
-BOOST_PYTHON3 = -lboost_python-py35
