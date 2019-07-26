@@ -79,9 +79,11 @@ void expose_misc(module& m) {
 	});
 
 	m.def("serialize", +[](const Tensor &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
-	m.def("serialize", +[](const TensorNetwork &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
 	m.def("serialize", +[](const TTTensor &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
 	m.def("serialize", +[](const TTOperator &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
+	m.def("serialize", +[](const HTTensor &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
+	m.def("serialize", +[](const HTOperator &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
+	m.def("serialize", +[](const TensorNetwork &_obj){ return bytes(misc::serialize(_obj)); }, arg("object"));
 
 	m.def("deserialize", +[](std::string _bytes){
 		// determine type stored in the file

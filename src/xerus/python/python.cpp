@@ -26,7 +26,20 @@
 
 
 PYBIND11_MODULE(xerus, m) {
-	// m.doc() = "...";
+	m.doc() = "\
+The `xerus` library is a general purpose library for numerical calculations with higher order tensors, Tensor-Train Decompositions / Matrix Product States and general Tensor Networks.\n\
+The focus of development was the simple usability and adaptibility to any setting that requires higher order tensors or decompositions thereof.\n\
+\n\
+The key features include:\n\
+* Modern code and concepts incorporating many features of the `C++11` standard.\n\
+* Full python bindings with very similar syntax for easy transitions from and to c++.\n\
+* Calculation with tensors of arbitrary orders using an intuitive Einstein-like notation `A(i,j) = B(i,k,l) * C(k,j,l);`.\n\
+* Full implementation of the Tensor-Train decompositions (MPS) with all neccessary capabilities (including Algorithms like ALS, ADF and CG).\n\
+* Lazy evaluation of (multiple) tensor contractions featuring heuristics to automatically find efficient contraction orders.\n\
+* Direct integration of the `blas` and `lapack`, as high performance linear algebra backends.\n\
+* Fast sparse tensor calculation by usage of the `suiteSparse` sparse matrix capabilities.\n\
+* Capabilites to handle arbitrary Tensor Networks.\n\
+";
 
 	// xerus version
 	m.attr("VERSION_MAJOR") = VERSION_MAJOR;
