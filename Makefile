@@ -268,18 +268,22 @@ install: shared
 	test -d $(strip $(INSTALL_LIB_PATH));
 	test -d $(strip $(INSTALL_HEADER_PATH));
 	@printf "Installing libxerus.so to $(strip $(INSTALL_LIB_PATH)) and storing the header files in $(strip $(INSTALL_HEADER_PATH)).\n"
+ifdef INSTALL_PYTHON2_PATH
+	test -d $(strip $(INSTALL_PYTHON2_PATH));
+	@printf "Installing python2/xerus.so to $(strip $(INSTALL_PYTHON2_PATH)).\n"
+endif
+ifdef INSTALL_PYTHON3_PATH
+	test -d $(strip $(INSTALL_PYTHON3_PATH));
+	@printf "Installing python3/xerus.so to $(strip $(INSTALL_PYTHON3_PATH)).\n"
+endif
 	cp include/xerus.h $(INSTALL_HEADER_PATH)
 	cp -r include/xerus $(INSTALL_HEADER_PATH)
 	cp build/libxerus_misc.so $(INSTALL_LIB_PATH)
 	cp build/libxerus.so $(INSTALL_LIB_PATH)
 ifdef INSTALL_PYTHON2_PATH
-	test -d $(strip $(INSTALL_PYTHON2_PATH));
-	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON2_PATH)).\n"
 	cp build/python2/xerus.so $(INSTALL_PYTHON2_PATH)
 endif
 ifdef INSTALL_PYTHON3_PATH
-	test -d $(strip $(INSTALL_PYTHON3_PATH));
-	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON3_PATH)).\n"
 	cp build/python3/xerus.so $(INSTALL_PYTHON3_PATH)
 endif
 else

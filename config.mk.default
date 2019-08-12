@@ -140,9 +140,5 @@ BOOST_LIBS = -lboost_filesystem -lboost_system
 # ARPACK_LIBRARIES = -larpack
 # OTHER += -DARPACK_LIBRARIES
 
-# Uncomment or add the appropriate boost python library
-BOOST_PYTHON2 = -lboost_python-py27
-BOOST_PYTHON3 = -lboost_python-py35
-
 # Custom include paths
 # OTHER += -I /path/to/include

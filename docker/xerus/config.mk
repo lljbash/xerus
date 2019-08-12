@@ -15,7 +15,7 @@ LOGGING += -D XERUS_LOG_ABSOLUTE_TIME     # Print absolute times instead of rela
 INSTALL_LIB_PATH = /usr/local/lib         # Path where to install the libxerus.so shared library.
 INSTALL_HEADER_PATH = /usr/local/include  # Path where to install the xerus header files.
 INSTALL_PYTHON2_PATH = /usr/local/lib/python2.7/site-packages
-INSTALL_PYTHON3_PATH = /usr/local/lib/python3.5/site-packages
+INSTALL_PYTHON3_PATH = /usr/local/lib/python3.6/site-packages
 
 BLAS_LIBRARIES = -lopenblas -lgfortran    # Openblas, serial
 LAPACK_LIBRARIES = -llapacke -llapack     # Standard Lapack + Lapacke libraries
