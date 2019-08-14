@@ -89,6 +89,7 @@ class TestTensor(unittest.TestCase):
 		xe.Tensor(xe.TTTensor([2]))
 
 		# xe.Tensor(tensor_network)
+		a = xe.Tensor.from_buffer(np.random.randn(6))
 
 	def test_create_tensors(self):
 		ten_init = xe.Tensor()
