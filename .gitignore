@@ -11,3 +11,4 @@ doc/parseDoxytags
 doc/xerus.tagfile
 doc/xerus.tags
 config.mk
+XerusTest
