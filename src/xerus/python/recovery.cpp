@@ -4,6 +4,7 @@ void expose_recoveryAlgorithms(module& m) {
 	// ------------------------------------------------------------- measurements
 
 	class_<SinglePointMeasurementSet>(m, "SinglePointMeasurementSet")
+		.def(init<>(), "constructs an empty measurement set")
 		.def(init<const SinglePointMeasurementSet&>())
 		.def_readwrite("positions", &SinglePointMeasurementSet::positions)
 		.def_readwrite("measuredValues", &SinglePointMeasurementSet::measuredValues)
@@ -40,6 +41,7 @@ void expose_recoveryAlgorithms(module& m) {
 	m.def("IHT", &IHT, arg("x"), arg("measurements"), arg("perfData")=NoPerfData);
 
 	class_<RankOneMeasurementSet>(m, "RankOneMeasurementSet")
+		.def(init<>(), "constructs an empty measurement set")
 		.def(init<const RankOneMeasurementSet&>())
 		.def("get_position", +[](RankOneMeasurementSet &_this, size_t _i){
 			return _this.positions[_i];
@@ -113,6 +115,7 @@ void expose_recoveryAlgorithms(module& m) {
 	m.attr("ADF") = ADF;
 
 	class_<uq::UQMeasurementSet>(m, "UQMeasurementSet")
+		.def(init<>(), "constructs an empty measurement set")
 		.def(init<const uq::UQMeasurementSet&>())
 		.def("add", &uq::UQMeasurementSet::add)
 	;
