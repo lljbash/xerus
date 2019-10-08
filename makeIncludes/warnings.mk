@@ -39,7 +39,6 @@ else ifdef USE_GCC
 	WARNINGS += -Wlogical-op					# Warn about suspicious uses of logical operators in expressions
 	WARNINGS += -Wtrampolines					# Warn about trampolines
 #	WARNINGS += -Wzero-as-null-pointer-constant			# Warn when a literal '0' is used as null pointer constant.
-	WARNINGS += -Wnoexcept						# Warn when a noexcept-expression evaluates to false because of a call to a function that does not have noexcept but is known by the compiler to never throw. 
  	WARNINGS += -Wsuggest-override					# Suggest functions that do override
 
 	ifdef SUGGEST_ATTRIBUTES
@@ -55,6 +54,8 @@ else ifdef USE_GCC
 		WARNINGS += -Wno-error=suggest-attribute=format 	# Do not promote to Error
 		WARNINGS += -Wno-error=suggest-final-methods		# Do not promote to Error
 		WARNINGS += -Wno-error=suggest-final-types		# Do not promote to Error
+		
+		WARNINGS += -Wnoexcept					# Warn when a noexcept-expression evaluates to false because of a call to a function that does not have noexcept but is known by the compiler to never throw.
 	endif
 endif
 
