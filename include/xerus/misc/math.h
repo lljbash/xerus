@@ -43,6 +43,12 @@ namespace xerus {
 			return (_value < 0 ) ? -_value : _value;
 		}
 		
+		///@brief: Calculates the absolute difference between the given values.
+		template<class T> 
+		constexpr T abs_diff(const T& _a, const T& _b) noexcept {
+			return (_a > _b) ? (_a - _b) : (_b - _a);
+		}
+		
 		
 		///@brief: Calculates _a*_a.
 		template<class T>
