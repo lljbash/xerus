@@ -37,7 +37,7 @@ namespace xerus {
 
 			if (realname) { 
 				return std::string(realname.get()); 
-			} 
+			}
 			return ""; 
 		}
 

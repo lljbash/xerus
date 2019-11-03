@@ -27,10 +27,6 @@
 #include <chrono>
 #include <fstream>
 
-#ifdef XERUS_LOG_BUFFER
-	#include <fstream>
-#endif
-
 #include <xerus/misc/namedLogger.h>
 #include <xerus/misc/stringUtilities.h>
 
