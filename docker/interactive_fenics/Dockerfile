@@ -1,6 +1,6 @@
 FROM firemarmot/xerus AS xerus
 
-FROM quay.io/fenicsproject/stable:current
+FROM quay.io/fenicsproject/stable:2019.1.0.r3
 USER root
 WORKDIR "/tmp/"
 
