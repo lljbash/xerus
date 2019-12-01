@@ -37,7 +37,7 @@ namespace xerus {
         class generic_error : public std::exception {
         public:
 			///@brief String containing all relevant information concerning this error.
-            std::string error_info;
+            std::stringstream error_info;
             
 			/// @brief: Normal constructor without preset error_info.
             generic_error();
@@ -52,7 +52,7 @@ namespace xerus {
 		template<typename error_t, class T>
 		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
 		operator<< (error_t &o, const T &_info) noexcept {
-			o.error_info += to_string(_info);
+			o.error_info << to_string(_info);
 			return o;
 		}
 		
@@ -60,7 +60,7 @@ namespace xerus {
 		template<typename error_t, class T>
 		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
 		operator<< (error_t &&o, const T &_info) noexcept {
-			o.error_info += to_string(_info);
+			o.error_info << to_string(_info);
 			return o;
 		}
     }

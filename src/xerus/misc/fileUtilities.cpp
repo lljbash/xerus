@@ -39,7 +39,7 @@
 #pragma GCC diagnostic pop
 
 namespace xerus { namespace misc {
-		
+	
 	void create_directories_for_file(const std::string& _path) {
 		if(_path.find('/') != std::string::npos) {
 			std::string folder = _path.substr(0, _path.find_last_of('/'));

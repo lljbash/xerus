@@ -28,11 +28,12 @@ namespace xerus {
 	namespace misc {
 		generic_error::generic_error() {}
 			
-		generic_error::generic_error(const generic_error &_other) noexcept
-			: error_info(_other.error_info) { }
+		generic_error::generic_error(const generic_error &_other) noexcept {
+			error_info << _other.error_info.rdbuf();
+		}
 		
 		const char* generic_error::what() const noexcept {
-			return error_info.c_str();
+			return error_info.str().c_str();
 		}
 		
 	} // namespace misc
