@@ -37,30 +37,17 @@ namespace xerus {
         class generic_error : public std::exception {
         public:
 			///@brief String containing all relevant information concerning this error.
-            std::stringstream error_info;
+			std::string errorInfo;
             
-			/// @brief: Normal constructor without preset error_info.
-            generic_error();
-            
-			/// @brief Standard copy constructor.
-            generic_error(const generic_error &_other) noexcept;
-            
-            const char* what() const noexcept override;
+            const char* what() const noexcept override { return errorInfo.c_str(); }
         };
 		
 		/// @brief The pipe operator allows to add everything that can be converted to string to the error_info and derived exceptions. 
-		template<typename error_t, class T>
-		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
-		operator<< (error_t &o, const T &_info) noexcept {
-			o.error_info << to_string(_info);
-			return o;
-		}
-		
-		/// @brief The pipe operator allows to add everything that can be converted to string to the error_info and derived exceptions. 
-		template<typename error_t, class T>
-		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
-		operator<< (error_t &&o, const T &_info) noexcept {
-			o.error_info << to_string(_info);
+		template<typename error_t, class T, typename std::enable_if<std::is_base_of<generic_error, std::remove_cvref_t<error_t>>::value, int>::type = 0>
+		std::remove_cvref_t<error_t>& operator<<(error_t&& o, const T& _info) noexcept {
+			std::ostringstream errorStream(o.errorInfo, std::ios_base::ate | std::ios_base::out);
+			errorStream << _info;
+			o.errorInfo = errorStream.str();
 			return o;
 		}
     }
