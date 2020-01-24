@@ -43,13 +43,34 @@ namespace xerus {
         };
 		
 		/// @brief The pipe operator allows to add everything that can be converted to string to the error_info and derived exceptions. 
-		template<typename error_t, class T, typename std::enable_if<std::is_base_of<generic_error, std::remove_cvref_t<error_t>>::value, int>::type = 0>
-		std::remove_cvref_t<error_t>& operator<<(error_t&& o, const T& _info) noexcept {
+		template<typename error_t, class T>
+		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
+		operator<<(error_t& o, const T& _info) noexcept {
 			std::ostringstream errorStream(o.errorInfo, std::ios_base::ate | std::ios_base::out);
 			errorStream << _info;
 			o.errorInfo = errorStream.str();
 			return o;
 		}
+		
+		/// @brief The pipe operator allows to add everything that can be converted to string to the error_info and derived exceptions. 
+		template<typename error_t, class T>
+		typename std::enable_if<std::is_base_of<generic_error, error_t>::value, error_t&>::type
+		operator<<(error_t&& o, const T& _info) noexcept {
+			std::ostringstream errorStream(o.errorInfo, std::ios_base::ate | std::ios_base::out);
+			errorStream << _info;
+			o.errorInfo = errorStream.str();
+			return o;
+		}
+		
+// 		Once we have C++20... :-/
+// 		/// @brief The pipe operator allows to add everything that can be converted to string to the error_info and derived exceptions. 
+// 		template<typename error_t, class T, typename std::enable_if<std::is_base_of<generic_error, std::remove_cvref_t<error_t>>::value, int>::type = 0>
+// 		std::remove_cvref_t<error_t>& operator<<(error_t&& o, const T& _info) noexcept {
+// 			std::ostringstream errorStream(o.errorInfo, std::ios_base::ate | std::ios_base::out);
+// 			errorStream << _info;
+// 			o.errorInfo = errorStream.str();
+// 			return o;
+// 		}
     }
 }
 
