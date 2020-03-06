@@ -5,10 +5,9 @@ std::vector<size_t> strides_from_dimensions_and_item_size(const std::vector<size
 	const size_t ndim = _dimensions.size();
 	std::vector<size_t> strides(ndim, 0);
 	if (ndim > 0) {
-		strides[ndim-1] = _item_size;
+		strides[0] = _item_size;
 		for (size_t i=0; i<ndim-1; ++i) {
-			size_t rev_i = ndim-1-i;
-			strides[rev_i-1] = _dimensions[rev_i] * strides[rev_i];
+			strides[i+1] = strides[i] * _dimensions[i];
 		}
 	}
 	return strides;
@@ -64,7 +63,7 @@ void expose_tensor(module& m) {
 		if (info.format != format_descriptor<double>::format()) {
 			throw std::runtime_error("Incompatible format: expected a double array!");
 		}
-		if (info.itemsize != sizeof(double)) {
+		if (info.itemsize != sizeof(value_t)) {
 			throw std::runtime_error("Incompatible size");
 		}
 		if (info.shape.size() == 1 and info.shape[0] == 0) {
@@ -74,11 +73,12 @@ void expose_tensor(module& m) {
 		std::vector<size_t> dims(info.shape.begin(), info.shape.end());
 		std::vector<size_t> strides(info.strides.begin(), info.strides.end());
 		if (strides != strides_from_dimensions_and_item_size(dims, info.itemsize)) {
+			/* std::cerr << "Incompatible strides: " << strides << " (got) vs " << strides_from_dimensions_and_item_size(dims, info.itemsize) << " (expected)" << std::endl; */
 			throw std::runtime_error("Incompatible strides");
 		}
 
 		Tensor result(dims, Tensor::Representation::Dense, Tensor::Initialisation::None);
-		misc::copy(result.get_unsanitized_dense_data(), static_cast<double*>(info.ptr), result.size);
+		*(result.denseData) = info.ptr;
 
 		return result;
 	})
