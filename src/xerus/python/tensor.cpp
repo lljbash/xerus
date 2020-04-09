@@ -5,9 +5,10 @@ std::vector<size_t> strides_from_dimensions_and_item_size(const std::vector<size
 	const size_t ndim = _dimensions.size();
 	std::vector<size_t> strides(ndim, 0);
 	if (ndim > 0) {
-		strides[0] = _item_size;
+		strides[ndim-1] = _item_size;
 		for (size_t i=0; i<ndim-1; ++i) {
-			strides[i+1] = strides[i] * _dimensions[i];
+			size_t rev_i = ndim-1-i;
+			strides[rev_i-1] = _dimensions[rev_i] * strides[rev_i];
 		}
 	}
 	return strides;
@@ -81,7 +82,8 @@ void expose_tensor(module& m) {
 		}
 
 		Tensor result(dims, Tensor::Representation::Dense, Tensor::Initialisation::None);
-		*(result.denseData) = info.ptr;
+		/* *(result.override_dense_data()) = static_cast<double*>(info.ptr); */
+		misc::copy(result.get_unsanitized_dense_data(), static_cast<double*>(info.ptr), result.size);
 
 		return result;
 	})
