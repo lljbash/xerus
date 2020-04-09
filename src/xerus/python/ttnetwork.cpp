@@ -36,7 +36,7 @@ void expose_ttnetwork(module& m) {
 
 		.def("use_dense_representations", &TTTensor::use_dense_representations)
 		.def_static("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks)
-//      .def("degrees_of_freedom", static_cast<size_t (TTTensor::*)()>(&TTTensor::degrees_of_freedom))
+//        .def("degrees_of_freedom", static_cast<size_t (TTTensor::*)() const>(&TTTensor::degrees_of_freedom))  // NOTE overloading a method with both static and instance methods is not supported
 		.def_static("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom))
 		.def("chop", &TTTensor::chop, arg("position"))
 			/* +[](TTTensor &_this, size_t _pos) { */
