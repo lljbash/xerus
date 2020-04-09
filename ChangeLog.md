@@ -11,7 +11,7 @@ Potentially breaking changes are marked with an exclamation point '!' at the beg
  * ! Support for GCC <= 4.8 was dropped. Update your compiler if this affects you.
  * (optional) support for arpack https://github.com/opencollab/arpack-ng
  * Fixed minor rank reduction bug in TensorNetwork soft thresholding.
- 
+ * Defining multiple UnitTests with the same name does not crash the execution of 'make test' anymore.
 
 * 2017-05-31 v3.0.1
  * Added TTNetwork::use_dense_representations() to convert all components to dense representation.

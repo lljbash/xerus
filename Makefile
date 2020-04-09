@@ -58,8 +58,17 @@ XERUS_SOURCES = $(wildcard src/xerus/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/algorithms/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/applications/*.cpp)
 XERUS_SOURCES += $(wildcard src/xerus/examples/*.cpp)
+# XERUS_SOURCES = $(wildcard src/xerus/**/*.cpp)
+
+XERUS_INCLUDES =  $(wildcard include/xerus/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/algorithms/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/applications/*.h)
+XERUS_INCLUDES += $(wildcard include/xerus/examples/*.h)
+# XERUS_INCLUDES = $(wildcard include/xerus/**/*.h)
 
 MISC_SOURCES = $(wildcard src/xerus/misc/*.cpp)
+
+MISC_INCLUDES = $(wildcard include/xerus/misc/*.h)
 
 PYTHON_SOURCES = $(wildcard src/xerus/python/*.cpp)
 
@@ -202,14 +211,14 @@ shared: build/libxerus_misc.so build/libxerus.so
 .PHONY: libxerus_misc_dependencies
 libxerus_misc_dependencies:
 	@:$(call check_defined, BOOST_LIBS, include and link paths)
-build/libxerus_misc.so: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_SOURCES)
+build/libxerus_misc.so: $(MINIMAL_DEPS) $(MISC_SOURCES) $(MISC_INCLUDES) | libxerus_misc_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus_misc.so $(FLAGS) -I include $(MISC_SOURCES) -Wl,--as-needed $(CALLSTACK_LIBS) $(BOOST_LIBS) -o build/libxerus_misc.so
 
 .PHONY: libxerus_dependencies
 libxerus_dependencies:
 	@:$(call check_defined, SUITESPARSE LAPACK_LIBRARIES BLAS_LIBRARIES, include and link paths)
-build/libxerus.so: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_SOURCES) build/libxerus_misc.so
+build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) $(XERUS_INCLUDES) build/libxerus_misc.so | libxerus_dependencies
 	mkdir -p $(dir $@)
 	$(CXX) -shared -fPIC -Wl,-soname,libxerus.so $(FLAGS) -I include $(XERUS_SOURCES) -L ./build/ -Wl,--as-needed -lxerus_misc $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) -o build/libxerus.so
 
@@ -217,21 +226,20 @@ build/libxerus.so: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_SOURCES) build/
 python2: build/python2/xerus.so
 python3: build/python3/xerus.so
 
-build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
-	@:$(call check_defined, PYTHON2_CONFIG BOOST_PYTHON2, include and link paths)
+build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
+	@:$(call check_defined, PYTHON2_CONFIG, include and link paths)
 	mkdir -p $(dir $@)
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON2) -o $@
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON2_CONFIG) $(PYTHON_FLAGS) -I include -I 3rdParty/pybind11/include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus -o $@
 
-build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) build/libxerus.so
-	@:$(call check_defined, PYTHON3_CONFIG BOOST_PYTHON3, include and link paths)
+build/python3/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
+	@:$(call check_defined, PYTHON3_CONFIG, include and link paths)
 	mkdir -p $(dir $@)
-	@# -fpermissive is needed because of a bug in the definition of BOOST_PYTHON_MODULE_INIT in <boost/python/module_init.h>
-	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON3_CONFIG) $(PYTHON_FLAGS) -fpermissive -I include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus $(BOOST_PYTHON3) -o $@
+	$(CXX) -shared -fPIC -Wl,-soname,xerus.so $(PYTHON3_CONFIG) $(PYTHON_FLAGS) -I include -I 3rdParty/pybind11/include $(PYTHON_SOURCES) -L ./build/ -Wl,--as-needed -lxerus -o $@
 
 
 static: build/libxerus_misc.a build/libxerus.a
 
-build/libxerus_misc.a: libxerus_misc_dependencies $(MINIMAL_DEPS) $(MISC_OBJECTS)
+build/libxerus_misc.a: $(MINIMAL_DEPS) $(MISC_OBJECTS) | libxerus_misc_dependencies
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
@@ -239,7 +247,7 @@ else
 	ar rcs ./build/libxerus_misc.a $(MISC_OBJECTS)
 endif
 
-build/libxerus.a: libxerus_dependencies $(MINIMAL_DEPS) $(XERUS_OBJECTS)
+build/libxerus.a: $(MINIMAL_DEPS) $(XERUS_OBJECTS) | libxerus_dependencies
 	mkdir -p $(dir $@)
 ifdef USE_LTO
 	gcc-ar rcs ./build/libxerus.a $(XERUS_OBJECTS)
@@ -260,18 +268,22 @@ install: shared
 	test -d $(strip $(INSTALL_LIB_PATH));
 	test -d $(strip $(INSTALL_HEADER_PATH));
 	@printf "Installing libxerus.so to $(strip $(INSTALL_LIB_PATH)) and storing the header files in $(strip $(INSTALL_HEADER_PATH)).\n"
+ifdef INSTALL_PYTHON2_PATH
+	test -d $(strip $(INSTALL_PYTHON2_PATH));
+	@printf "Installing python2/xerus.so to $(strip $(INSTALL_PYTHON2_PATH)).\n"
+endif
+ifdef INSTALL_PYTHON3_PATH
+	test -d $(strip $(INSTALL_PYTHON3_PATH));
+	@printf "Installing python3/xerus.so to $(strip $(INSTALL_PYTHON3_PATH)).\n"
+endif
 	cp include/xerus.h $(INSTALL_HEADER_PATH)
 	cp -r include/xerus $(INSTALL_HEADER_PATH)
 	cp build/libxerus_misc.so $(INSTALL_LIB_PATH)
 	cp build/libxerus.so $(INSTALL_LIB_PATH)
 ifdef INSTALL_PYTHON2_PATH
-	test -d $(strip $(INSTALL_PYTHON2_PATH));
-	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON2_PATH)).\n"
 	cp build/python2/xerus.so $(INSTALL_PYTHON2_PATH)
 endif
 ifdef INSTALL_PYTHON3_PATH
-	test -d $(strip $(INSTALL_PYTHON3_PATH));
-	@printf "Installing xerus.so to $(strip $(INSTALL_PYTHON3_PATH)).\n"
 	cp build/python3/xerus.so $(INSTALL_PYTHON3_PATH)
 endif
 else
@@ -283,7 +295,7 @@ install:
 	@printf "Cannot install xerus: INSTALL_LIB_PATH not set.  Please set the path in config file.\n"
 endif
 
-$(TEST_NAME): libxerus_misc_dependencies libxerus_dependencies $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a
+$(TEST_NAME): $(MINIMAL_DEPS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a | libxerus_misc_dependencies libxerus_dependencies
 	$(CXX) -D XERUS_UNITTEST $(FLAGS) $(UNIT_TEST_OBJECTS) $(TEST_OBJECTS) build/libxerus.a build/libxerus_misc.a $(SUITESPARSE) $(LAPACK_LIBRARIES) $(ARPACK_LIBRARIES) $(BLAS_LIBRARIES) $(BOOST_LIBS) $(CALLSTACK_LIBS) -o $(TEST_NAME)
 
 build/print_boost_version: src/print_boost_version.cpp
@@ -319,13 +331,13 @@ endif
 .PHONY: test_python2_dependencies
 test_python2_dependencies:
 	@:$(call check_defined, PYTEST2, pytest executable)
-test_python2: test_python2_dependencies build/libxerus.so build/python2/xerus.so
+test_python2: build/libxerus.so build/python2/xerus.so | test_python2_dependencies
 	@PYTHONPATH=build/python2:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST2) src/pyTests
 
 .PHONY: test_python3_dependencies
 test_python3_dependencies:
 	@:$(call check_defined, PYTEST3, pytest executable)
-test_python3: test_python3_dependencies build/libxerus.so build/python3/xerus.so
+test_python3: build/libxerus.so build/python3/xerus.so | test_python3_dependencies
 	@PYTHONPATH=build/python3:${PYTHONPATH} LD_LIBRARY_PATH=build:${LD_LIBRARY_PATH} $(PYTEST3) src/pyTests
 
 

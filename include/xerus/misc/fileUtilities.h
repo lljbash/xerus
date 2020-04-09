@@ -27,6 +27,7 @@
 #include <set>
 #include <string>
 #include <fstream>
+#include <vector>
 
 // #include "standard.h"
 
@@ -35,17 +36,26 @@ namespace xerus { namespace misc {
 	///@brief Creates all directories in the @a _path of the file, if needed.
 	void create_directories_for_file(const std::string& _path);
 	
-	///@brief Returns a set containing all regular files at the given @a _path.
+	///@brief Returns a set containing all regular files present at the given @a _path.
 	std::set<std::string> get_files(const std::string& _path);
+	
+	///@brief Returns a set containing all directories present at the given @a _path.
+	std::set<std::string> get_directories(const std::string& _path);
 
 	///@brief Checks whether a file at the given @a _path exists.
 	bool file_exists(const std::string& _path);
+	
+	///@brief Checks whether a directory at the given @a _path exists.
+	bool directory_exists(const std::string& _path);
 	
 	///@brief Checks whether a file at the given @a _path is empty.
 	bool file_is_empty(const std::string& _path);
 	
 	///@brief Reads the complete content of the file at the given @a _path into a string.
 	std::string read_file(const std::string& _path);
+	
+	///@brief Reads all lines of the file at the given @a _path into a vector of strings.
+	std::vector<std::string> read_file_lines(const std::string& _path);
 	
 	
 	/// @brief Resolves 'folder/..' occurences in pathnames.

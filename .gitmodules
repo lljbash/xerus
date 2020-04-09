@@ -1,3 +1,7 @@
+[submodule "src/pybind11"]
+	path = 3rdParty/pybind11
+	url = https://github.com/pybind/pybind11.git
+
 [submodule "3rdParty/measurement_utils"]
 	path = 3rdParty/measurement_utils
 	url = https://trunschk@bitbucket.org/trunschk/measurement_utils.git
