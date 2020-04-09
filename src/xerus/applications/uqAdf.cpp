@@ -106,17 +106,17 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 
 
 		static std::vector<std::vector<Tensor>> transpose_positions(const TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions) {
-			REQUIRE(_positions.size() == _solutions.size(), "Incompatible positions and solutions vector");
+			REQUIRE(_positions.size() == _solutions.size(), "Incompatible positions and solutions vector: " << _positions.size() << " vs " << _solutions.size());
 			for(size_t sample=0; sample < _positions.size(); ++sample) {
-				REQUIRE(_positions[sample].size() == _x.order()-1, "Invalid measurement");
+				REQUIRE(_positions[sample].size() == _x.order()-1, "Invalid measurement: " << _positions[sample].size() << " vs " <<  _x.order()-1 << " (at sample " << sample << ")");
 			}
 
 			std::vector<std::vector<Tensor>> positions(_x.order());
 			for(size_t corePosition=1; corePosition < _x.order(); ++corePosition) {
 				positions[corePosition].reserve(_positions.size());
 				for(size_t sample=0; sample < _positions.size(); ++sample) {
-					REQUIRE(_positions[sample][corePosition-1].dimensions.size() == 1, "Invalid measurement component");
-					REQUIRE(_positions[sample][corePosition-1].size == _x.dimensions[corePosition], "Invalid measurement component");
+					REQUIRE(_positions[sample][corePosition-1].dimensions.size() == 1, "Invalid measurement component: len(" << _positions[sample][corePosition-1].dimensions << ") != 1 (at sample " << sample << " & position " << corePosition << ")");
+					REQUIRE(_positions[sample][corePosition-1].size == _x.dimensions[corePosition], "Invalid measurement component"); // << _positions[sample][corePosition-1].size == _x.dimensions[corePosition]);
 					positions[corePosition].push_back(_positions[sample][corePosition-1]);
 				}
 			}

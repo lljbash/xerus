@@ -64,7 +64,9 @@ void expose_tensor(module& m) {
 			throw std::runtime_error("Incompatible format: expected a double array!");
 		}
 		if (info.itemsize != sizeof(value_t)) {
-			throw std::runtime_error("Incompatible size");
+			std::ostringstream msg;
+			msg << "Incompatible size: " << info.itemsize << " (got) vs " << sizeof(value_t) << " (expected)";
+			throw std::runtime_error(msg.str());
 		}
 		if (info.shape.size() == 1 and info.shape[0] == 0) {
 			return Tensor({}, Tensor::Representation::Dense, Tensor::Initialisation::None);
@@ -73,8 +75,9 @@ void expose_tensor(module& m) {
 		std::vector<size_t> dims(info.shape.begin(), info.shape.end());
 		std::vector<size_t> strides(info.strides.begin(), info.strides.end());
 		if (strides != strides_from_dimensions_and_item_size(dims, info.itemsize)) {
-			/* std::cerr << "Incompatible strides: " << strides << " (got) vs " << strides_from_dimensions_and_item_size(dims, info.itemsize) << " (expected)" << std::endl; */
-			throw std::runtime_error("Incompatible strides");
+			std::ostringstream msg;
+			msg << "Incompatible strides: " << strides << " (got) vs " << strides_from_dimensions_and_item_size(dims, info.itemsize) << " (expected). Make sure your buffer is C contiguous." << std::endl;
+			throw std::runtime_error(msg.str());
 		}
 
 		Tensor result(dims, Tensor::Representation::Dense, Tensor::Initialisation::None);
