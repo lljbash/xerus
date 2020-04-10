@@ -224,7 +224,14 @@ build/libxerus.so: $(MINIMAL_DEPS) $(XERUS_SOURCES) $(XERUS_INCLUDES) build/libx
 
 
 python2: build/python2/xerus.so
-python3: build/python3/xerus.so
+python3: xerus/xerus.so xerus/libxerus.so xerus/libxerus_misc.so
+
+xerus/xerus.so: build/python3/xerus.so
+	cp $< $@
+xerus/libxerus.so: build/libxerus.so
+	cp $< $@
+xerus/libxerus_misc.so: build/libxerus_misc.so
+	cp $< $@
 
 build/python2/xerus.so: $(MINIMAL_DEPS) $(PYTHON_SOURCES) src/xerus/python/misc.h build/libxerus.so
 	@:$(call check_defined, PYTHON2_CONFIG, include and link paths)

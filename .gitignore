@@ -3,6 +3,7 @@ __pycache__
 *.sw[pon]
 *.np[yz]
 *.xrs
+*.so
 lapacke
 build
 doc/html
