@@ -1,11 +1,10 @@
-import sys; sys.path.insert(0, '.')
 import numpy as np
 import xerus as xe
 from scipy.optimize import bisect
 
-from basis import HermitePolynomials
-from samplers import Uniform, CMDensity, CMSampler, CMWeights, CartesianProductSampler, test_CMSamples, test_CMWeights, approx_quantiles, constant, gaussian
-from measures import BasisMeasure, MeasurementList, IdentityMeasure
+from measurement_utils.bases import HermitePolynomials
+from measurement_utils.samplers import Uniform, CMDensity, CMSampler, CMWeights, CartesianProductSampler, test_CMSamples, test_CMWeights, approx_quantiles, constant, gaussian, interpolate, scan_AffineSampler, RejectionSampler
+from measurement_utils.measures import BasisMeasure, MeasurementList, IdentityMeasure
 
 # the function to approximate
 # from functions import easy as fnc
@@ -17,7 +16,6 @@ n_test_samples = 10000
 
 
 def rejection_sampler(density, domain):
-	from samplers import interpolate, scan_AffineSampler, RejectionSampler
 	nodes = interpolate(density, domain, eps=1e-1)
 	sampler_1d = scan_AffineSampler(nodes, density)
 	return RejectionSampler(sampler_1d.domain, density, sampler_1d)
@@ -62,7 +60,7 @@ for e, sampler_1d in enumerate([cm_sampler_1d, test_sampler_1d]):
 
 		ml = MeasurementList(measures)
 
-		tensor = xe.Tensor.from_ndarray
+		tensor = lambda arr: xe.Tensor.from_buffer(np.ascontiguousarray(arr))
 		meas = ml(nodes.T)  # input shape: order, n_samples
 		meas = np.moveaxis(meas, 0, 1)                         # redundant with new xe interf.
 		meas = [[tensor(cmp_m) for cmp_m in m] for m in meas]  # redundant with new xe interf.
@@ -78,7 +76,7 @@ for e, sampler_1d in enumerate([cm_sampler_1d, test_sampler_1d]):
 
 		ml = MeasurementList([IdentityMeasure((1, 1)), *ml.measures])
 		test_vals = ml.evaluate(reco, test_pts)
-		test_vals = [val.to_ndarray() for val in test_vals]  # redundant with new xe interf.
+		test_vals = [np.array(val) for val in test_vals]  # redundant with new xe interf.
 		ref_vals = fnc(test_nodes.T)
 
 		error = np.linalg.norm(test_vals - ref_vals, axis=1)**2
