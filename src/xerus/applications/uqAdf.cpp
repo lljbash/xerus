@@ -673,6 +673,17 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 		solver.solve();
 		return x;
 	}
+
+	TTTensor uq_ra_adf(const TTTensor& _x, const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
+		REQUIRE(_positions.size() == _solutions.size(), "Invalid measurments");
+		REQUIRE(_dimensions.front() == _solutions.front().size, "Inconsitent spacial dimension");
+
+		TTTensor x(_x);
+		x.canonicalize_left();
+		impl_uqRaAdf::InternalSolver<2> solver(x, _positions, _solutions, _maxItr, _targetEps, 1e-1);
+		solver.solve();
+		return x;
+	}
 	
 
 	TTTensor uq_ra_adf(const std::vector<std::vector<Tensor>>& _positions, const std::vector<Tensor>& _solutions, const std::vector<double>& _weights, const std::vector<size_t>& _dimensions, const double _targetEps, const size_t _maxItr) {
@@ -699,7 +710,7 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 	}
 	
 
-	TTTensor uq_ra_adf(TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
+	TTTensor uq_ra_adf(const TTTensor& _x, const UQMeasurementSet& _measurments, const PolynomBasis _basisType, const double _targetEps, const size_t _maxItr) {
 		REQUIRE(_measurments.parameterVectors.size() == _measurments.solutions.size(), "Invalid measurments");
 		REQUIRE(_x.dimensions.front() == _measurments.solutions.front().size, "Inconsitent spacial dimension");
 
@@ -712,9 +723,11 @@ namespace xerus { namespace uq { namespace impl_uqRaAdf {
 			}
 		  }
 		}
-		impl_uqRaAdf::InternalSolver<2> solver(_x, _measurments, _basisType, _maxItr, _targetEps, 1e-1);
+
+		TTTensor x(_x);
+		impl_uqRaAdf::InternalSolver<2> solver(x, _measurments, _basisType, _maxItr, _targetEps, 1e-1);
 		solver.solve();
-		return _x;
+		return x;
 	}
 
 }} // namespace  uq | xerus
