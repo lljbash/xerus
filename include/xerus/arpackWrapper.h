@@ -29,6 +29,7 @@
 #include <complex.h>
 // fix for non standard-conform complex implementation
 #undef I
+#define J _Complex_I
 
 #ifdef __has_include
 	#if __has_include("arpack.hpp")

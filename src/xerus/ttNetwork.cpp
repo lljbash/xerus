@@ -660,7 +660,11 @@ namespace xerus {
 	void TTNetwork<isOperator>::round(const std::vector<size_t>& _maxRanks, const double _eps) {
 		require_correct_format();
 		const size_t numComponents = order()/N;
-		REQUIRE(_eps < 1, "_eps must be smaller than one. " << _eps << " was given.");
+		if (numComponents <= 1){
+			REQUIRE(_eps   < 1, "_eps must be smaller than one. " << _eps << " was given.");
+		} else {
+			REQUIRE(_eps / std::sqrt(double(numComponents-1))  < 1, "_eps/sqrt(numComponents -1) must be smaller than one. " << (_eps/std::sqrt(double(numComponents-1))) << " was given.");
+		}
 		REQUIRE(_maxRanks.size()+1 == numComponents || (_maxRanks.empty() && numComponents == 0), "There must be exactly order/N-1 maxRanks. Here " << _maxRanks.size() << " instead of " << numComponents-1 << " are given.");
 		REQUIRE(!misc::contains(_maxRanks, size_t(0)), "Trying to round a TTTensor to rank 0 is not possible.");
 

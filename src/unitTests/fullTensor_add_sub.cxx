@@ -31,7 +31,7 @@ static misc::UnitTest tensor_sum_mat2("Tensor", "sum_matrix_2x2", [](){
     Tensor B({2,2});
     Tensor C({2,2});
 
-    Index i, J;
+    Index i, j;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -43,9 +43,9 @@ static misc::UnitTest tensor_sum_mat2("Tensor", "sum_matrix_2x2", [](){
     C[{1,0}]=7;
     C[{1,1}]=8;
     
-    res(i,J) = B(i,J) + C(i,J);
+    res(i,j) = B(i,j) + C(i,j);
     TEST(approx_entrywise_equal(res, {6,8,10,12}));
-    res(i,J) = B(i,J) + C(J,i);
+    res(i,j) = B(i,j) + C(j,i);
     TEST(approx_entrywise_equal(res, {6,9,9,12}));
 });
 
@@ -53,7 +53,7 @@ static misc::UnitTest tensor_sum_eq("Tensor", "sum_lhs_equals_rhs", []() {
     Tensor B({2,2});
     Tensor C({2,2});
 
-    Index i, J;
+    Index i, j;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -65,9 +65,9 @@ static misc::UnitTest tensor_sum_eq("Tensor", "sum_lhs_equals_rhs", []() {
     C[{1,0}]=7;
     C[{1,1}]=8;
     
-    B(i,J) = B(i,J) + C(i,J);
+    B(i,j) = B(i,j) + C(i,j);
 	TEST(approx_entrywise_equal(B, {6,8,10,12}));
-    B(i,J) = B(i,J) + B(J,i);
+    B(i,j) = B(i,j) + B(j,i);
     TEST(approx_entrywise_equal(B, {12,18,18,24}));
 });
 
@@ -83,11 +83,11 @@ static misc::UnitTest tensor_sum_mat1000("Tensor", "sum_matrix_1000x1000", [](){
 		return double(_idx[0] + _idx[1] + _idx[0] * _idx[1]);
 	});
 
-    Index i, J;
+    Index i, j;
     
-    res(i,J) = A(i,J) + B(i,J);
+    res(i,j) = A(i,j) + B(i,j);
     TEST(approx_entrywise_equal(res, C, 1e-14));
-    res(J,i) = A(J,i) + B(i,J);
+    res(j,i) = A(j,i) + B(i,j);
     TEST(approx_entrywise_equal(res, C, 1e-14));
 });
 
@@ -96,7 +96,7 @@ static misc::UnitTest tensor_dyadic("Tensor", "sum_dyadic", [](){
     Tensor B({2});
     Tensor C({2});
 
-    Index i, J, K;
+    Index i, j, k;
     
     B[0]=1;
     B[1]=2;
@@ -104,7 +104,7 @@ static misc::UnitTest tensor_dyadic("Tensor", "sum_dyadic", [](){
     C[0]=5;
     C[1]=9;
     
-    FAILTEST(res(i,J) = B(i) + C(J));
+    FAILTEST(res(i,j) = B(i) + C(j));
 //     TEST(approx_entrywise_equal(res, {6,10,7,11}));
 });
 
@@ -114,7 +114,7 @@ static misc::UnitTest tensor_sum_threefold("Tensor", "sum_threefold_sum", [](){
     Tensor C({2});
     Tensor D({2});
 
-    Index i, J, K;
+    Index i, j, k;
     
     B[0]=1;
     B[1]=2;

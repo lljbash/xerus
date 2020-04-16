@@ -325,7 +325,7 @@ static misc::UnitTest sparse_prod_three("SparseTensor", "Product_Threefold", [](
     Tensor C({2,2}, Tensor::Representation::Sparse);
     Tensor D({2,2}, Tensor::Representation::Sparse);
 
-    Index i, J, K, L;
+    Index i, j, k, l;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -346,13 +346,13 @@ static misc::UnitTest sparse_prod_three("SparseTensor", "Product_Threefold", [](
 	B.use_sparse_representation();
 	C.use_sparse_representation();
 	
-    res(i,L) = B(i,J) * C(J,K) * D(K,L);
+    res(i,l) = B(i,j) * C(j,k) * D(k,l);
     TEST(approx_entrywise_equal(res, {413, 454, 937, 1030}));
-    res(i,L) = B(i,J) * C(K,L) * D(J,K);
+    res(i,l) = B(i,j) * C(k,l) * D(j,k);
     TEST(approx_entrywise_equal(res, {393, 458, 901, 1050}));
-    res(i,L) = B(K,L) * C(i,J) * D(J,K);
+    res(i,l) = B(k,l) * C(i,j) * D(j,k);
     TEST(approx_entrywise_equal(res, {477, 710, 649, 966}));
-    res(i,L) = B(J,K) * C(K,L) * D(i,J);
+    res(i,l) = B(j,k) * C(k,l) * D(i,j);
     TEST(approx_entrywise_equal(res, {601, 698, 725, 842}));
 });
 
