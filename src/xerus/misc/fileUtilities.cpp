@@ -39,11 +39,17 @@
 #pragma GCC diagnostic pop
 
 namespace xerus { namespace misc {
-		
+	
 	void create_directories_for_file(const std::string& _path) {
 		if(_path.find('/') != std::string::npos) {
-			const std::string folder = _path.substr(0, _path.find_last_of('/'));
-			boost::filesystem::create_directories(folder);
+			std::string folder = _path.substr(0, _path.find_last_of('/'));
+			
+			// Remove trailing / (can appear e.g. in "folder//file.dat").
+			while(folder.back() == '/') { folder.pop_back(); }
+			
+			if(folder != ".") { // Boost doesn't like being called with ".".
+				boost::filesystem::create_directories(folder);
+			}
 		}
 	}
 	
