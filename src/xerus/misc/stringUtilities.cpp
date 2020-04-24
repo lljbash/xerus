@@ -62,6 +62,10 @@ namespace xerus {
 			return result; 
 		}
 		
+		
+		bool contains(const std::string& _string, const std::string& _search) {
+			return _string.find(_search) != std::string::npos;
+		}
 
 		void replace(std::string& _string, const std::string& _search, const std::string& _replace) {
 			size_t pos = 0;

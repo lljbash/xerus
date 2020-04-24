@@ -36,6 +36,9 @@ namespace xerus {
 
 		///@brief: Explodes a string at positions indicated by _delim.
 		std::vector<std::string> explode(const std::string& _string, const char _delim);
+		
+		///@brief: Returns true if _string contains _search as a substring.
+		bool contains(const std::string& _string, const std::string& _search);
 
 		///@brief: Replaces all occurences of _search in _string by _replace.
 		void replace(std::string& _string, const std::string& _search, const std::string& _replace);
