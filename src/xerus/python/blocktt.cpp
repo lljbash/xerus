@@ -52,7 +52,7 @@ void expose_blocktt() {
 		.def("dofs", &BlockTT::dofs)
 
 		.def("move_core_left", &BlockTT::move_core_left)
-		.def("move_core_right", &BlockTT::move_core_left)
+		.def("move_core_right", &BlockTT::move_core_right)
 	;
 
 	def("frob_norm", static_cast<value_t (*)(const BlockTT&)>(&frob_norm));

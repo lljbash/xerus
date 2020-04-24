@@ -215,7 +215,7 @@ static misc::UnitTest sparse_assign_eq("SparseTensor", "Assignment_LHS_Equals_RH
     Tensor B({2,2}, Tensor::Representation::Sparse);
     Tensor C({2,2}, Tensor::Representation::Sparse);
 
-    Index i, J, K;
+    Index i, j, k;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -227,9 +227,9 @@ static misc::UnitTest sparse_assign_eq("SparseTensor", "Assignment_LHS_Equals_RH
     C[{1,0}]=7;
     C[{1,1}]=8;
     
-    B(i,J) = B(i,J);
+    B(i,j) = B(i,j);
     TEST(approx_entrywise_equal(B, {1,2,3,4}));
-    B(i,J) = B(J,i);
+    B(i,j) = B(j,i);
     TEST(approx_entrywise_equal(B, {1,3,2,4}));
 });
 

@@ -318,7 +318,7 @@ static misc::UnitTest tensor_prod_three("Tensor", "Product_Threefold",  [](){
     Tensor C({2,2});
     Tensor D({2,2});
 
-    Index i, J, K, L;
+    Index i, j, k, l;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -335,13 +335,13 @@ static misc::UnitTest tensor_prod_three("Tensor", "Product_Threefold",  [](){
     D[{1,0}]=11;
     D[{1,1}]=12;
     
-    res(i,L) = B(i,J) * C(J,K) * D(K,L);
+    res(i,l) = B(i,j) * C(j,k) * D(k,l);
     TEST(approx_entrywise_equal(res, {413, 454, 937, 1030}));
-    res(i,L) = B(i,J) * C(K,L) * D(J,K);
+    res(i,l) = B(i,j) * C(k,l) * D(j,k);
     TEST(approx_entrywise_equal(res, {393, 458, 901, 1050}));
-    res(i,L) = B(K,L) * C(i,J) * D(J,K);
+    res(i,l) = B(k,l) * C(i,j) * D(j,k);
     TEST(approx_entrywise_equal(res, {477, 710, 649, 966}));
-    res(i,L) = B(J,K) * C(K,L) * D(i,J);
+    res(i,l) = B(j,k) * C(k,l) * D(i,j);
     TEST(approx_entrywise_equal(res, {601, 698, 725, 842}));
 });
 
@@ -402,18 +402,18 @@ static misc::UnitTest tensor_prod1000("Tensor", "Product_1000x1000", [](){
     Tensor A({1000,1000}, [] (const std::vector<size_t> &_idx) { return double(_idx[0] + _idx[1]); });
     Tensor B({1000,1000}, [] (const std::vector<size_t> &_idx) { return double((1000-_idx[0]) * (1000-_idx[1])); });
     Tensor C({1000,1000}, Tensor::Representation::Dense);
-    Index i, J, K;
+    Index i, j, k;
 
     blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, B.get_dense_data(), false);
-    res(i,K) = A(i,J) * B(J,K);
+    res(i,k) = A(i,j) * B(j,k);
     MTEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0, "Error: " << frob_norm(res-C));
     
     blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), false, 1000, B.get_dense_data(), true);
-    res(i,K) = A(i,J) * B(K,J);
+    res(i,k) = A(i,j) * B(k,j);
     TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
     
     blasWrapper::matrix_matrix_product(C.get_dense_data(), 1000, 1000, 1.0, A.get_dense_data(), true, 1000, B.get_dense_data(), true);
-    res(i,K) = A(J,i) * B(K,J);
+    res(i,k) = A(j,i) * B(k,j);
     TEST(memcmp(res.get_dense_data(), C.get_dense_data(), sizeof(value_t)*1000*1000)==0);
 });
 

@@ -28,7 +28,7 @@ static misc::UnitTest sparse_sum2("SparseTensor", "sum_matrix_2x2", [](){
     Tensor B({2,2}, Tensor::Representation::Sparse);
     Tensor C({2,2}, Tensor::Representation::Sparse);
 
-    Index i, J;
+    Index i, j;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -43,9 +43,9 @@ static misc::UnitTest sparse_sum2("SparseTensor", "sum_matrix_2x2", [](){
 	B.use_sparse_representation();
 	C.use_sparse_representation();
 	
-    res(i,J) = B(i,J) + C(i,J);
+    res(i,j) = B(i,j) + C(i,j);
     TEST(approx_entrywise_equal(res, {6,8,10,12}));
-    res(i,J) = B(i,J) + C(J,i);
+    res(i,j) = B(i,j) + C(j,i);
     TEST(approx_entrywise_equal(res, {6,9,9,12}));
 });
  
@@ -53,7 +53,7 @@ static misc::UnitTest sparse_sum_eq("SparseTensor", "sum_lhs_equals_rhs", [](){
     Tensor B({2,2}, Tensor::Representation::Sparse);
     Tensor C({2,2}, Tensor::Representation::Sparse);
 
-    Index i, J;
+    Index i, j;
     
     B[{0,0}]=1;
     B[{0,1}]=2;
@@ -67,9 +67,9 @@ static misc::UnitTest sparse_sum_eq("SparseTensor", "sum_lhs_equals_rhs", [](){
     
 	B.use_sparse_representation();
 	C.use_sparse_representation();
-    B(i,J) = B(i,J) + C(i,J);
+    B(i,j) = B(i,j) + C(i,j);
 	TEST(approx_entrywise_equal(B, {6,8,10,12}));
-    B(i,J) = B(i,J) + B(J,i);
+    B(i,j) = B(i,j) + B(j,i);
     TEST(approx_entrywise_equal(B, {12,18,18,24}));
 });
 
@@ -79,9 +79,9 @@ static misc::UnitTest sparse_dyadicsum("SparseTensor", "sum_dyadic", [](){
     Tensor B({2}, Tensor::Representation::Sparse);
     Tensor C({2}, Tensor::Representation::Sparse);
 
-    Index i, J, K;
+    Index i, j, k;
     
-    FAILTEST(res(i,J) = B(i) + C(J));
+    FAILTEST(res(i,j) = B(i) + C(j));
 });
 
 static misc::UnitTest sparse_sum_three("SparseTensor", "sum_threefold", [](){
@@ -90,7 +90,7 @@ static misc::UnitTest sparse_sum_three("SparseTensor", "sum_threefold", [](){
     Tensor C({2}, Tensor::Representation::Sparse);
     Tensor D({2}, Tensor::Representation::Sparse);
 
-    Index i, J, K;
+    Index i, j, k;
     
     B[0]=1;
     B[1]=2;
