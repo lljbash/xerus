@@ -10,6 +10,7 @@ void expose_ttnetwork(module& m) {
 				return misc::deserialize<TTTensor>(_bytes);
 			}
 		))
+		.def(init<>(), "constructs an empty TTTensor")
 		.def(init<const TTTensor &>())
 		.def(init<const Tensor&>())
 		.def(init<const Tensor&, value_t>())
@@ -23,7 +24,7 @@ void expose_ttnetwork(module& m) {
 		.def_readonly("corePosition", &TTTensor::corePosition)
 		.def("ranks", &TTTensor::ranks)
 		.def("rank", &TTTensor::rank)
-//      .def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited
+		/* .def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited */
 		.def_static("random",
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTTensor::random(_dim, _rank);
@@ -36,13 +37,9 @@ void expose_ttnetwork(module& m) {
 
 		.def("use_dense_representations", &TTTensor::use_dense_representations)
 		.def_static("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks)
-//        .def("degrees_of_freedom", static_cast<size_t (TTTensor::*)() const>(&TTTensor::degrees_of_freedom))  // NOTE overloading a method with both static and instance methods is not supported
+		/* .def("degrees_of_freedom", static_cast<size_t (TTTensor::*)() const>(&TTTensor::degrees_of_freedom))  // NOTE overloading a method with both static and instance methods is not supported */
 		.def_static("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom))
 		.def("chop", &TTTensor::chop, arg("position"))
-			/* +[](TTTensor &_this, size_t _pos) { */
-			/*     const auto result = _this.chop(_pos); */
-			/*     return boost::python::make_tuple(result.first, result.second); */
-			/* }, arg("position")) */
 
 		.def("round", static_cast<void (TTTensor::*)(const std::vector<size_t>&, double)>(&TTTensor::round),
 			arg("ranks"), arg("epsilon")=EPSILON
@@ -57,13 +54,24 @@ void expose_ttnetwork(module& m) {
 		.def("assume_core_position", &TTTensor::assume_core_position)
 		.def("canonicalize_left", &TTTensor::canonicalize_left)
 		.def("canonicalize_right", &TTTensor::canonicalize_right)
+		/* .def(-self) */
+		.def("__neg__",
+			+[](TTTensor& _self) {
+				return (-1)*_self;
+			})
 		.def(self + self)
 		.def(self - self)
-		.def(self * value_t())
-		.def(value_t() * self)
-		.def(self / value_t())
 		.def(self += self)
 		.def(self -= self)
+		.def(self * value_t())
+		.def(value_t() * self)
+		.def(self *= value_t())
+		.def(self / value_t())
+		/* .def(self /= self) */
+		.def("__itruediv__",
+			+[](TTTensor& _self, value_t _other) {
+				return (_self *= (1/_other));
+			})
 	;
 
 	m.def("entrywise_product", static_cast<TTTensor (*)(const TTTensor&, const TTTensor&)>(&entrywise_product));
@@ -84,7 +92,7 @@ void expose_ttnetwork(module& m) {
 		.def_readonly("corePosition", &TTOperator::corePosition)
 		.def("ranks", &TTOperator::ranks)
 		.def("rank", &TTOperator::rank)
-//      .def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
+		/* .def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited */
 		.def_static("random", //TODO check error throwing python crashes when error from xerus is thrown
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::TTOperator::random(_dim, _rank);
@@ -97,13 +105,9 @@ void expose_ttnetwork(module& m) {
 
 		.def("use_dense_representations", &TTOperator::use_dense_representations)
 		.def_static("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks)
-//      .def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom))
+		/* .def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom)) */
 		.def_static("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom))
 		.def("chop", &TTOperator::chop, arg("position"))
-			/* +[](TTOperator &_this, size_t _pos) { */
-			/*     const auto result = _this.chop(_pos); */
-			/*     return make_tuple(result.first, result.second); */
-			/* }, arg("position")) */
 
 		.def("round", static_cast<void (TTOperator::*)(const std::vector<size_t>&, double)>(&TTOperator::round), arg("ranks"), arg("epsilon")=EPSILON)
 		.def("round", static_cast<void (TTOperator::*)(double)>(&TTOperator::round))
@@ -116,14 +120,24 @@ void expose_ttnetwork(module& m) {
 		.def("assume_core_position", &TTOperator::assume_core_position)
 		.def("canonicalize_left", &TTOperator::canonicalize_left)
 		.def("canonicalize_right", &TTOperator::canonicalize_right)
+		/* .def(-self) */
+		.def("__neg__",
+			+[](TTTensor& _self) {
+				return (-1)*_self;
+			})
 		.def(self + self)
 		.def(self - self)
 		.def(self += self)
 		.def(self -= self)
 		.def(self * value_t())
 		.def(value_t() * self)
+		.def(self *= value_t())
 		.def(self / value_t())
-
+		/* .def(self /= self) */
+		.def("__itruediv__",
+			+[](TTTensor& _self, value_t _other) {
+				return (_self *= (1/_other));
+			})
 
 		// for  TTOperator only:
 		.def_static("identity", &TTOperator::identity<>)

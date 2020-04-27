@@ -48,7 +48,7 @@ void expose_htnetwork(module& m) {
 		.def_readonly("corePosition", &HTTensor::corePosition)
 		.def("ranks", &HTTensor::ranks)
 		.def("rank", &HTTensor::rank)
-// 		.def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited
+		//.def("frob_norm", &TTTensor::frob_norm) // NOTE unneccessary because correct call is inherited
 		.def_static("random",
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTTensor::random(_dim, _rank);
@@ -60,12 +60,7 @@ void expose_htnetwork(module& m) {
 
 		//.def("use_dense_representations", &TTTensor::use_dense_representations)
 		//.def_static("reduce_to_maximal_ranks", &TTTensor::reduce_to_maximal_ranks)
-//// 		.def("degrees_of_freedom", static_cast<size_t (TTTensor::*)()>(&TTTensor::degrees_of_freedom))
-		//.def_static("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTTensor::degrees_of_freedom))
-//			+[](HTTensor &_this, size_t _pos) {
-//				const auto result = _this.chop(_pos);
-//				return boost::python::make_tuple(result.first, result.second);
-//			}, arg("position"))
+		//.def("degrees_of_freedom", static_cast<size_t (TTTensor::*)()>(&TTTensor::degrees_of_freedom))
 
 		.def("round", static_cast<void (HTTensor::*)(const std::vector<size_t>&, double)>(&HTTensor::round),
 				arg("ranks"), arg("epsilon")=EPSILON
@@ -109,7 +104,7 @@ void expose_htnetwork(module& m) {
 		.def_readonly("corePosition", &HTOperator::corePosition)
 		.def("ranks", &HTOperator::ranks)
 		.def("rank", &HTOperator::rank)
-// 		.def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
+		//.def("frob_norm", &TTOperator::frob_norm) // NOTE unneccessary because correct call is inherited
 		.def_static("random",
 			+[](std::vector<size_t> _dim, std::vector<size_t> _rank) {
 				return xerus::HTOperator::random(_dim, _rank);
@@ -121,14 +116,10 @@ void expose_htnetwork(module& m) {
 
 		//.def("use_dense_representations", &TTOperator::use_dense_representations)
 		//.def("reduce_to_maximal_ranks", &TTOperator::reduce_to_maximal_ranks).staticmethod("reduce_to_maximal_ranks")
-// 		.def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom))
+		//.def("degrees_of_freedom", static_cast<size_t (TTOperator::*)()>(&TTOperator::degrees_of_freedom))
 		//.def("degrees_of_freedom", static_cast<size_t (*)(const std::vector<size_t>&, const std::vector<size_t>&)>(&TTOperator::degrees_of_freedom)).staticmethod("degrees_of_freedom")
-//		.def("chop",
-//			+[](HTOperator &_this, size_t _pos) {
-//				const auto result = _this.chop(_pos);
-//				return boost::python::make_tuple(result.first, result.second);
-//			}, arg("position"))
-//
+		//.def("chop", ...)
+
 		.def("round", static_cast<void (HTOperator::*)(const std::vector<size_t>&, double)>(&HTOperator::round),
 			arg("ranks"), arg("epsilon")=EPSILON
 		)

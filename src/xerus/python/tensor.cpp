@@ -1,4 +1,5 @@
 #include "misc.h"
+#include<pybind11/numpy.h>
 
 
 std::vector<size_t> strides_from_dimensions_and_item_size(const std::vector<size_t>& _dimensions, const size_t _item_size) {
@@ -6,14 +7,30 @@ std::vector<size_t> strides_from_dimensions_and_item_size(const std::vector<size
 	std::vector<size_t> strides(ndim, 0);
 	if (ndim > 0) {
 		strides[ndim-1] = _item_size;
-		for (size_t i=0; i<ndim-1; ++i) {
-			size_t rev_i = ndim-1-i;
-			strides[rev_i-1] = _dimensions[rev_i] * strides[rev_i];
+		for (size_t i=ndim-1; i>0; --i) {
+			strides[i-1] = _dimensions[i] * strides[i];
 		}
 	}
 	return strides;
 }
 
+Tensor Tensor_from_buffer(buffer& _b) {
+	// cast buffer into c_contiguous array (removes boilerplate code)
+	auto b = array_t<value_t, array::c_style | array::forcecast>::ensure(_b);
+	buffer_info info = b.request();
+
+	if (info.shape.size() == 1 and info.shape[0] == 0) {
+		return Tensor({}, Tensor::Representation::Dense, Tensor::Initialisation::None);
+	}
+
+	std::vector<size_t> dims(info.shape.begin(), info.shape.end());
+	std::vector<size_t> strides(info.strides.begin(), info.strides.end());
+
+	Tensor result(dims, Tensor::Representation::Dense, Tensor::Initialisation::None);
+	misc::copy(result.get_unsanitized_dense_data(), static_cast<double*>(info.ptr), result.size);
+
+	return result;
+}
 
 void expose_tensor(module& m) {
 	enum_<Tensor::Representation>(m, "Representation", "Possible representations of Tensor objects.")
@@ -22,7 +39,7 @@ void expose_tensor(module& m) {
 	;
 	enum_<Tensor::Initialisation>(m, "Initialisation", "Possible initialisations of new Tensor objects.")
 		.value("Zero", Tensor::Initialisation::Zero)
-		.value("None", Tensor::Initialisation::None)
+		.value("Uninitialized", Tensor::Initialisation::None)  /* None is a protected keyword in python */
 	;
 
 	class_<Tensor>(m, "Tensor", "a non-decomposed Tensor in either sparse or dense representation", buffer_protocol())
@@ -58,41 +75,7 @@ void expose_tensor(module& m) {
 		LOG(warning, "Deprecation warning: `from_function` is deprecated and will be removed in Xerus v5.0.0. Use the `Tensor` constructor instead.");
 		return Tensor(_dim, _f);
 	})
-	.def_static("from_buffer", +[](buffer& b){
-		buffer_info info = b.request();
-
-		if (info.format != format_descriptor<double>::format()) {
-			throw std::runtime_error("Incompatible format: expected a double array!");
-		}
-		if (info.itemsize != sizeof(value_t)) {
-			std::ostringstream msg;
-			msg << "Incompatible size: " << info.itemsize << " (got) vs " << sizeof(value_t) << " (expected)";
-			throw std::runtime_error(msg.str());
-		}
-		if (info.shape.size() == 1 and info.shape[0] == 0) {
-			return Tensor({}, Tensor::Representation::Dense, Tensor::Initialisation::None);
-		}
-
-		std::vector<size_t> dims(info.shape.begin(), info.shape.end());
-		std::vector<size_t> strides(info.strides.begin(), info.strides.end());
-		if (strides != strides_from_dimensions_and_item_size(dims, info.itemsize)) {
-			std::ostringstream msg;
-			msg << "Incompatible strides: " << strides << " (got) vs " << strides_from_dimensions_and_item_size(dims, info.itemsize) << " (expected). Make sure your buffer is C contiguous." << std::endl;
-			throw std::runtime_error(msg.str());
-		}
-
-		Tensor result(dims, Tensor::Representation::Dense, Tensor::Initialisation::None);
-		/* *(result.override_dense_data()) = static_cast<double*>(info.ptr); */
-		misc::copy(result.get_unsanitized_dense_data(), static_cast<double*>(info.ptr), result.size);
-
-		return result;
-	})
-	.def("__float__", [](const Tensor &_self){
-			if (_self.order() != 0) {
-				throw value_error("order must be 0");
-			}
-			return value_t(_self());
-	})
+	.def_static("from_buffer", &Tensor_from_buffer)
 	.def_property_readonly("dimensions", +[](Tensor &_A) {
 		return _A.dimensions;
 	})
@@ -208,13 +191,25 @@ arg("dim")
 		return new xerus::internal::IndexedTensor<Tensor>(std::move(_this(idx)));
 	}, keep_alive<0,1>(), return_value_policy::take_ownership )
 	.def("__str__", &Tensor::to_string)
-	.def(self * value_t())
-	.def(value_t() * self)
-	.def(self / value_t())
+	/* .def(-self) */
+	.def("__neg__",
+		+[](TTTensor& _self) {
+			return (-1)*_self;
+		})
 	.def(self + self)
 	.def(self - self)
 	.def(self += self)
 	.def(self -= self)
+	.def(self * value_t())
+	.def(value_t() * self)
+	.def(self *= value_t())
+	.def(self / value_t())
+	/* .def(self /= self) */
+	.def("__itruediv__",
+		+[](TTTensor& _self, const value_t _other) {
+			return (_self *= (1/_other));
+		})
+
 	.def("__getitem__", +[](Tensor &_this, size_t _i) {
 		if (_i >= _this.size) {
 			throw index_error("Index out of range");
@@ -230,6 +225,65 @@ arg("dim")
 	.def("__setitem__", +[](Tensor &_this, std::vector<size_t> _i, value_t _val) {
 		_this[_i] = _val;
 	})
-	// .def("__float__", [](const Tensor &_self){ return value_t(_self); })  //TODO: does not work! use implicitly_convertible<Tensor, internal::IndexedTensorReadOnly<TensorNetwork>>();
+	.def("__float__", [](const Tensor &_self){
+			if (_self.order() != 0) {
+				throw value_error("order must be 0");
+			}
+			return value_t(_self());
+	})
 	;
 }
+
+// NOTE The following code (when defined globally) would cast every xerus::Tensor to a numpy.ndarray.
+//      This would allow for cleaner code like the following:
+//          tt = xe.TTTensor([3])
+//          tt.set_component(0, np.arange(3)[None,:,None])
+/* namespace pybind11 { namespace detail { */
+/*   template <> struct type_caster<Tensor> */
+/*   { */
+/*     public: */
+
+/*       PYBIND11_TYPE_CASTER(Tensor, _("Tensor")); */
+
+/*       // Conversion part 1 (Python -> C++) */
+/*       bool load(handle src, bool convert) */
+/*       { */
+/*         if ( !convert and !array_t<value_t>::check_(src) ) */
+/*           return false; */
+
+/*         auto buf = array_t<value_t, array::c_style | array::forcecast>::ensure(src); */
+/*         if ( !buf ) */
+/*           return false; */
+
+/*         try { */
+/*             value = Tensor_from_buffer(buf); */
+/*         } catch (const std::runtime_error&) { */
+/*             return false; */
+/*         } */
+/*         return true; */
+/*       } */
+
+/*       //Conversion part 2 (C++ -> Python) */
+/*       static handle cast(const Tensor& src, return_value_policy policy, handle parent) */
+/*       { */
+/*         std::cerr << "cast Tensor -> array" << std::endl; */
+/*         std::cerr << "    create dimension vector" << std::endl; */
+/*         std::vector<size_t> shape = src.dimensions; */
+/*         std::cerr << "    create strides vector" << std::endl; */
+/*         std::vector<size_t> strides = strides_from_dimensions_and_item_size(shape, sizeof(value_t)); */
+
+/*         /1* array a(std::move(shape), std::move(strides), src.get_dense_data()); *1/ */
+/*         /1* return a.release(); *1/ */
+/*         if (src.is_dense()) { */
+/*             std::cerr << "    is_dense" << std::endl; */
+/*             array a(std::move(shape), std::move(strides), src.get_unsanitized_dense_data()); */
+/*             return a.release(); */
+/*         } else { */
+/*             std::cerr << "    is_sparse" << std::endl; */
+/*             Tensor tmp(src); */
+/*             array a(std::move(shape), std::move(strides), tmp.get_dense_data()); */
+/*             return a.release(); */
+/*         } */
+/*       } */
+/*   }; */
+/* }} // namespace pybind11::detail */
